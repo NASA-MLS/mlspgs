@@ -1,0 +1,9 @@
+begin Join
+  ;; This sets the swath name that will appear in the file
+  Label, quantity=state.h2o_hr, label='H2O-InitR2'   
+  
+  ;; This does the actual writing
+  DirectWrite, hdfVersion=5, $
+    type=l2dgg, source=state.h2o_hr,precision=outputPrecision.h2o_hr,status=otherDiagnostics.statush2o_hr, $
+    quality=otherDiagnostics.qualityh2o_hr, convergence=otherDiagnostics.convergenceh2o_hr
+end Join

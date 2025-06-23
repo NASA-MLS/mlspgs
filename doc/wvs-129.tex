@@ -1,0 +1,171 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-129r1}
+\newcommand{\docdate}{12 October 2017}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\Delta B}
+\newcommand{\oDB}{\overline{\DB}}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\hMT}{\MT^s}
+\newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Intersections of a line with a cone\\
+From: \>Van Snyder\\
+%Reference: \>
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+In an Earth-centered rotating (ECR) co{\"o}rdinate system having its
+origin at the center of the Earth, the surface of a cone with its vertex
+on the Earth's axis at a distance $v$ northward from the center of the
+Earth, and its axis parallel to the Earth's axis is given by
+%
+\begin{equation}\label{one}
+(\mathbf{X-V})^T \mathbf{M} (\mathbf{X-V}) = 0\,,
+\end{equation}
+%
+where $\mathbf{V} = [ 0, 0, v ]^T$,
+%
+\begin{equation}
+\mathbf{M} = \mathbf{D} \mathbf{D}^T - \sin^2 \theta \,\, \mathbf{I} \,,
+\end{equation}
+%
+$\mathbf{D} = [ 0, 0, 1 ]^T$, $\theta$ is the latitude where the cone
+intersects the Earth's surface ($90^\circ-\theta$ is the cone angle), and
+$\mathbf{I}$ is the identity matrix.
+
+Define a line by
+%
+\begin{equation}
+\mathbf{X} = \mathbf{C} + t \mathbf{U}
+\end{equation}
+%
+where $\mathbf{C}$ is a point on the line, and $\mathbf{U}$ is a
+vector along the line, and substitute this into Equation (\ref{one}),
+giving
+%
+\begin{equation}\begin{split}\label{four}
+&(\mathbf{C} + t\, \mathbf{U-V})^T \mathbf{M} (\mathbf{C} + t\, \mathbf{U-V}) = 0
+\text{ or} \\
+& \mathbf{U}^T \mathbf{M} \mathbf{U} \, t^2 +
+  2 \, \mathbf{U}^T \mathbf{M} ( \mathbf{C} - \mathbf{V} ) \, t +
+  ( \mathbf{C} - \mathbf{V} )^T \mathbf{M} ( \mathbf{C} - \mathbf{V} ) = 0 \\
+\end{split}\end{equation}
+%
+The points where the line intersects the cone are given by the values of
+$t$ that are roots of Equation (\ref{four}), which can be written as
+%
+\begin{equation}
+a_2 t^2 + 2\, a_1 t + a_0 = 0
+\end{equation}
+%
+where
+%
+\begin{equation}\begin{split}
+a_2 =\,& \mathbf{U}^T \mathbf{M} \mathbf{U}
+    = u_3^2 - \mathbf{U} \cdot \mathbf{U} \sin^2 \theta
+    =  u_3^2 - |\mathbf{U}|^2 \sin^2 \theta \\
+\,& \\
+a_1 =\,& \mathbf{U}^T \mathbf{M} ( \mathbf{C} - \mathbf{V} )
+    = (c_3-v) \, u_3 - (\mathbf{C-V}) \cdot \mathbf{U}\, \sin^2 \theta \\
+\,& \\
+a_0 =\,& ( \mathbf{C} - \mathbf{V} )^T \mathbf{M} ( \mathbf{C} - \mathbf{V} ) \\
+    =\,& (c_3-v)^2 - (\mathbf{C-V}) \cdot (\mathbf{C-V})\, \sin^2 \theta
+    = (c_3-v)^2 - |\mathbf{C-V}|^2\, \sin^2 \theta \,. \\
+\end{split}\end{equation}
+%
+If the latitude $\theta$ is geocentric, $v = 0$.  If the latitude is
+geodetic,
+%
+\begin{equation}
+v = -\frac{a e^2 \sin\theta}{\sqrt{1 - e^2 \sin^2 \theta}}
+\end{equation}
+%
+where $e^2 = 1 - \frac{b^2}{a^2}$, and $a$ and $b$ are the equatorial and
+polar radii of the Earth, respectively.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.1  2016/02/05 00:26:55  vsnyder
+% Initial commit
+%

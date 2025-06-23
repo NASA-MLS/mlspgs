@@ -1,0 +1,183 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-115r1}
+\newcommand{\docdate}{1 July 2014}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Paul\\
+Subject: \>Out-of-orbit-plane modeling\\
+From: \>Van Snyder\\
+%Reference: \> \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+For out-of-orbit-plane modeling, for now only for UARS, either the state
+vector or the extra vector needs to have a quantity of type {\tt azimuth}.
+Only the first element is examined.  It is the angle in degrees,
+counterclockwise (looking downward) from the spacecraft velocity vector,
+of the plane in which modeling is to take place.
+
+If the angle is not zero (that's all the wrapper cares about so far), and
+if the {\tt polarized} field of the configuration is true, the quantities
+of type {\tt magneticField}, {\tt RefGPH} and {\tt SCVelECR} must appear
+in either the state vector or the extra vector.
+
+The {\tt magneticField} quantity doesn't need to have a value, but it does
+need to have {\tt hGrid} and {\tt vGrid}.  The {\tt hGrid} ought to be an
+explicit {\tt hGrid}, which needs only to have a {\tt geodAngle} field. 
+This is a list of angles at which to evaluate the magnetic field.  The
+{\tt vGrid} specifies the vertical co\"ordinate.  The {\tt vGrid}
+co\"ordinate type needs to be {\tt zeta}.
+
+The MIF number from which to compute the profile and spacecraft
+geolocation (lat,lon) can be specified by a {\tt ReferenceMIF} field in
+the forward model configuration.  The default is 1.  The location of the
+profile is the (lat,lon) of the reference MIF in the {\tt PTan} quantity,
+and the location of the spacecraft is the (lat,lon) of the reference MIF
+in the {\tt SCVelECR} quantity, both for the current MAF number, which we
+assume L1 will have co\"ordinated correctly.
+
+For now (i.e., for UARS), the model plane is not computed from the {\tt
+azimuth} field of the forward model configuration.  Rather, it is the
+plane defined by the {\tt PTan} and {\tt SCVelECR} reference MIF
+geolocations.  All that's computed in that plane (so far) is the magnetic
+field.
+
+The {\tt azimuth} quantity might turn out to be the wrong thing for SMLS. 
+Maybe, like UARS, the model plane will be defined by a geolocation in
+something like a minor-frame quantity.
+
+The magnetic field model wants $(x,y,z)$, not (lat,lon,$\zeta$), so
+vectors are computed in the model plane at positions defined by the {\tt
+hGrid} used to define the {\tt magneticField} quantity.  Zero is the
+geolocation of the {\tt PTan} reference MIF.  Negative values are nearer
+to the spacecraft, along the great circle in the model plane.  The
+computed (lat,lon) positions are stored in the magnetic field quantity's
+template.  The magnetic field values are computed by the {\tt
+UsingMagneticField} subroutine in the {\tt FillUtils_1} module.  It gets
+heights from the MAF instance of the {\tt RefGPH} quantity, which we
+assume to apply at the {\tt PTan} geolocation and have the same $\zeta$s
+as {\tt PTan}, and (since we're doing 1-D retrieval for UARS), also at the
+spacecraft geolocation.
+
+Examples:
+
+{\tt\begin{verbatim}
+hGridMag: hGrid, type=explicit, geodAngle=[-3.0, -1.5, 0, 1.5, 3.0]
+magQ: Quantity, type=magneticField, hGrid=hGridMag, vGrid=vGridStandard
+\end{verbatim}}
+
+\newpage
+
+If/when we decide to use {\tt azimuth} to compute the model plane, here's
+how the computation of a vertical model plane is done in {\tt
+Compute_Model_Plane}:
+
+Given $\mathbf{S}$, the spacecraft position and $\mathbf{V}$, the
+spacecraft velocity, the vector $\mathbf{P} = \mathbf{S} \times
+\mathbf{V}$ is normal to the orbit plane.  The vector $\mathbf{T}$
+that is in the orbit plane and perpendicular to $\mathbf{S}$ and
+$\mathbf{P}$ is given by $\mathbf{T} = \mathbf{S} \times \mathbf{P}
+= ( \mathbf{S} \cdot \mathbf{V}) \mathbf{S} - ( \mathbf{S} \cdot
+\mathbf{S} ) \mathbf{V} = ( \mathbf{S} \cdot \mathbf{V}) \mathbf{S}
+-  \mathbf{V}$ (because $|\mathbf{S}| = 1$). ($\mathbf{T}$ would be
+$-\mathbf{V}$ if the orbit were circular.) We want a vector in the
+$\mathbf{P} - \mathbf{T}$ plane, at an angle $\alpha$ ({\tt
+Azimuth}) from $\mathbf{P}$.  This vector $\mathbf{N}$ ({\tt
+Normal}) is given by $\mathbf{N} = \sin(\alpha) \mathbf{T} +
+\cos(\alpha) \mathbf{P}$.  If $\alpha = 0$, $\mathbf{N} =
+\mathbf{P}$, the normal to the orbit plane.  If $\alpha =
+\frac\pi2$, $\mathbf{N} = \mathbf{T} \approx -\mathbf{V}$, i.e.,
+$\alpha$ is an anti-clockwise rotation, from the spacecraft velocity
+vector, about the spacecraft position vector.
+
+An alternative to a vertical  model plane defined either by {\tt azimuth}
+or by the relationship of spacecraft geolocation and {\tt PTan}
+geolocation at a particular MIF, is a model surface defined by lines of
+sight between spacecraft positions and {\tt PTan} positions at
+corresponding MIFs.  Lines along which the model would be evaluated would
+be interpolated in the {\tt PTan}s to the specified $\zeta$'s, and the
+same interpolation factors would be used to interpolate in the spacecraft
+position.  This would be a more accurate sampling of the atmosphere, but
+wouldn't give a vertical solution profile; rather, the solution would be
+reported on an interpolation of the {\tt PTan}s.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.1  2013/08/16 02:59:12  vsnyder
+% Initial commit

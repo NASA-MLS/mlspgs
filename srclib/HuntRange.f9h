@@ -1,0 +1,104 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+    ! subroutine HuntRange_r4 ( list, vrange, irange, options )
+    ! Return index range through which
+    ! values of list are within vrange, inclusive
+    ! If none, return (/ 0, 0 /)
+    ! Special interpretation: inclusive means
+    ! if vrange(1) == vrange(2), any values of list also == vrange
+    ! are within that range
+    ! options allow simplifications
+    ! options           meaning
+    !   p               assume list is preordered s.t. list[i] <= list[i+1]
+    !                     (which should allow you to ignore FillVaalues)
+    ! Dummy args
+    ! real(rk), dimension(:)               :: list
+    ! real(rk), dimension(2)               :: vrange
+    character(len=*), optional, intent(in) :: options
+    real(rk) :: s
+    real(rk), dimension(size(list)) :: slist
+    real(rk), dimension(2) :: svrange
+    real(rk) :: smaller
+    integer, dimension(2) :: irange
+    ! Local variables
+    logical :: increasing
+    integer :: N
+    character(len=8) :: myOptions
+    ! Executable
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    N = size(list)
+    ! Special cases
+    if ( N == 1 ) then
+      if ( ( list(1)-vrange(1) ) * ( vrange(2)-list(1) ) >= 0._rk ) then
+        irange = 1
+      else
+        irange = 0
+      endif
+      return
+    endif
+    s = 1. ! To be used by nearest intrinsic
+    ! First: is list increasing or decreasing?
+    increasing = ( list(N) >= list(1) ) .or. ( index(myOptions, 'p') > 0 )
+    if ( .not. increasing ) then
+      slist = -list
+      svrange = -vrange
+    elseif ( any(isFillValue(list)) .and. .false. ) then
+      ! I'm not happy with this idea--missing values are exactly that: missing
+      slist = list
+      call ReplaceFillValues( slist, &
+        & real(undefinedValue, kind(slist)), &
+        & options='-i' )
+      svrange = vrange
+    else
+      slist = list
+      svrange = vrange
+    endif
+    
+    ! Next make sure smaller of svrange is 1st, large second
+    if ( svrange(2) < svrange(1) ) then
+      smaller = svrange(2)
+      svrange(2) = svrange(1)
+      svrange(1) = smaller
+    endif
+    
+    ! Now find first slist s.t. slist(first) > svrange(1)
+    irange(1) = FindFirst( slist > nearest(svrange(1), -s) )
+    ! Now find last slist s.t. slist(last) < svrange(2)
+    irange(2) = FindLast( slist < nearest(svrange(2), s) .and. &
+      & slist > nearest(svrange(1), -s) )
+    irange(1) = min( irange(1), irange(2) )
+    if ( all(irange == 0 ) ) then
+      ! This is as it should be when none of list are within range
+    elseif ( any(irange == 0 ) ) then
+      ! This should be impossible, unless we're simply unlucky
+      call dump(list, 'list')
+      call dump(vrange, 'vrange')
+      call dump(irange, 'irange')
+      call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "illegal case of hunting range" )
+    else
+      ! This is as it should be: some of the list are within range
+    endif
+        
+! $Log$
+! Revision 1.3  2007/08/20 22:02:52  pwagner
+! Fixed another bug in HuntRange
+!
+! Revision 1.2  2007/08/13 17:29:16  pwagner
+! Fixed obvious bugs in HuntRange
+!
+! Revision 1.1  2006/01/14 00:48:25  pwagner
+! First commit
+!

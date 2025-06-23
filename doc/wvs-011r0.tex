@@ -1,0 +1,143 @@
+\documentclass[11pt]{article}
+\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.25in
+
+\begin{document}
+
+%\tracingcommands=1
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    10 January 2001\hfill Page \thepage\ of \pageref{lastpage}\hfill{\bf
+    wvs-011}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-20pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dave, Nathaniel\\
+Subject: \>More remarks on solving the linear system during retrieval\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+Consider the $m \times n$ least-squares problem $A {\bf x} \simeq {\bf
+b}$.  Multiply this problem from the left by an orthogonal matrix $Q$
+defined so as to give
+
+$$
+Q A {\bf x} = 
+     \left [ \begin {array}{c} U \\ 0 \end {array} \right ]
+     {\bf x} \simeq Q {\bf b} =
+     \left [ \begin {array}{c}
+     {\bf \hat b_1} \\ {\bf \hat b_2} \end {array} \right ]
+$$
+
+where $U$ is $n \times n$ and upper triangular, ${\bf \hat b_1}$ has $n$
+elements, and ${\bf \hat b_2}$ has $m-n$ elements.
+
+Let $\hat A = [ \begin{array}{cc} A & -{\bf b} \end{array} ]$.  Write a new
+system of normal equations, {\em viz.}
+
+$$
+\hat A^T \hat A
+ \left [ \begin{array}{c} {\bf x} \\ 1 \end{array} \right ] =
+\left [ \begin{array}{cc}
+ A^T \\
+ -{\bf b}^T
+ \end{array} \right ]
+ \left [
+ \begin{array}{cc}
+ A & -{\bf b}
+ \end{array} \right ]
+ \left [ \begin{array}{c} {\bf x} \\ 1 \end{array} \right ] =
+\left [ \begin{array}{cc}
+ A^T A        & -A^T {\bf b} \\
+ -{\bf b}^T A & {\bf b}^T {\bf b} \end{array} \right ]
+ \left [ \begin{array}{c} {\bf x} \\ 1 \end{array} \right ] =
+\left [ \begin{array}{c} {\bf 0}\\ r^2 \end{array} \right ]
+$$
+
+where the first $n$ rows of the last equation are the usual normal
+equations $A^T A {\bf x} = A^T {\bf b}$, and the last row is
+
+$$
+-{\bf b}^T A {\bf x} + {\bf b^T b} =
+{\bf b}^T ({\bf b} -A {\bf x}) =
+{\bf b}^T Q^T Q ({\bf b} - A {\bf x}) =
+\left [ \begin{array}{cc}
+{\bf \hat b_1^T} & {\bf \hat b_2^T}
+\end{array} \right ]
+\left [
+  \begin{array}{c}
+    {\bf 0}\\
+    {\bf \hat b_2}
+  \end{array} \right ] = {\bf \hat b_2^T b_2} = r^2
+$$
+
+where we have used
+
+$$
+  Q ({\bf b} - A {\bf x}) =
+\left [ \begin{array}{c} {\bf \hat b_1} \\ {\bf \hat b_2} \end{array} \right ]
+- \left [ \begin{array}{c} U \\ {0} \end{array} \right ] {\bf x} =
+\left [ \begin{array}{c} {\bf \hat b_1} \\ {\bf \hat b_2} \end{array} \right ]
+- \left [ \begin{array}{c} {\bf \hat b_1} \\ {0} \end{array} \right ] =
+\left [ \begin{array}{c} {\bf 0} \\ {\bf \hat b_2} \end{array} \right ] .
+$$
+
+Therefore $r = ||{\bf \hat b_2}||$.  Since $||Q ({\bf b} - A {\bf x})|| =
+||Q|| \, ||({\bf b} - A {\bf x})|| = ||({\bf b} - A {\bf x})|| = ||{\bf
+\hat b_2}||$, $r$ is the norm of the part of ${\bf b}$ that is not in the
+column space of $A$.
+
+Now consider the Cholesky factor $\hat U$ of $\hat A$, i.e. $\hat U^T
+\hat U = \hat A^T \hat A$.  Dissect
+$
+  \hat U = \left [
+           \begin{array}{cc} \tilde U & -{\bf v} \\ {\bf 0}^T & w
+           \end{array} \right ] .
+$
+Then
+
+$$
+\hat A^T \hat A
+ \left [ \begin{array}{c} {\bf x} \\ 1 \end{array} \right ] =
+\hat U^T \hat U
+ \left [ \begin{array}{c} {\bf x} \\ 1 \end{array} \right ] =
+\left [ \begin{array}{cc} \tilde U^T \tilde U & -\tilde U^T {\bf v} \\
+                          -{\bf v}^T \tilde U & {\bf v}^T {\bf v} + w^2
+                       \end{array} \right ]
+ \left [ \begin{array}{c} {\bf x} \\ 1 \end{array} \right ] =
+\left [ \begin{array}{c} {\bf 0}\\ r^2 \end{array} \right ] .
+$$
+
+The last equation above can be written as the two equations $\tilde U^T
+\tilde U {\bf x} = \tilde U^T {\bf v}$ and $-{\bf v}^T \tilde U {\bf x} +
+{\bf v}^T {\bf v} + w^2 = r^2$.  Solve the first of these to get ${\bf x}
+= \tilde U^{-1} {\bf v}$.  Substitute this into the second to get $w^2 =
+r^2$.  Therefore, by computing $\hat U$ instead of the Cholesky factor of
+$A^T A$:
+
+\begin{enumerate}
+\item We can solve for ${\bf x}$ with a single back-solve (this isn't
+ actually any less work), and
+\item The nonlinear solver needs $r = w = \hat U_{n+1,n+1}$.  The obvious
+ way to compute it, {\em viz.} $r^2 = {\bf b}^T({\bf b} - A {\bf x})$,
+ requires keeping $A$ until after ${\bf x}$ is computed.
+\end{enumerate}
+
+\label{lastpage}
+\end{document}
+% $Id$

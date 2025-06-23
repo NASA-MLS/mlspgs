@@ -1,0 +1,52 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Factor_Symm_Tri_inPlace_r* ( D, H, U )
+    ! Factor a symmetric tridiagonal matrix
+
+    ! There are at least two ways to LU factor a symmetric tridiagonal matrix.
+    ! The one with ones on the diagonal of U (the Crout factorization) is
+    ! simple to compute:
+
+    ! The subdiagonal of L is H, the subdiagonal of the matrix.
+    ! The diagonal elements of L follow the simple recurrence
+    ! \beta_1 = d_1
+    ! \beta_i = d_i - h_i^2 / \beta_{i-1}
+
+    ! The diagonal elements of U are 1
+    ! The i'th superdiagonal element, where i indexes the row, is
+    ! h_i / \beta_i.
+
+    ! The one with ones on the diagonal of L (the Doolittle factorization) is
+    ! also simple to compute, but I had to choose only one of them, and I
+    ! chose Crout.
+
+    real(rk), intent(inout) :: D(:) ! (1:n) Diagonal of the matrix on input,
+                                    ! Inverse of diagonal of L on output
+                                    ! Subdiagonal of L is H(1:n-1)
+    real(rk), intent(in) :: H(:)    ! (1:n-1) Super- and subdiagonal of input
+    real(rk), intent(out) :: U(:)   ! (1:n-1) Superdiagonal of U
+
+    integer :: K, N
+
+    n = size(d)
+
+    d(1) = 1.0 / d(1)
+    do k = 2, n
+      u(k-1) = h(k-1) * d(k-1)
+      d(k) = 1.0 / ( d(k) - h(k-1) * u(k-1) )
+    end do
+
+! end subroutine Factor_Symm_Tri_inPlace_r*
+
+! $Id$
+
+! $Log$

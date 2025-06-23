@@ -1,0 +1,88 @@
+!divert(-1)
+; $Id$
+;; Except for special sids or l2pc runs, quantities are stored
+;; using DirectWrite commands in Join sections during the loop of chunks
+;; The remaining Output section task would then be to catenate the
+;; split DGG/DGM files and Copy any standard products to individual
+;; files.
+!divert!dnl
+;; Skip all output if requested to do so
+!ifdef(flagSuppressRegularOutput,{
+!clearDivert(!joinedDGGDivert,!joinedDGMDivert)
+},{
+!ifdef(flagAvoidDirectWrite,{
+;; Do any standard outputs?
+!include(outputstdprods.l2cf)
+},{
+;; otherwise it was done with direct write; so must Copy
+!include(copystdprods.l2cf)
+})
+
+begin Output
+  Dump, text='In last section of outputstate.l2cf'
+;; Now output the L2CF (but only if asked)
+!ifdef(flagWriteL2CFToDGM,{
+Output, type=l2cf, $
+  file='!DGMFileName'})
+
+;; Now output the L2CF template file (but only if asked)
+!ifdef(flagWriteL2CFTemplateToDGM,{
+Copy, inputFile='l2cf.template', inputtype=ascii, type=l2aux, $
+  file='!DGMFileName'})
+
+;; Now output the master ident file (but only if asked)
+!ifdef(flagWriteIdentToDGM,{
+Copy, inputFile='master.ident', inputtype=ascii, type=l2aux, $
+  file='!DGMFileName'})
+
+end Output
+;; These days pretty well everything is written with directWrite
+;; statements, except maybe matrices
+
+;; Now output any averaging kernel.
+!ifdef(matrixFilenameWord,{},{!define(matrixFilenameWord,{Full})})
+!ifdef(flagGotMatrices,{
+begin Output
+  Dump, text='In last section of outputstate.l2cf'
+Dump, text='Should see this statement in stdout'
+Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
+  file='!outpathl2mtx/MLS-Aura_L2MTX-!matrixFilenameWord_!l2version_!day.h5'
+end Output
+  })
+})
+!divert(-1)
+; $Log$
+; Revision 1.53  2023/04/25 17:09:34  pwagner
+; Work around bug in OutputAndClose module
+;
+; Revision 1.52  2013/10/18 22:49:38  pwagner
+; Split outputstate.l2cf into 3 files
+;
+; Revision 1.51  2013/10/17 22:33:03  pwagner
+; Can write asc/desc mode to file attributes
+;
+; Revision 1.50  2013/09/04 17:38:34  pwagner
+; Add new Sleep, Catenate commands
+;
+; Revision 1.49  2013/01/24 22:40:47  pwagner
+; Prevent Copying StdProds if skipped BrO phase
+;
+; Revision 1.48  2013/01/22 18:44:27  pwagner
+; Can now Copy APriori swaths to std prod files
+;
+; Revision 1.47  2012/05/14 22:28:05  pwagner
+; No need to create OH if THz is off
+;
+; Revision 1.46  2011/11/30 22:12:37  pwagner
+; Can write l2cf template to DGM file
+;
+; Revision 1.45  2009/07/28 20:09:15  pwagner
+; Copies CH3Cl std prod to own l2gp file
+;
+; Revision 1.44  2009/06/26 00:18:10  pwagner
+; Changed input file type of master.ident to 'ascii'
+;
+; Revision 1.43  2009/06/23 17:34:36  pwagner
+; Can write mlsl2 ident to DGM file
+;
+!divert!dnl

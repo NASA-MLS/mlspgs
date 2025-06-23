@@ -1,0 +1,63 @@
+begin Construct
+  BScalar: Boolean, values="true", /literal
+  BArray: Boolean, values=["aa", "bb", "cc", "dd"], /literal
+  CArray: Boolean, values=["aa", "bb", "cc", "dd"], /literal
+  dump, Boolean=BArray
+  dump, text="barrayn barray(1) barray(3) barray(2)"
+  Reevaluate, Boolean=OKIter, formula="barrayn barray(1) barray(3) barray(2)", /evaluate, /literal
+  dump, Boolean=OKIter
+  dump, text="${barrayn}-${barray(1)}-${barray(3)}-${barray(2)}"
+  Reevaluate, Boolean=OKIter, formula="${barrayn}-${barray(1)}-${barray(3)}-${barray(2)}", /literal
+  dump, Boolean=OKIter
+  ; stdout will now show
+  ; array-valued run-time Boolean barray
+  ; i          value
+  ; 1    aa
+  ; 2    bb
+  ; 3    cc
+  ; 4    dd
+  ; barrayn barray(1) barray(3) barray(2)
+  ; okiter = 4 aa cc bb
+  ; ${barrayn}-${barray(1)}-${barray(3)}-${barray(2)}
+  ; okiter = 4-aa-cc-bb
+end Construct
+
+;; Try to reevaluate each element of an array-valued Boolean
+begin Fill
+  Repeat, values=["a", "amigo", "3", "4-sassafras"]
+  Reevaluate, Boolean=BArray, formula="Band${counts(n)}", /literal
+  Reevaluate, Boolean=CArray, formula="Sub${barray(${n})}", /literal
+end Fill
+begin Fill
+  dump, text="After reevaluating each element of an array-valued Boolean"
+  dump, text="B"
+  dump, Boolean=BArray
+  dump, text="C"
+  dump, Boolean=CArray
+  ; stdout will now show
+  ; array-valued run-time Boolean barray
+  ;   i          value
+  ; 1    Banda
+  ; 2    Bandamigo
+  ; 3    Band3
+  ; 4    Band4-sassafras
+
+  ; array-valued run-time Boolean carray
+  ;   i          value
+  ; 1    SubBanda
+  ; 2    SubBandamigo
+  ; 3    SubBand3
+  ; 4    SubBand4-sassafras
+end Fill
+
+;; Modifying arrays
+begin Fill
+  Reevaluate, Boolean=BArray, values=["x", "y"]
+  Dump, text="Having resized B, it is now smaller"
+  Dump, Boolean=BArray
+  ; stdout will now show
+  ; array-valued run-time Boolean barray
+  ;   i          value
+  ; 1    x
+  ; 2    y
+end Fill

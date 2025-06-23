@@ -1,0 +1,149 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-133r1}
+\newcommand{\docdate}{23 March 2020}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Reflection of a line from a plane\\
+From: \>Van Snyder\\
+%Reference: \>
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+Using vector notation, a plane can be expressed as a point
+$\mathbf{p}$ and an unit normal vector $\mathbf{N}$ at $\mathbf{p}$.
+
+Given a vector $\mathbf{L}$ that is incident onto the plane at
+$\mathbf{p}$, the projection $\mathbf{z}$ of $\mathbf{L}$ onto
+$\mathbf{N}$ is
+%
+\begin{equation}
+\mathbf{z} = ( \mathbf{L} \cdot \mathbf{N} ) \, \mathbf{N}\,.
+\end{equation}
+
+The projection $\mathbf{x}$ of $\mathbf{L}$ onto the intersection of the
+given plane and one orthogonal to $\mathbf{L} \times \mathbf{N}$ is
+%
+\begin{equation}
+\mathbf{x} = \mathbf{L} - \mathbf{z} \,.
+\end{equation}
+
+The projection $\mathbf{r}$ of the reflecting vector $\mathbf{R}$ onto the
+same intersection is $\mathbf{r} = \mathbf{x}$.
+
+We have, trivially,
+%
+\begin{equation}
+\mathbf{L} = \mathbf{z} + ( \mathbf{L} - \mathbf{z} ) \,.
+\end{equation}
+
+The projection $\mathbf{r}$ of the reflecting vector $\mathbf{R}$ onto the
+same intersection is $\mathbf{r} = \mathbf{x}$.  The reflection must
+reverse the projection onto $\mathbf{N}$.  Therefore the projection of 
+$\mathbf{R}$ onto $\mathbf{N}$ is $-\mathbf{z}$, and we have, trivially,
+%
+\begin{equation}
+\mathbf{R} = \mathbf{x} - \mathbf{z}
+           = ( \mathbf{L} - \mathbf{z} ) - \mathbf{z} \,. \\
+\end{equation}
+
+From this, we have
+%
+\begin{equation}
+\mathbf{R} = \mathbf{L} - 2 \, \mathbf{z} =
+ \mathbf{L} - 2 \, ( \mathbf{L} \cdot \mathbf{N} ) \, \mathbf{N}\,.
+\end{equation}
+
+Because $\mathbf{N}$ is normal, $|\mathbf{L}|^2 = |\mathbf{x}|^2 +
+|\mathbf{z}|^2 = |\mathbf{R}|^2$.  If $|\mathbf{L}| = |\mathbf{N}|=1$,
+then $|\mathbf{R}|=1$.
+
+If $\mathbf{N}$ is a normal vector that is not necessarily an unit normal
+vector, we have
+%
+\begin{equation}
+\mathbf{R} = \mathbf{L} - 2 \, \frac{\mathbf{L} \cdot \mathbf{N}}
+                                    { | \mathbf{N} |^2 } \mathbf{N}
+\end{equation}
+
+\begin{centering}
+\includegraphics{./wvs-133-fig}\\
+\end{centering}
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.2  2020/03/24 00:03:32  vsnyder
+% Clarify derivation
+%
+% Revision 1.1  2016/03/03 02:59:29  vsnyder
+% Initial commit
+%

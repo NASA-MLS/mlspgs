@@ -1,0 +1,66 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+%\settowidth{\hW}{\bf wvs-020}
+\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    10 March 2005\hfill\parbox[t]{\hW}{{\bf wvs-020}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Dong, Michael, Nathaniel\\
+Subject: \>Reading and writing spectroscopy data in MLSL2\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+The way we currently read spectroscopy data into MLSL2 is to put it in the
+L2CF.  This occupies several tens of thousands of lines of text, several
+hundreds of thousands of characters in the character table, several tens of
+thousands of entries in the string table, and requires a relatively long time
+to read and parse.
+
+A command has been added to the L2CF to write the spectroscopy data onto
+an HDF5 file, \emph{viz.}:
+
+\hspace*{0.25in}{\tt writeSpectroscopy, file=\emph{file-name}}
+
+Once this has been done, the entire spectrosopy section can be replaced by
+a newly-added command to read that file, \emph{viz.}:
+
+\hspace*{0.25in}{\tt readSpectroscopy, file=\emph{file-name}}
+
+I've already written a spectroscopy file, and put the result into
+
+\hspace*{0.25in}{\tt \~{}vsnyder/mlspgs/l2/big\_spectroscopy.h5}
+
+It probably ought to be done ``officially,'' and the result put into a
+standard repository, such as {\tt /testing/...}.
+
+It would also save some time and space to use this method in the next version
+we send to Raytheon.
+
+\label{lastpage}
+\end{document}
+% $Id$

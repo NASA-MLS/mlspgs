@@ -1,0 +1,12 @@
+! Compute and fill ptan quantity from other quantities
+subroutine FillPtanQuantity (ptan, temperature, refGPH, h2o, orbitInclination, &
+                             phitan, geocentricAltitude)
+   use ScanModelModule, only: Get2DHydrostaticTangentPressure
+   use Init_tables_module, only: phyq_angle
+
+   type(VectorValue_T), intent(inout) :: ptan
+   ! Input quantities
+   type(VectorValue_T), intent(in) :: temperature, refGPH
+   type(VectorValue_T), intent(in) :: h2o, orbitInclination, phitan
+   type(VectorValue_T), intent(in) :: geocentricAltitude
+end subroutine

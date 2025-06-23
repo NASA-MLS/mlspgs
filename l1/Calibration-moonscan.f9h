@@ -1,0 +1,8 @@
+!  Defines WinMAFs. If building a moonscan, it will this file setting
+! WinMAFs=10, unless you edit this file!)  otherwise it will use
+! Calibration-normal.f9h (WinMAFs=6)
+
+!! Moonscan L1 runs
+  INTEGER, PARAMETER :: WinMAFs = 10     ! window size in MAFs for  `moonscan' run
+  INTEGER, PARAMETER :: max_cal_index = WinMAFs * 150 - 1
+

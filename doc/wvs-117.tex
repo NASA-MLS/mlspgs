@@ -1,0 +1,246 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-117r3}
+\newcommand{\docdate}{9 April 2014}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Paul, Bill, Alyn, Mike, Vince\\
+Subject: \>New MLS programs configuration file (e.g., {\tt l2cf}) capabilities\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-004} \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+As of 9 April 2014, several new facilities were added to the {\tt mlsl2}
+configuration file.
+
+\begin{itemize}
+
+\item An {\tt l2cf} variable of string type can be given a value from the
+  {\tt mlsl2} command line.  Use ``{\tt--var} \emph{variable value}''.  Unlike
+  setting {\tt make} variables from the command line, definitions in the
+  {\tt l2cf} take precedence over values set on the command line. 
+  Quotation marks and apostrophes are stripped from the left-adjusted and
+  trimmed value.
+
+\item {\tt max}, {\tt min}, and {\tt mod} functions are available for
+  numeric arguments, but not numeric range arguments, in expressions. 
+  Shape conformance rules are the same as for Fortran.
+
+\end{itemize}
+
+As of 26 February 2014, several new facilities were added to the
+configuration file.
+
+\begin{itemize}
+
+\item {\tt \#include "string"}, where {\tt string} is a file name, can
+  appear either within or outwith sections.  To accompany this, {\tt -I
+  directory} command-line options may appear, as many times as desired, to
+  specify directories to search for include files.  The current directory
+  is always in the search set.  The directories containing the program and
+  the configuration file are not necessarily in the search set.
+
+\item \emph{variable := expr}, where \emph{variable} is a name, can appear
+  either within or outwith sections.  The \emph{expr} can be a scalar or
+  an array.  As is the case with a Fortran array constructor, if the value
+  is an array, it is always a one-dimensional array, even if an array
+  element is a variable that has an array value. A variable gets a type by
+  the first assignment of a value.  Once it has a type, it cannot be
+  assigned a different type, and if it is numeric its units cannot change,
+  but it can change between array and scalar.
+
+  Except that a variable name cannot be the same as an enumeration
+  literal, a parameter, or the label of a specification, unlike a
+  parameter defined by \emph{name} = \emph{expr}, there are no
+  restrictions on which names can appear in which sections.
+
+  If a name that appears within an \emph{expr} is a variable or parameter
+  name, its current value is substituted.
+
+\item An IF construct, with the same syntax as in Fortran, can appear
+  either within or outwith sections.  Thus, it can either control which
+  sections are processed, or which specifications within a section are
+  processed.  The predicate in IF or ELSE IF must be a scalar with a
+  boolean value; it can depend upon the value of a variable.
+
+\item A SELECT CASE construct, with the same syntax as in Fortran (except
+  that CASE DEFAULT must be last if it appears), can appear either within
+  or outwith sections.  Thus, it can either control which sections are
+  processed, or which specifications within a section are processed.  The
+  expressions in the SELECT CASE and CASE statements must be scalars of
+  the same type; they can depend upon the values of variables.
+
+\item A DO construct, of two forms.  The syntax is {\tt DO}
+  \emph{variable} {\tt :=} \emph{expr} [ , \emph{expr} [, \emph{expr} ]]
+  \dots\ END DO.
+
+  The DO construct can either enclose sections or appear within them.
+
+  If there are two or three expressions, they have to be scalars of
+  numeric type, with the nearest integer being used; the semantics are
+  otherwise the same as for the Fortran DO construct.  If there is only
+  one expression, it can be of any type, and must be an array.  The
+  \emph{variable} is assigned elements of the value of \emph{expr}.
+
+\item A WHILE construct.  The syntax is {\tt DO WHILE (} \emph{expr} )
+  \dots\ {\tt END DO}.
+
+  The WHILE construct can either enclose sections or appear within them.
+
+  The expression must be of boolean type.
+
+\item A CYCLE statement of the form {\tt CYCLE} \emph{label}, where
+  \emph{label} is the label of a DO or WHILE construct that contains the
+  CYCLE statement.
+
+\item An EXIT statement of the form {\tt EXIT} \emph{label}, where
+  \emph{label} is the label of a DO, IF, SELECT CASE, or WHILE
+  construct that contains the EXIT statement.
+
+\end{itemize}
+
+DO, IF, SELECT CASE, and WHILE constructs can have labels on their initial
+statement, followed by a colon.  Unlike the case with Fortran syntax, the
+label is not required, nor even allowed, on the END statement that
+completes the construct, or on any of the CASE statements of a SELECT CASE
+construct.
+
+New intrinsic functions to perform computations on sets represented as
+arrays of any type have been added:
+
+\begin{itemize}
+
+\item {\tt union ( a, b )} computes the union of the sets represented by
+  the arrays {\tt a} and {\tt b}.  This is different from the expression
+  {\tt [ a, b ] } in that duplicates are eliminated.
+
+\item {\tt intersection ( a, b )} computes the intersection of the sets
+  represented by the arrays {\tt a} and {\tt b}.
+
+\item {\tt without ( a, b )} computes the set consisting of elements of
+  {\tt a} that are not elements of {\tt b}.  Think of this as ``{\tt a}
+  without {\tt b}.''  This is different from the expression {\tt a - b} in
+  that the latter is an element-by-element subtraction, in which the types
+  of {\tt a} and {\tt b} are required to be numeric.
+
+\item {\tt difference ( a, b )} computes the symmetric difference of the
+  sets represented by the arrays {\tt a} and {\tt b}.  This is the same as
+  {\tt union ( without ( a, b ), without ( b, a ) )}.  This is different
+  from the expression {\tt a - b} in that the latter is an
+  element-by-element subtraction, in which the types of {\tt a} and {\tt
+  b} are required to be numeric.
+
+\end{itemize}
+
+In all cases, the arguments must be of the same type.
+
+A potential knock-on effect of the changes to the expression evaluator to
+handle variables is that the result of a boolean expression is now either
+the enumeration literal {\tt l_true} or {\tt l_false}.  This had
+previously been inconsistently handled: If a boolean expression consisted
+of one of those enumeration literals, that was its value.  If, however, it
+had been a computation of a boolean result, involving, for example, a
+comparison operator, the result was zero for false and nonzero for true.
+
+Where a program uses the {\tt expr} subroutine from the {\tt expr_m}
+module to evaluate boolean-valued fields, rather than the {\tt
+get_boolean} function from the {\tt MoreTree} module, it is necessary to
+use {\tt l_false} or {\tt l_true} as the result value, not zero or
+nonzero.  Better would be to replace {\tt expr} with {\tt get_boolean}.
+
+I have not changed {\tt mlsl1} or {\tt mlsl3} to handle the IF, DO, SELECT
+CASE, and WHILE constructs, or the CYCLE and EXIT statements.  Changes to
+{\tt mlsl1} should be simple, but since {\tt mlsl3} does not use the
+abstract syntax tree directly, it would be necessary also to change the
+alternative representation used in {\tt mlsl3}.
+
+A revision of {\tt wvs-004} that reflects these changes in syntax has been
+checked in.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.4  2014/02/28 22:00:30  vsnyder
+% Cannonball polishing
+%
+% Revision 1.3  2014/02/22 01:14:28  vsnyder
+% Add Log CVS line
+%

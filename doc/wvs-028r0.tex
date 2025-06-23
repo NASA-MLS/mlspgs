@@ -1,0 +1,158 @@
+\documentclass[11pt]{article}
+
+\usepackage[fleqn]{amsmath}
+\usepackage{longtable}
+\usepackage{multirow}
+
+\textwidth 6.25in
+
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-028}
+\newcommand{\docdate}{20 October 2005}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Mike\\
+Subject: \>Summary of line-by-line and PFA radiance and derivatives\\
+From: \>Van Snyder\\
+References: \>wvs-024r2, wvs-025, wvs-026r2, wvs-027r1\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+\begin{longtable}{p{0.325in}|p{2.90in} p{2.87in}}
+&\hfil Frequency averaged \hfill &\hfil Monochromatic \hfill \\
+\hline
+&&\\[-25pt]
+    & % frequency averaged
+     \begin{equation*}
+      I^s_c = \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc}
+            \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{in}
+     \end{equation*}
+    & % monochromatic
+     \begin{equation*}
+      I^s_c = \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{ic}
+     \end{equation*}
+\\[-0.35in]
+\multirow{1}{0.3in}[-0.45in]{LBL}
+    & % frequency averaged
+     \begin{equation*}
+      \frac{\partial I^s_n}{\partial x_k} = 
+       \sum_{i=1}^{N_p} \left( \frac{\partial \Delta B_{in}}{\partial x_k}
+        - \Delta B_{in}
+         \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k} \right)
+         \tau^s_{in}
+     \end{equation*}
+    & % monochromatic
+    \begin{equation*}
+    \frac{\partial I^s_c}{\partial x_k} =
+     \sum_{i=1}^{N_p} \left( \frac{\partial \Delta B_{ic}}{\partial x_k}
+        - \Delta B_{ic}
+         \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k} \right)
+         \tau^s_{ic}
+     \end{equation*}
+\\[-25pt]
+    & % frequency averaged
+     \begin{equation*}
+      \frac{\partial I_c}{\partial x_k} =
+      \frac{\partial I^s_c}{\partial x_k} =
+       \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc}
+       \frac{\partial I^s_n}{\partial x_k}
+     \end{equation*}
+    & % monochromatic
+     \newlength\foo
+     \settoheight{\foo}{\begin{equation*}\sum_{i=1}^{N_f}\end{equation*}}
+     \begin{equation*}
+      \rule{0mm}{\foo}
+      \frac{\partial I_c}{\partial x_k} =
+      \frac{\partial I^s_c}{\partial x_k}
+     \end{equation*}
+\\
+\hline
+\multirow{2}{0.3in}[-0.35in]{PFA }
+    & \multicolumn{2}{c}{
+     \parbox{3in}{
+     \begin{equation*}
+      I_c = \sum_{i=1}^{N_p} \Delta B_{ic} \tau^w_{ic}
+     \end{equation*}}}
+\\[-10pt]
+    & \multicolumn{2}{c}{
+    \parbox{3in}{\begin{equation*}
+    \frac{\partial I_c}{\partial x_k} =
+     \sum_{i=1}^{N_p} \left( \frac{\partial \Delta B_{ic}}{\partial x_k}
+        - \Delta B_{ic}
+         \sum_{j=1}^i \frac{\partial \delta^w_{jc}}{\partial x_k} \right)
+         \tau^w_{ic}
+     \end{equation*}}}
+\\[20pt]
+\hline
+&&\\[-25pt]
+    & % frequency averaged
+      \begin{equation*}
+      \overline{I^s_{ic}} = 
+       \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc} \tau^s_{in}
+      \end{equation*}
+    &
+\\[-30pt]
+\multirow{2}{0.3in}[-0.4in]{LBL and PFA}
+    &
+      \begin{equation*}
+       I_{ic} = \Delta B_{ic} \overline{I^s_{ic}} \tau^w_{ic}
+      \end{equation*}
+    & % monochromatic
+      \begin{equation*}
+      I_{ic} = \Delta B_{ic} \tau^s_{ic} \tau^w_{ic}
+      \end{equation*}
+\\[-25pt]
+    & \multicolumn{2}{c}{
+     \parbox{3in}{\begin{equation*}
+      I_c = \sum_{i=1}^{N_p} I_{ic}
+      \end{equation*}}}
+\\[-20pt]
+    & \multicolumn{2}{c}{
+     \parbox{3in}{\begin{equation*}
+      \frac{\partial I_c}{\partial x_k} =
+      \frac{\partial I^s_c}{\partial x_k}
+       - \sum_{i=1}^{N_p} I_{ic}
+         \sum_{j=1}^i \frac{\partial \delta^w_{jc}}{\partial x_k}
+     \end{equation*}}} \\
+\hline
+Notes&\multicolumn{2}{p{6in}}
+ {$N_f$ is the number of points in the pointing frequency grid.
+  $n$ is an index in the pointing frequency grid.
+  $N_p$ is the number of points in the line-of-sight path.
+  $i$ is an index in the line-of-sight path.
+  $c$ is a channel index.  $s$ indicates a strong-line (LBL) result.
+  $w$ indicates a weak-line (PFA) result.}
+\end{longtable}
+
+\label{lastpage}
+\end{document}
+% $Id$

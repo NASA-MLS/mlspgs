@@ -1,0 +1,199 @@
+\documentclass[11pt]{article}
+
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\newcommand{\docname}{wvs-120r1}
+\newcommand{\docdate}{6 July 2020}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\parindent 0pt
+\parskip 6pt
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Paul, Bill, Michael\\
+Subject: \>Magnetic fields\\
+From: \>Van Snyder\\
+%Reference: \>\h{wvs-050} \\
+\end{tabbing}
+
+\vspace*{-30pt}
+
+\section*{Current method in MLSL2}
+
+\subsection*{For AURA}
+
+The magnetic field for AURA is calculated by a {\tt fill} statement in the
+{\tt l2cf}. The coordinates of the magnetic field quantity are $\phi$ and
+$\zeta$. The magnetic field quantity is required to have the same $\phi$
+and $\zeta$ grids as GPH (which is in turn required to have the same grids
+as temperature).  The value in the GPH quantity at each $\phi$ and $\zeta$
+is then used as if it were geometric height for the corresponding element
+of the magnetic field quantity.  Latitude and longitude for each $\phi$ of
+the magnetic field quantity are taken from the ones for the GPH quantity
+for the same $\phi$.  Latitude, longitude, and height are then converted
+to Cartesian coordinates for use by the magnetic field model (IGRF), which
+produces the magnetic field for that point in the ECR frame.
+
+\subsection*{For UARS}
+
+The magnetic field for UARS is calculated by the forward model wrapper,
+which means it is calculated for each iteration.  It is calculated in a
+plane determined by the geolocation of the reference MIF of PTan of the
+current MAF, the geolocation of the same MIF of the spacecraft velocity
+vector of the current MAF, and the center of the Earth.  The reference
+MIF, and the HGrid and VGrid  of the magnetic field quantity, are
+specified by the L2CF. The zero of HGrid is assumed to be at the reference
+MIF of the PTan of the current MAF.  Latitude and longitude corresponding
+to each $\phi$ are computed along the line (actually great circle) passing
+through the latitude and longitude of the reference MIF of the PTan and
+spacecraft position, with spacing specified by the HGrid.
+
+The VGrid coordinate of the magnetic field is $\zeta$, and is required to
+be the same as GPH.  GPH is assumed to have only one instance.  Its
+latitude, longitude, and values are assumed to have been filled as if it
+were a profile at the reference MIF for PTan.  As for AURA, the value of
+GPH is used as if it were height.  The magnetic field is then calculated,
+using latitude, longitude, and height, in the same way as for AURA. 
+Whatever GPH is found in the state or extra vectors is used.  If the GPH
+is the same on each iteration, the magnetic field is the same on each
+iteration, i.e., the calculation is redundant.
+
+\subsection*{In the forward model}
+
+The magnetic field at each point on the path being integrated in the
+forward model is obtained by interpolation based on $\phi$ and $\zeta$,
+and then rotated from the ECR frame to the FOV frame.
+
+\section*{First proposed revision}
+
+For UARS, calculate GPH in the forward model wrapper before calculating
+the magnetic field.  Thereby, the magnetic field position reflects the
+currently-estimated state of the atmosphere, not the apriori state.
+
+\section*{Longer-term revision}
+
+Instead of $\phi$ and $\zeta$, use $\phi$ and $h$ for the magnetic field
+quantity's coordinates.  In the forward model, this is a very minor
+change, requiring to use $h$, instead of $\zeta$, to interpolate from the
+magnetic field quantity to the path of integration.  The {\tt metrics}
+calculation already provides $h$ for each point on the path of
+integration.
+
+For both AURA and UARS, calculate the magnetic field by a {\tt fill}
+statement in the {\tt l2cf}, not in the wrapper for each iteration.  The
+$\phi$ and $h$ coordinates would be specified by {\tt HGrid} and {\tt
+VGrid} statements in the {\tt l2cf}.  For AURA, latitude and longitude
+could be taken from any geophysical quantity with the same extent and
+spacing of its HGrid.
+
+For UARS, latitude and longitude for each point in the magnetic field grid
+would be calculated using the latitude, longitude, and height of PTan and
+the spacecraft using the same MIF in the current MAF for both, with the
+MIF chosen such that the line between those two points passes closest to
+the point in the magnetic field grid.  This would be based on the zero for
+$\phi$ being at that MIF in PTan, and the other points being along the
+geometric (not refracted) line of sight between PTan and the spacecraft
+position, at that MIF, with the angular separation specified by the HGrid.
+
+The IGRF model is a nontrivial model, entailing evaluation of a fairly
+high order spherical harmonic expansion.  It is probably somewhat more
+expensive than calculating $\beta$ for a single species, even in the
+polarized case.  Therefore, calculating it in advance, instead of in each
+iteration, could make a noticable difference in run times.  The expense of
+evaluating a more elaborate magnetic field model, incorporating the solar
+wind and diurnal effects, would certainly be greater than for the IGRF
+model, making the difference in cost between prior calculation and on-line
+calculation even greater.
+
+\section*{For SMLS}
+
+For SMLS, the horizontal grid is a QTM. A QTM-based grid for the magnetic
+field will be necessary for SMLS. The vertical axis ought to be height,
+not $\zeta$ or GPH, because geometric co\"ordinates used by the IGRF
+model.
+
+A QTM-based grid for the magnetic field would also work for UARS. The
+scheme used for UARS is complicated. It might be useful to change to a
+QTM-based magnetic field for UARS, and remove the complication caused by
+the UARS scheme. The complication appears in the {\tt Grids_t} structure,
+which has an additional ``cross'' coordinate.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.1  2014/11/10 20:27:39  vsnyder
+% Initial commit
+%

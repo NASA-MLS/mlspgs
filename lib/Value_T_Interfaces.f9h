@@ -1,0 +1,57 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! Declarations of arithmetic and logical operations on the type Value_T
+
+! These are provided as an include file rather than simply providing public
+! identifiers in Declaration_Table, where Value_T is defined and these
+! interfaces are also provided, so that an optimizing compiler might inline
+! them, and then perhaps optimize away redundant assignment of type and
+! units components.
+
+! $RCSfile$
+
+  interface operator(==)
+    module procedure Value_Equal   ! Two value_t objects are equal
+  end interface
+
+  interface operator(/=)
+    module procedure Value_Unequal ! Two value_t objects are unequal
+  end interface
+
+  interface operator(+)
+    module procedure Value_Add     ! Sum of two value_t objects
+    module procedure Value_Same    ! Identity operation for one value_t object
+  end interface
+
+  interface operator(-)
+    module procedure Value_Diff    ! Difference of two value_t objects
+    module procedure Value_Neg     ! Negation operation for one value_t object
+  end interface
+
+  interface operator(*)
+    module procedure Value_Prod    ! Product of two value_t objects
+  end interface
+
+  interface operator(/)
+    module procedure Value_Div     ! Ratio of two value_t objects
+  end interface
+
+! $Log$
+! Revision 2.3  2013/10/11 00:43:17  vsnyder
+! Cannonball polishing
+!
+! Revision 2.2  2013/10/10 22:40:21  vsnyder
+! Spell RCSfile correctly
+!
+! Revision 2.1  2013/10/10 22:39:32  vsnyder
+! Initial commit
+!

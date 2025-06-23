@@ -1,0 +1,48 @@
+! Copyright 2008, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+    ! Dummy args
+    real(rk), dimension(:,:,:), intent(in) :: array ! The larger array
+    integer, dimension(:), intent(out)     :: i
+    integer, dimension(:), intent(out)     :: j
+    integer, dimension(:), intent(out)     :: k
+    integer, intent(out)               :: n
+    real(rk), intent(in), optional     :: testvalue
+    real(rk), dimension(:), intent(out), optional :: values
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    integer, dimension(size(i)) :: iflat
+    integer :: s
+    integer, dimension(3) :: shp
+    ! Executable
+    i = 0
+    j = 0
+    k = 0
+    call Depopulate( reshape(array, (/ product(shape(array)) /)), &
+      & iflat, n, testvalue=testvalue, options=options )
+    if ( n < 1 ) return
+    do s = 1, n
+      call rerank ( iflat(s), shape(array), shp )
+      i(s) = shp(1)
+      j(s) = shp(2)
+      k(s) = shp(3)
+    enddo
+    if ( n > 0 .and. present(values) ) then
+      do s=1, n
+        values(s) = array( i(s), j(s), k(s) )
+      enddo
+    endif
+! $Log$
+! Revision 1.1  2010/02/17 22:28:40  pwagner
+! First commit
+!

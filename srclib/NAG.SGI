@@ -1,0 +1,19 @@
+#$MLSF95.$MLSPLAT -- a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id$"
+FC = f95
+
+DUSTY = $(FOPTS) -dusty
+
+GC_IN_LDOPTS := $(shell echo ${LDOPTS} | grep '\-gc')
+ifeq ($(GC_IN_LDOPTS),)
+BAD_MATCH=-gc
+else
+BAD_MATCH=no -gc
+endif
+
+# How to prefix search paths for include and .mod files
+PATH_OPTS=-d -prefix=-I
+
+# $Log$

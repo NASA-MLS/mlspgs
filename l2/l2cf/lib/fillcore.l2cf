@@ -1,0 +1,65 @@
+; $Id$
+
+;; This L2CF fragment sets the contents of parts of stateCore to the results
+;; of the `core' retrievals.
+
+begin Fill
+  Transfer, source=apriori, destination=stateCore
+  Transfer, source=aprioriPrecision, destination=outputPrecisionCore
+
+;  !define(fillFromOneCoreL2GP,{!dnl
+;    Fill, quantity=stateCore.$1, method=l2gp, $
+;      sourceL2GP=l2gpCore$1Input!nl})
+;  !forall(fillFromOneCoreL2GP,!coreL2GPSpecies)
+
+
+  ;; temperature_hr
+  Fill, quantity=stateCore.Temperature_hr, method=l2gp, $
+    sourceL2GP=l2gpCoreTemperatureInput
+
+  ;; totalextinctionr3
+  Fill, quantity=stateCore.totalextinctionr3, method=l2gp, $
+    sourceL2GP=l2gpCoreExtinctionR3Input
+
+  ;; H2O_hr
+  Fill, quantity=stateCore.H2O_hr, method=l2gp, $
+    sourceL2GP=l2gpCoreH2OInput
+
+  ;; O3
+  Fill, quantity=stateCore.O3, method=l2gp, $
+    sourceL2GP=l2gpCoreO3Input
+
+  ;; HNO3
+  Fill, quantity=stateCore.HNO3, method=l2gp, $
+    sourceL2GP=l2gpCoreHNO3Input
+   
+
+  ;; GPH_hr
+  Fill, quantity=stateCore.GPH_hr, method=hydrostatic, refGPHQuantity=stateCore.refGPH, $
+    temperatureQuantity=stateCore.temperature_hr
+
+  ;; Also do ptan
+  Fill, quantity=stateCore.ptanGHz, method=l2aux, sourceL2AUX=l2auxCorePtanInput
+
+  ;; Do a THz ptan from the GHz information
+  Fill, quantity=stateCore.ptanTHz, method=hydrostatic, $
+    h2oQuantity=stateCore.h2o_hr, $
+    temperatureQuantity=stateCore.temperature_hr, $
+    refGPHQuantity=stateCore.refGPH, $
+    geocAltitudeQuantity=stateCore.tngtGeocAltTHz, $
+    orbitInclination=stateCore.orbitInclination, $
+    phiTan=stateCore.phiTanTHz, $
+    maxIterations=20, $
+    phiWindow=5 profiles
+
+; don't fill _hr here anymore
+;  ;; Transfer the low resolution data into the high resolution data
+;  Fill, quantity=stateCore.h2o_hr, method=vector, sourceQuantity=stateCore.h2o, /interpolate
+;  Fill, quantity=stateCore.o3_hr, method=vector, sourceQuantity=stateCore.o3, /interpolate
+;  Fill, quantity=stateCore.temperature_hr, method=vector, sourceQuantity=stateCore.temperature, /interpolate
+  
+  ;; Transfer stateCore into standard products for those phases where we
+  ;; 'restore' things
+  Transfer, source=stateCore, destination=standardProducts
+
+end Fill

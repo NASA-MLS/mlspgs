@@ -1,0 +1,575 @@
+\makeatletter\let\ifGm@compatii\relax\makeatother
+\documentclass[landscape]{beamer}
+
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+% \ifx\pdfoutput\undefined
+%   \pdfoutput=0
+%   \usepackage{hyperref}
+%   \hypersetup{%
+%     hypertex,%
+%     plainpages,%
+%     hyperindex=true,%
+%     hypertexnames=false%
+%   }
+%   % Specify the driver for the color package
+%   \ExecuteOptions{dvips}
+%   %\ExecuteOptions{xdvi}
+% \else
+%   \ifnum\pdfoutput>0
+%     \usepackage{hyperref}
+%     \hypersetup{%
+%       pdftex,%
+%       plainpages,%
+%       hyperindex=true,%
+%       pdfpagelabels,%
+%       hypertexnames=false,%
+%       colorlinks=true,%
+%       linktocpage=true,%
+%     }
+%     % Specify the driver for the color package
+%     \ExecuteOptions{pdftex}
+%   \else
+%     \usepackage{hyperref}
+%     \hypersetup{%
+%       hypertex,%
+%       plainpages,%
+%       hyperindex=true,%
+%       hypertexnames=false%
+%     }
+%     % Specify the driver for the color package
+%     \ExecuteOptions{dvips}
+%     %\ExecuteOptions{xdvi}
+%   \fi
+% \fi
+% 
+% \hyperbaseurl{}
+% \newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+% \newcommand\h[1]{#1 (\hr{#1})}
+
+\newcommand{\newframe}[2][]{\begin{frame}\frametitle{\hfill #2 \hfil}}
+\renewcommand{\d}{\text{d}}
+
+\title{Radiative Transfer Equation \\
+in the Full Forward Model}
+\subtitle{wvs-139r4}
+
+\author{Van Snyder}
+
+\date{20 May 2020}
+
+\titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Radiative Transfer Equation}
+
+The clear-sky non-scattering radiative-transfer equation for one frequency
+is
+
+\begin{equation}\label{one}
+\frac{\d I(s,\mathbf{x})}{\d s} + \alpha(s,\mathbf{x})\, I(s,\mathbf{x}) =
+ \alpha(s,\mathbf{x})\, B(T(s)) \,,
+\end{equation}
+
+where $I$ is radiative intensity (more simply radiance), $\mathbf{x}$ is
+the state vector, $s$ is path length, $\alpha(s,\mathbf{x})$ is the
+absorption cross section,
+
+\begin{equation*}
+B(T(s)) = \frac{h \nu}k \left( \exp \left(\frac{h \nu}{k T(s)} \right)
+ - 1 \right)^{-1}
+\end{equation*}
+
+is the Planck black-body radiation function in brightness-temperature
+units, $\nu$ is frequency, $h$ is Planck's constant, $k$ is Boltzmann's
+constant, and $T(s) \in \mathbf{x}(s)$ is temperature.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Radiative Transfer Equation}
+
+The solution to Equation (\ref{one}) can be written
+%
+\begin{equation}\label{two}
+I(s_m,\mathbf{x}) = I(s_0,\mathbf{x})\, \mathcal{T}(s_m) +
+ \int_{s_0}^{s_m} \mathcal{T}(s) \,
+  \alpha(s,\mathbf{x})\, B(T(s)) \, \d s \,,
+\end{equation}
+%
+where $s_0$ is deep space, $s_m$ is the instrument
+position,
+%
+\begin{equation*}\begin{split}
+\mathcal{T}(s) = \,& \exp \left( - \int_{s_0}^s \alpha(\sigma,\mathbf{x}) \,
+ \d \sigma \right), \\
+\alpha(s,\mathbf{x}(s)) = \,& \sum_{k} f^k(s)\, \beta^k(s,T(s)) \,,
+\end{split}\end{equation*}
+
+$f^k(s) \in \mathbf{x}(s)$ is the mixing ratio of the $k^\text{th}$
+chemical species, and $\beta^k(s,T(s))$ is the absorption coefficient for
+that species.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Radiative Transfer Equation}
+
+In the Full Forward Model, Equation (\ref{two}) is transformed by observing
+that
+
+\begin{equation*}
+\frac{\d \mathcal{T}(s)}{\d s} = -\alpha(s)\, \mathcal{T}(s)
+\end{equation*}
+
+giving
+
+\begin{equation*}
+I(s_m,\mathbf{x}) = I(s_0,\mathbf{x})\, \mathcal{T}(s_m) -
+ \int_{s_0}^{s_m} B(T(s)) \, \frac{\d \mathcal{T}(s)}{\d s} \, \d s
+\end{equation*}
+
+which is then integrated by parts giving
+
+\begin{equation}\label{three}
+I(s_m,\mathbf{x}) = \left( I(s_0,\mathbf{x}) - B(s_m) \right) \,
+ \mathcal{T}(s_m) +
+  \int_{s_0}^{s_m} \mathcal{T}(s) \frac{\d B(T(s))}{\d s} \, \d s \,.
+\end{equation}
+
+These transformations do not appear to be necessary; they eliminate one
+multiply in the evaluation of the integrand in Equation (\ref{two}), which
+is replaced by two subtractions, one of which approximates $\frac{\d
+B(T(s))}{\d s}$ inaccurately.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Derivatives of the Radiative Transfer Equation (1)}
+
+To solve for $\mathbf{x}$ using a Newton method (see wvs-050), derivatives
+of $I(s_m,\mathbf{x})$ with respect to $\mathbf{x}$ are needed.  These can
+be gotten by differentiating Equation (\ref{one}) with respect to elements
+of $\mathbf{x}(s)$, which after re-arranging becomes
+
+\begin{equation}\label{four}
+\frac{\d I_{x^\mu}(s)}{\d s} + \alpha(s,\mathbf{x}(s))\,
+ I_{x^\mu}(s) = R(s,\mathbf{x}(s)) \,,
+\end{equation}
+
+where
+
+\begin{equation*}
+I_{x^\mu}(s) = \frac{\partial I(s,\mathbf{x}(s))}{\partial x^\mu(s)} \,,
+\end{equation*}
+
+$x^\mu(s) \in \mathbf{x}(s)$ (either $f^k(s)$ or $T(s)$), and
+
+\begin{equation}\label{R}
+R(s,\mathbf{x}(s)) =
+ \frac{\partial \alpha(s,\mathbf{x}(s))}{\partial x^\mu(s)}
+ \left( B(T(s)) - I(s,\mathbf{x}) \right) +
+ \alpha(s,\mathbf{x}(s)) \frac{\partial B(T(s))}{\partial x^\mu(s)} \,.
+\end{equation}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Derivatives of the Radiative Transfer Equation (2)}
+
+$B(T(s))$ depends upon frequency and temperature, but not any mixing ratio.
+Its derivatives are
+%
+\begin{equation*}\begin{split}
+\frac{\text{d} B(T(s))}{\text{d} T(s)} = \,&
+ \frac{B(T(s))}{T(s)^2} \left( \frac{h\nu}k + B(T(s)) \right)\, \text{and}
+ \\
+\frac{\partial B(T(s))}{\partial f^k} = \,& 0\,.
+\end{split}\end{equation*}
+%
+Remember that  $\alpha(s,\mathbf{x}(s)) = \sum_{k} f^k(s)\,
+\beta^k(s,T(s))$, observe that $\beta^k(s,\mathbf{T}(s))$ usually does not
+depend upon $f^k(s)$, and $f^k(s)$ does not depend upon temperature. 
+Therefore
+%
+\begin{equation*}
+\frac{\partial \alpha(s,\mathbf{x}(s))}{\partial f^k(s)} =
+\beta^k(s,T(s)) \text{ and }
+\frac{\partial \alpha(s,\mathbf{x}(s))}{\partial T(s)} =
+\sum_{k} f^k(s) \frac{\partial \beta^k(s,T(s))}{\partial T(s)}
+\end{equation*}
+%
+(see wvs-018 concerning temperature derivatives).
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Derivatives of the Radiative Transfer Equation(3)}
+
+Equation (\ref{four}) is of the same form as Equation (\ref{one}), with
+$I(s,\mathbf{x})$ replaced by $I_{x^\mu}(s)$, and $\alpha(s,\mathbf{x})\,
+B(T(s))$ in the right-hand side replaced by $R(s,\mathbf{x})$.  The
+solution is therefore of the same form as Equation (\ref{two}), with
+$\alpha(s,\mathbf{x})\, B(T(s))$ replaced by $R(s,\mathbf{x})$,
+\emph{viz}.
+
+\begin{equation}\begin{split}\label{five}
+I_{x^\mu}(s_m) = \,&
+ I_{x^\mu}(s_0) \,
+  \mathcal{T}(s_m) +
+  \int_{s_0}^{s_m} \mathcal{T}(s) \, R(s,\mathbf{x}(s)) \, \d s \\
+= \,&
+ \int_{s_0}^{s_m} \mathcal{T}(s) \, R(s,\mathbf{x}(s)) \, \d s \,, \\
+\end{split}\end{equation}
+
+the last equality because the derivative of radiance at the deep-space
+starting point, $s_0$, with respect to any state-vector element $x^\mu$,
+is zero.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Derivatives of the Radiative Transfer Equation (4)}
+
+We wrote $\mathbf{x}(s)$ instead of $\mathbf{x}$ to emphasize that these
+derivatives are with respect to state vector quantities \emph{on the
+integration path}.  The Newton method needs derivatives with respect to
+state vector elements \emph{in solution profiles}, which are calculated
+using the chain rule, \emph{viz}.
+%
+\begin{equation*}
+\frac{\partial \cdot}{\partial x^\mu_j} =
+\frac{\partial \cdot}{\partial x^\mu(s)}
+\frac{\partial x^\mu(s)}{\partial x^\mu_j} =
+\frac{\partial \cdot}{\partial x^\mu(s)} \, \eta^\mu_j(s)\,,
+\end{equation*}
+%
+where $x^\mu_j$ is the $j^\text{th}$ element of the $\mu^\text{th}$
+solution profile state vector quantity (either $f^k$ or $T$), and
+$\eta^\mu_j(s)$ is the interpolation coefficient from the geolocation of
+$x^\mu_j$ to the integration path at $s$.
+
+\vspace*{4pt}
+Equations (\ref{three}) and (\ref{five}) are discretized, with steps at
+$s_i$. Because we use bilinear interpolation from ($\phi \times \zeta$) to
+$s_i$, the $i^\text{th}$ row of the matrix of elements $\eta^\mu_j(s_i)$
+has only four nonzeroes for each $\mu$, and the number of nonzeroes in the
+$j^\text{th}$ column for the $\mu^\text{th}$ species is $\leq 7$ because
+$s_i$ is on a constant-$\zeta$ surface and quadrature (described below)
+uses values on those surfaces, or at most three points each in
+$(\zeta_{i-1},\zeta_i)$ and $(\zeta_i,\zeta_{i+1})$.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Derivatives in the Full Forward Model (1)}
+
+The Full Forward Model evaluates $I_{f^\mu}(s_m)$ by differentiating
+Equation (\ref{two}) w.r.t. $f^\mu_j$, \emph{viz}.
+
+\begin{equation}\begin{split}\label{I_f}
+\frac{\partial I(s_m)}{\partial f^\mu_j} = \,&
+ -I(s_0)\, \mathcal{T}(s_m)
+  \int_{s_0}^{s_m} \beta^\mu(\sigma)\, \eta^\mu_j \d \sigma + \\
+&
+ \int_{s_0}^{s_m} \mathcal{T}(s)\, B(s)
+  \left( \beta^\mu(s)\, \eta^\mu_j(s) -
+         \alpha(s) \int_s^{s_m} \beta^\mu(\sigma)\, \eta^\mu_j(\sigma)
+          \d \sigma \right) \d s \,, \\
+\end{split}\end{equation}
+
+which leads to an expression different from Equation (\ref{five}), but
+which is necessarily equivalent as can be shown (with some difficulty --
+see
+% \h{wvs-093} and \h{wvs-100}%
+wvs-093 and wvs-100%
+) by integrating by parts.
+
+\vspace*{5pt}
+
+The forward model also evaluates $I_{T_j}(s_m)$ by differentiating
+Equation (\ref{two}) w.r.t.\ $T_j$, producing an expression even more
+complicated than Equation (\ref{I_f}).
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Derivatives in the Full Forward Model (2)}
+
+The original advantage of differentiating Equation (\ref{two}) rather than
+solving Equation(\ref{four}), giving Equation (\ref{five}), is that
+$I(s,\mathbf{x})$ is not averaged over all frequencies within a channel
+(as specified by the pointing-frequency grid), and the average then
+retained at each $\zeta_i$.  Rather, only $I(s_m,\mathbf{x})$ is retained
+for all frequencies, and then averaged (see wvs-063, ``Pointing loop'').
+
+\vspace*{5pt}
+
+(Remember that in Equation (\ref{R}), $R(s,\mathbf{x}(s))$ depends upon
+$I(s,\mathbf{x})$.  To compute frequency-averaged derivatives using
+Equation (\ref{five}) would require to retain the frequency-averaged
+$I(s_i,\mathbf{x})$, not just the frequency-averaged $I(s_m,\mathbf{x})$.)
+
+\vspace*{5pt}
+
+To combine results for line-by-line (LBL) quantities with those for
+pre-frequency-averaged (PFA) quantities (see wvs-027), however,
+$I(s_i,\mathbf{x})$ for LBL quantities is averaged over those frequencies
+and retained for each channel, which would allow the simpler expression in
+Equation (\ref{five}) to be used.  Frequency averaging at all $s_i$ would
+be only a tiny bit slower than only at $s_m$.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Transmissivity in the Full Forward Model}
+
+The Full Forward Model evaluates $\mathcal{T}(s)$ as the exponential of a
+sum of a sequence of integrals, with $\zeta = -\log_{10} P$ where $P$ is
+pressure, as the independent variable:
+
+\begin{equation}\label{six}
+\mathcal{T}(\zeta_n) =
+ \exp \left( - \sum_{i=1}^n \int_{\zeta_{i-1}}^{\zeta_i}
+ \alpha(\zeta,\mathbf{x}) \,
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \, \d \zeta \right)
+\end{equation}
+
+where $\zeta_i = \zeta(s_i) = -\log_{10} P(s_i)$.
+
+\vspace*{5pt}
+
+Each integral is approximated by a quadrature.  The integrand is evaluated
+at $\zeta_{i-1}$ and $\zeta_i$.  An estimate of the error in a trapezoidal
+approximation of the integral is formed.  If the error is not too large
+(according to a parameter in the {\tt l2cf}), the trapezoidal estimate is
+used.
+
+\vspace*{5pt}
+
+If the error is too large, the integrand is evaluated at the abscissae of
+the three-point Gauss-Legendre quadrature formula.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Path length in the Full Forward Model (1)}
+
+For limb viewing, without considering refraction directly,
+
+\begin{equation*}
+s = \sqrt{h^2 - h_t^2}\,,
+\end{equation*}
+
+where $h_t$ is the geocentric tangent point height, and $h$ is the height
+at the point a distance $s$ from the tangent point.
+
+\begin{centering}
+\includegraphics[scale=0.5]{wvs-139-1}\\
+\end{centering}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Path length in the Full Forward Model (1)}
+
+Thereby
+
+\begin{equation}\label{sqrt}
+\frac{\d s}{\d h} = \frac{h}{\sqrt{h^2 - h_t^2}} \,.
+\end{equation}
+
+Therefore, the integrand in Equation (\ref{six}) has a square-root
+singularity at the tangent point.  Using either a Taylor series or a
+binomial expansion, one sees that a square-root singularity cannot be
+represented by a finite polynomial.
+
+\vspace*{5pt}
+In the neighborhood of the singularity, $\frac{\d s}{\d h}$ cannot be
+accurately approximated by a polynomial of any finite order, and in
+particular not by a polynomial that the quadrature formula would integrate
+exactly.
+
+\vspace*{5pt}
+The exponential function is also not a finite polynomial, but because it
+does not have a singularity, it can be approximately well, over a short
+interval, by a polynomial.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Full Forward Model -- Singularity at the Tangent}
+
+Using a rectangular quadrature for the integral in Equation (\ref{six}),
+
+\begin{equation*}\begin{split}
+\int_{\zeta_{i-1}}^{\zeta_i} \alpha(\zeta,\mathbf{x})
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \, \d \zeta \approx \,&
+\alpha(\zeta_{i-1},\mathbf{x}) \int_{\zeta_{i-1}}^{\zeta_i} 
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \, \d \zeta \\
+ \equiv Q_{i-1} = \,&
+ \alpha(\zeta_{i-1},\mathbf{x})\, \delta s_{i-1 \rightarrow i} \,, \\
+\end{split}\end{equation*}
+
+where $\delta s_{i-1 \rightarrow i} = s_i - s_{i-1}$, that integral can be
+written
+
+\begin{equation*}
+\int_{\zeta_{i-1}}^{\zeta_i} \alpha(\zeta,\mathbf{x})
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \, \d \zeta =
+ Q_{i-1} + \int_{\zeta_{i-1}}^{\zeta_i}
+  \left ( \alpha(\zeta,\mathbf{x}) - \alpha(\zeta_{i-1},\mathbf{x}) \right)
+ \frac{\d s}{\d h} \frac{\d h}{\d \zeta} \, \d \zeta \,,
+\end{equation*}
+
+which cancels the singularity at the tangent point (but not in other
+integrals), provided $\left ( \alpha(\zeta,\mathbf{x}) -
+\alpha(\zeta_{i-1},\mathbf{x}) \right) \rightarrow 0$ as $\zeta
+\rightarrow \zeta_{i-1}$ faster than $\sqrt{h^2-h_t^2} \rightarrow 0$ as
+$h \rightarrow h_t$.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Full Forward Model -- Radiative Transfer Integral (1)}
+
+If the error estimate for the integral is small enough, a trapezoidal
+approximation is constructed using either
+%
+\begin{equation*}
+\int_{s_{i-1}}^{s_i} \alpha(\zeta,\mathbf{x})\, \d s \approx
+  \frac12 \left ( \alpha(\zeta_{i-1},\mathbf{x}) +
+                          \alpha(\zeta_i,\mathbf{x}) \right)
+                          \, \delta s_{i-1 \rightarrow i}
+\end{equation*}
+
+or
+%
+\begin{equation*}
+\int_{s_{i-1}}^{s_i} \alpha(\zeta,\mathbf{x})\, \d s \approx
+  \frac12 \left ( \alpha(\zeta_{i-1},\mathbf{x}) +
+                          \alpha(\zeta_i,\mathbf{x}) \right)
+                          \, \frac{\d s_{i-1}}{\d h}
+                             \frac{\d h_{i-1}}{\d\zeta}
+                             ( \zeta_i - \zeta_{i-1} )
+\end{equation*}
+
+depending upon the setting of {\tt trapezoid} in the forward model
+configuration in the {\tt l2cf} to {\tt correct} or {\tt wrong},
+respectively, wherein
+%
+\begin{equation*}
+\frac{\d s_{i-1}}{\d h} \frac{\d h_{i-1}}{\d\zeta}
+         ( \zeta_i - \zeta_{i-1} ) \approx \int_{\zeta_{i-1}}^{\zeta_i}
+ \frac{\d s}{\d h} \frac{\d h}{\d\zeta}\, \d \zeta
+\end{equation*}
+
+is a rectangular quadrature approximation to $\delta s_{i-1 \rightarrow
+i}$.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Full Forward Model -- Radiative Transfer Integral (2)}
+
+If the error estimate for the integral is not small enough, a 3-point
+Gauss-Legendre approximation is constructed using
+%
+\begin{equation}\begin{split}\label{nine}
+\int_{\zeta_{i-1}}^{\zeta_i} & \alpha(\zeta,\mathbf{x})
+ \frac{\d s}{\d h} \frac{d h}{\d \zeta} \, \d \zeta \approx
+Q_{i-1} + \\
+ \,&
+( \zeta_i - \zeta_{i-1} ) \,
+ \sum_{n=1}^3 w_{in} \left ( \alpha(\zeta_{in},\mathbf{x}) -
+ \alpha(\zeta_{i-1},\mathbf{x}) \right)
+\end{split}\end{equation}
+
+where $w_{in} = \omega_n \frac{\d s(\zeta_{in})}{\d h} \frac{\d
+h(\zeta_{in})}{\d \zeta}$, $\omega_n$ is the weight for the $n^\text{th}$
+Gauss-Legendre point, and $\zeta_{in}$ is the abscissa for that point
+within the range $\zeta_{i-1} \rightarrow \zeta_i$.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Full Forward Model -- Radiative Transfer Integral (3)}
+
+Although this strategy provides acceptable accuracy, it creates tremendous
+mischief throughout the rest of the forward model by attempting to
+optimize the calculation.  It has led to a complicated system of flags and
+indices, especially to calculate derivatives.
+\vspace*{0.1in}
+
+An alternative strategy is to compute $\alpha(\zeta_{in},\mathbf{x})$ from
+first principles if the error estimate is not small enough, and use
+interpolation to $\zeta_{in}$ from $\alpha(\zeta_{i-1},\mathbf{x})$ and
+$\alpha(\zeta_i,\mathbf{x})$ if it is small enough.  Then always use the
+approximation in Equation (\ref{nine}) rather than trying to save a tiny
+bit of computation by choosing whether to use the trapezoidal quadrature
+or the Gauss-Legendre quadrature. \vspace*{0.1in}
+
+This might well be faster by replacing a branch within the path loop with
+a subtract, a multiply to interpolate $\alpha$ to $\zeta_{in}$, and
+multiplying by $w_{in}$.  It would definitely be simpler, especially in
+the case of computing derivatives, by eliminating numerous flags and
+indices.  Notice that $w_{in}$ is calculated once for each path, then used
+for every frequency, and for both the radiance and every derivative
+evaluated at each frequency.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.8  2019/09/04 00:22:00  vsnyder
+% Corrected derivative w.r.t. state-vector elements on page 8, added page 9,
+% embellished former page 9 (now page 10), improved discussion of singularity
+% on page 12 (now page 13), improved alternative integration strategy
+% description on page 15 (now page 16).
+%
+% Revision 1.7  2019/08/29 01:26:39  vsnyder
+% Clarify stuff, correct inconsistent notations
+%
+% Revision 1.6  2019/08/27 01:22:42  vsnyder
+% Minor improvements and typo corrections
+%
+% Revision 1.5  2017/10/31 18:16:44  vsnyder
+% Add a graphic, some cannonball polishing
+%
+% Revision 1.4  2017/10/16 17:30:22  pwagner
+% This modification was needed; dont know why
+%
+% Revision 1.3  2017/06/08 18:39:12  vsnyder
+% Remove hyperlink stuff because Paul can't build with it included
+%
+% Revision 1.2  2017/06/08 01:27:55  vsnyder
+% Update after presentation
+%

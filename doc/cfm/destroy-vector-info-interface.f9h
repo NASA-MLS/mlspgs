@@ -1,0 +1,4 @@
+! This routine destroys a vector created above
+subroutine DestroyVectorInfo ( Vector )
+   type (Vector_T), intent(inout) :: VECTOR
+end subroutine

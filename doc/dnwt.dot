@@ -1,0 +1,73 @@
+digraph DNWT
+
+{
+
+size = "5.7,7.5";
+ratio = auto;
+layout = dot;
+
+Start [ style=filled, color=lawngreen, fontsize = 24 ] ;
+
+TolF [ style=filled, fillcolor = lightblue ] ;
+TolX [ style=filled, fillcolor = lightblue ] ;
+TolX_Best [ style=filled, fillcolor = lightblue label="TolX Best" ] ;
+
+too_small [ style=filled, fillcolor = pink label="Too Small" ] ;
+FandJ [ style=filled, fillcolor = pink ] ;
+
+Start -> EvalF [style=bold, color=red] ;
+Start -> Gmove ;
+
+EvalF ->FandJ ;
+EvalF -> Gmove ;
+EvalF -> EvalJ [style=bold, color=red] ;
+EvalF -> TolX [style=bold, color=red] ;
+EvalF -> TolX_Best ;
+
+EvalJ -> TolF [style=bold, color=red] ;
+EvalJ -> Solve [style=bold, color=red] ;
+
+Solve -> Gmove ;
+Solve -> Best ;
+Solve -> dx [style=bold, color=red] ;
+Solve -> Lev [style=bold, color=red] ;
+Solve -> TolX ;
+Solve -> TolX_Best ;
+
+Lev -> Solve [style=bold, color=red] ;
+
+NewX -> Gmove ;
+NewX -> too_small ;
+NewX -> EvalF [style=bold, color=red] ;
+
+Gmove -> NewX ;
+
+Best -> dx ;
+Best -> Aitken ;
+
+Aitken -> dx_Aitken ;
+Aitken -> dx ;
+
+dx -> NewX [style=bold, color=red] ;
+
+dx_Aitken [ label="dx Aitken" ] ;
+dx_Aitken -> NewX ;
+
+TolX -> Best ;
+
+TolX_Best -> Best ;
+
+TolF -> Solve ;
+
+too_small -> Gmove ;
+
+FandJ -> Gmove ;
+
+}
+
+// $Id$
+
+// $Log$
+// Revision 1.1  2018/07/25 03:23:02  vsnyder
+// Initial commit
+//

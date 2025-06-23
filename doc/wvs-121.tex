@@ -1,0 +1,375 @@
+\documentclass[11pt]{article}
+
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\newcommand{\docname}{wvs-121r2}
+\newcommand{\docdate}{25 November 2014}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\parindent 0pt
+\parskip 6pt
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Mike, Paul\\
+Subject: \>Three-dimensional rotation about a specified axis\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-120} \\
+\end{tabbing}
+
+\vspace*{-30pt}
+
+\section*{Application to computing magnetic field}
+
+The angular positions of the points in the magnetic field are specified on
+a great circle that includes the tangent point and spacecraft positions. 
+To calculate those positions, rotate the tangent point position vector
+about the normal to the plane containing the tangent point and spacecraft
+positions by the the angles $\phi$ specified in the HGrid for the magnetic
+field.
+
+There are (at least) four ways to calculate these positions.
+
+Let $S$ and $P$ be position vectors for the spacecraft and tangent point,
+respectively, and $\hat{S}$ and $\hat{P}$ be unit vectors parallel to
+them.  Then the vector $\eta = S \times P$ is normal to the plane
+containing $S$ and $P$, in the right-hand sense, and $\hat{\eta}$ is an
+unit vector parallel to $\eta$.  A rotation of $P$ about $\hat{\eta}$ by
+an angle $\phi$ rotates $P$ away from or toward $S$, depending upon
+whether $\phi$ is positive or negative, respectively.
+
+\section*{Mathematical formalism for rotation}
+
+Define the completely antisymmetric Levi-Civita tensor in three dimensions
+as
+%
+\begin{equation*}
+\epsilon_{ijk} = \left\{ \begin{array}{ll}
++1 & \text{ if } (i,j,k) \text{ is } (1,2,3),\, (2,3,1),\text{ or } (3,1,2) \\
+-1 & \text{ if } (i,j,k) \text{ is } (3,2,1),\, (1,3,2),\text{ or } (2,1,3) \\
+0  & \text{ if } i = j \text{ or } j = k \text{ or } i = k \\
+\end{array} \right. \,.
+\end{equation*}
+%
+To rotate a three-dimensional vector $V$ by an angle $\phi$ about a unit
+vector $\hat{\eta}$, multiply $V$ on the left by the matrix
+%
+\begin{equation*}
+R_{ij} = \cos\phi\, \delta_{ij} + (1-\cos\phi)\, \hat{\eta}_i \hat{\eta}_j
+          - \sum_{k=1}^3 \sin\phi\, \epsilon_{ijk} \hat{\eta}_k
+\end{equation*}
+%
+where $\hat{\eta}_i$ are the coordinates of $\hat{\eta}$, $\delta_{ij}$
+is the Kronecker delta, and $\epsilon_{ijk}$ is the Levi-Civita tensor. 
+This is called the \emph{Rodrigues formula}.  There is at most one nonzero
+in the summation, which occurs when $i$, $j$, and $k$ are distinct.  In
+expanded form, $R$ is
+%
+\begin{equation*}
+R = \left( \begin{array}{ccc}
+\cos\phi + \hat{\eta}_1^2(1-\cos\phi) &
+  \hat{\eta}_1 \hat{\eta}_2 ( 1 - \cos\phi ) - \hat{\eta}_3 \sin\phi &
+    \hat{\eta}_1 \hat{\eta}_3 ( 1 - \cos\phi ) + \hat{\eta}_2 \sin\phi \\
+\hat{\eta}_1 \hat{\eta}_2 ( 1 - \cos\phi ) + \hat{\eta}_3 \sin\phi &
+  \cos\phi + \hat{\eta}_2^2(1-\cos\phi) &
+    \hat{\eta}_2 \hat{\eta}_3 ( 1 - \cos\phi ) - \hat{\eta}_1 \sin\phi \\
+\hat{\eta}_1 \hat{\eta}_3 ( 1 - \cos\phi ) - \hat{\eta}_2 \sin\phi &
+  \hat{\eta}_2 \hat{\eta}_3 ( 1 - \cos\phi ) + \hat{\eta}_1 \sin\phi &
+    \cos\phi + \hat{\eta}_3^2(1-\cos\phi) \\
+\end{array} \right)
+\end{equation*}
+%
+This is derived in, e.g., {\tt
+http://scipp.ucsc.edu/$\sim$haber/ph216/rotation_12.pdf}.
+
+(As a side note, the vector product $A \times B$ can be written using the
+Levi-Civita tensor as $(A \times B)_k = \sum_{i,j} \epsilon_{ijk} A_i
+B_j$.  This can be generalized to a product of $n-1$ $n$-dimensional
+vectors using the order $n$ Levi-Civita tensor.)
+
+\section*{Trigonometric method to compute latitude and longitude}
+
+% Compute geocentric latitude of the tangent point from its geodetic
+% latitude:
+% 
+% \begin{equation*}\begin{split}
+% \lambda_{tc} = \,& \sin^{-1} \left(
+%  \frac{\sin \lambda_{tg}}
+%       { \sqrt{\frac{a^4}{b^4} \cos^2 \lambda_{tg} + \sin^2 \lambda_{tg}} }
+%       \right) \\
+% \,&\\
+%  = \,& \tan^{-1} \left(
+%   \frac{\sin \lambda_{tg}}
+%        {f^2 \cos \lambda_{tg}} \right) \text{ where } f = \frac{a}b
+%       \\
+% \,&\\
+%  = \,& \sin^{-1} \left(
+%   \frac{\tan \lambda_{tg}}
+%        {\sqrt{f^2 + \tan^2 \lambda_{tg}}}
+%       \right) \\
+% \end{split}\end{equation*}
+% 
+% The second method is used in the function {\tt GeodToGeocLat} in the {\tt
+% Geometry} module.
+
+Let $\hat{\mathbf{n}}$ be either the unit vector in ECR coordinates along
+the line of sight between the instrument and the tangent point, the unit
+tangent at the tangent point along the great circle containing the tangent
+point and spacecraft positions, in the direction of the spacecraft, for
+the same MIF, or the third row of the ECR-to-FOV matrix from the {\tt
+L1BOA} file.
+
+Let $\phi$ be the increment along the line of sight at which the
+geocentric latitude and longitude are desired, $\lambda_{tc}$ be the
+geocentric latitude of the tangent point, and $\mu_t$ be the longitude of
+the tangent point.  Compute the geocentric latitude of that point:
+%
+\begin{equation*}\begin{split}
+\lambda_c = \,& \sin^{-1} \left(
+ \frac{\sin \lambda_{tc} + n_z \tan \phi}
+                          {\sqrt{1 + \tan^2 \phi}} \right) \\
+\,& \\
+ = \,& | \sin^{-1} \left( \sin \lambda_{tc} \cos \phi +
+        n_z \sin \phi \right) | \text{ signum} (n_z)
+ \\
+\end{split}\end{equation*}
+%
+The latter being better behaved for $|\phi| \approx \frac\pi2$.  Compute
+the longitude of that point:
+
+\begin{equation*}\begin{split}
+\mu = \,& \tan^{-1} \left(
+  \frac{\sin \mu_t \cos \lambda_{tc} + n_y \tan \phi}
+       {\cos \mu_t \cos \lambda_{tc} + n_x \tan \phi}
+  \right ) \\
+\,& \\
+ = \,& \tan^{-1} \left(
+  \frac{\sin \mu_t \cos \lambda_{tc} \cos \phi + n_y \sin \phi}
+       {\cos \mu_t \cos \lambda_{tc} \cos \phi + n_x \sin \phi}
+  \right ) \,, \\
+\end{split}\end{equation*}
+
+the latter being better behaved for $|\phi| \approx \frac\pi2$.
+
+\section*{Alternative trigonometric method to compute $x, y, z$}
+
+Using the same definitions of vectors and angles as above, $R = P +
+|P|\, \tan \phi \, \hat{\mathbf{n}}$.
+
+\section*{Test results}
+
+I computed the result for rotation angles of -3.0, -1.5, 0.0, 1.5, and 3.0
+degrees, using all methods, in double precision, for spacecraft and
+tangent point positions taken from the first MIF of the first MAF in the
+UARS {\tt L1BOA} file  {\tt
+/testing/workspace/pwagner/UARS/l1b/1992d009/MLS-UARS_L1BOA_v00-20-c01_1982d009.h5}:
+
+\begin{longtable}{lccccccc}
+Module & GeodLat & GeocLat & GeocAlt   & Lon      & X       & Y       & Z \\
+\hline
+SC     & 13.3604 & 13.2741 & 6953137.5 & -170.867 & -0.9609 & -0.1545 & 0.2296 \\
+GHz    & 26.2619 & 26.1095 & 6462785.2 & -152.039 & -0.7931 & -0.4210 & 0.4401 \\
+\hline
+\end{longtable}
+\vspace*{-10pt}
+
+As above, let $S$ be the spacecraft position vector and $P$ be the tangent
+point position vector, and let $R$ be the result of the rotation
+calculation.  In the test results table below, under Method, {\tt Vector}
+indicates the rotated position was computed using the vector method, and
+{\tt Trig} or {\tt Alt} indicates whether the rotated position was
+computed using the trigonometric or alternative method, respectively,
+while 1 indicates $\hat{\mathbf{n}}$ is the unit vector parallel to $(P -
+S)$, 2 indicates $\hat{\mathbf{n}}$ is the unit vector parallel to $(S
+\times P) \times P$, i.e., tangent to the great circle containing
+$\hat{S}$ and $\hat{P}$, and 3 indicates $\hat{\mathbf{n}}$ is the last
+row of the ECR-to-FOV matrix from the UARS {\tt L1BOA} file.
+
+\newcommand{\C}[1]{\multicolumn{1}{c}{#1}}
+\begin{longtable}{lrccrrrrr}
+\multicolumn{9}{c}{\bfseries Test Results} \\
+\hline
+Method & \C{$\phi$} & GeocLat & Lon & \C{X} & \C{Y} & \C{Z} & \C{Plane} & \C{Angle} \\
+\hline
+\endfirsthead
+Method & \C{$\phi$} & GeocLat & Lon & \C{X} & \C{Y} & \C{Z} & \C{Plane} & \C{Angle} \\
+\hline
+\endhead
+Vector & -3.0 & 24.48 & -154.82 & -0.8237 & -0.3872 & 0.4143  &   0.000 &  0.000 \\
+Trig 1 &      & 24.51 & -154.82 & -0.8235 & -0.3871 & 0.4148  & 179.463 &  0.018 \\
+Trig 2 &      & 24.51 & -154.82 & -0.8234 & -0.3871 & 0.4149  & 179.391 &  0.021 \\
+Trig 3 &      & 24.72 & -154.96 & -0.8230 & -0.3845 & 0.4181  & 174.817 &  0.015 \\
+Alt  1 &      & 24.48 & -154.82 & -0.8237 & -0.3872 & 0.4143  &   0.000 & -0.001 \\
+Alt  2 &      & 24.48 & -154.82 & -0.8237 & -0.3872 & 0.4143  &   0.000 &  0.000 \\
+Alt  3 &      & 24.68 & -154.96 & -0.8232 & -0.3846 & 0.4176  & 175.369 & -0.001 \\
+Vector & -1.5 & 25.30 & -153.44 & -0.8087 & -0.4042 & 0.4273  &   0.000 &  0.000 \\
+Trig 1 &      & 25.31 & -153.44 & -0.8086 & -0.4042 & 0.4275  & 179.767 &  0.004 \\
+Trig 2 &      & 25.31 & -153.44 & -0.8086 & -0.4042 & 0.4275  & 179.691 &  0.005 \\
+Trig 3 &      & 25.41 & -153.51 & -0.8084 & -0.4029 & 0.4291  & 175.137 &  0.003 \\
+Alt  1 &      & 25.30 & -153.44 & -0.8087 & -0.4042 & 0.4273  &   0.000 &  0.000 \\
+Alt  2 &      & 25.30 & -153.44 & -0.8087 & -0.4042 & 0.4273  &   0.000 &  0.000 \\
+Alt  3 &      & 25.40 & -153.51 & -0.8085 & -0.4029 & 0.4290  & 175.369 &  0.000 \\
+All    &  0.0 & 26.11 & -152.04 & -0.7931 & -0.4210 & 0.4401  &   0.000 &  0.000 \\
+Vector &  1.5 & 26.91 & -150.62 & -0.7770 & -0.4375 & 0.4525  &   0.000 &  0.000 \\
+Trig 1 &      & 26.92 & -150.62 & -0.7770 & -0.4375 & 0.4527  &   0.396 &  0.006 \\
+Trig 2 &      & 26.92 & -150.62 & -0.7770 & -0.4375 & 0.4527  &   0.315 &  0.005 \\
+Trig 3 &      & 26.81 & -150.55 & -0.7772 & -0.4388 & 0.4511  &   4.206 &  0.006 \\
+Alt  1 &      & 26.91 & -150.62 & -0.7770 & -0.4375 & 0.4525  &   0.000 &  0.000 \\
+Alt  2 &      & 26.91 & -150.62 & -0.7770 & -0.4375 & 0.4525  &   0.000 &  0.000 \\
+Alt  3 &      & 26.80 & -150.55 & -0.7773 & -0.4388 & 0.4509  &   4.631 &  0.000 \\
+Vector &  3.0 & 27.69 & -149.18 & -0.7604 & -0.4537 & 0.4647  &   0.000 &  0.000 \\
+Trig 1 &      & 27.73 & -149.18 & -0.7601 & -0.4535 & 0.4653  &   0.719 &  0.023 \\
+Trig 2 &      & 27.73 & -149.18 & -0.7602 & -0.4535 & 0.4653  &   0.634 &  0.020 \\
+Trig 3 &      & 27.52 & -149.05 & -0.7606 & -0.4561 & 0.4621  &   3.869 &  0.020 \\
+Alt  1 &      & 27.69 & -149.18 & -0.7604 & -0.4537 & 0.4647  &   0.000 & -0.001 \\
+Alt  2 &      & 27.69 & -149.18 & -0.7604 & -0.4537 & 0.4653  &   0.000 &  0.000 \\
+Alt  3 &      & 27.48 & -149.05 & -0.7609 & -0.4563 & 0.4614  &   4.631 & -0.001 \\
+\hline
+\end{longtable}
+
+The {\tt Plane} and {\tt Angle} columns are diagnostics defined by
+%
+\begin{equation*}\begin{split}
+\text{\tt Plane} =\,&
+ \cos^{-1} \left( \hat{\eta} \cdot
+           \frac{P \times R}{|P \times R|} \right) \text{ and} \\
+\,&\\[-7pt]
+\text{\tt Angle} = \,&  \sin^{-1} | \hat{P} \times \hat{R}|
+ \text{ signum} ( | P - S | - | R - S | ) - \phi
+ \\
+\end{split}\end{equation*}
+
+\begin{itemize}
+
+\item [{\tt Plane}] is the angle in degrees between $\hat\eta$ (the normal
+      to the $S-P$ plane) and the normal to the $R - P$ plane.  This is
+      zero if the rotation occurred in the $S - P$ plane.
+
+\item [{\tt Angle}] is the difference in degrees between $\phi$ and the
+      angle between $P$ and $R$.  It should zero.
+
+\end{itemize}
+
+The values of $\hat{\mathbf{n}}$ for the three methods are
+
+\begin{longtable}{cccc}
+Method & X & Y & Z \\
+\hline
+ 1 & 0.6015213 & -0.6367467 & 0.4824167 \\
+ 2 & 0.6041459 & -0.6353586 & 0.4809648 \\
+ 3 & 0.5929608 & -0.6871292 & 0.4198217 \\
+\hline
+\end{longtable}
+
+As a simple test, I put the spacecraft at (0.0 N, 0.0 E) and the tangent
+point at (30.0 N, 0.0 E) geocentric, and $\phi = 3.0$.  The rotated
+tangent point should be at (33.0 N, 0.0 E) geocentric.
+
+\begin{longtable}{lrccrrrrr}
+\multicolumn{9}{c}{\bfseries Test Results} \\
+\hline
+Method & \C{$\phi$} & GeocLat & Lon & \C{X} & \C{Y} & \C{Z} & \C{Plane} & \C{Angle} \\
+\hline
+Vector &  3.0 & 33.00 &    0.00 & 0.8387 & 0.0000 & 0.5446 &  0.000 &  0.000  \\
+Alt  2 &      & 33.00 &    0.00 & 0.8387 & 0.0000 & 0.5446 &  0.000 &  0.000  \\
+Trig 2 &      & 33.05 &    0.00 & 0.8382 & 0.0000 & 0.5453 &  0.000 &  0.047  \\
+\hline
+\end{longtable}
+
+% The vector rotation method always rotates $P$ by the correct amount, and
+% $R$ is always in the $S - P$ plane. The {\tt Trig 1} method rotates the
+% tangent point by approximately the correct amount (within about 3.4\%),
+% but it is out of the $S - P$ plane by as much as 5.3 degrees.  The {\tt
+% Trig 2} method is more accurate by both measures.  The {\tt Trig 3} method
+% rotates the tangent point by a slightly more accurate amount than either
+% the {\tt Trig 1} or {\tt Trig 2} method, but the vector is as far out of
+% the $S - P$ plane as the one the {\tt Trig 1} method computes.
+
+\section*{Conclusions}
+
+The first trigonometric method produces results slightly out of the $S -
+P$, even if $\hat{\mathbf{n}}$ is in the $S - P$ plane, and the amount by
+which the tangent-point vector is rotated is not as accurate as the vector
+or alternative trigonometric methods.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.2  2014/11/15 02:15:58  vsnyder
+% Add second method, test results
+%
+% Revision 1.1  2014/11/10 20:27:39  vsnyder
+% Initial commit
+%

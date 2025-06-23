@@ -1,0 +1,93 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-054r1}
+\newcommand{\docdate}{22 May 2019}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Dave\\
+Subject: \>A few more ideas for speeding up MLS Level 2 retrievals, with possible application \\
+\> to SMLS\\
+From: \>Van Snyder, Fred Krogh\\
+References: \>wvs-051
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+In addition to the ideas mentioned in wvs-051, a few more possibilities for
+speeding up MLS Level 2 retrievals have occurred to me.
+
+\begin{enumerate}
+
+\item wvs-051 suggested to solve for feature parameters.  A similar idea
+is to solve for the Planck function instead of temperature.  This
+wouldn't reduce the number of things to solve for, but it would make
+derivatives simpler, and might make the problem sufficiently more linear
+as to require fewer iterations.  Of course, temperature is the ultimately
+interesting quantity, and I'm not sure exactly which frequency ought to
+be used to get from the Planck function to the temperature, especially if
+a retrieval uses several signals from several bands.
+
+\item It might be possible to develop a strategy to keep the Jacobian
+constant every now and then, instead of re-evaluating it at every
+iteration.  This might increase the number of iterations, but they would
+be substantially cheaper ones.
+
+\item Solving at only the highest elevations in the atmosphere is cheaper
+than solving at all of them.  If we solve for the highest levels of the
+atmosphere before solving at lower levels, and use those results instead
+during the lower-level retrievals, the full solution might require
+sufficiently fewer iterations to repay the cost of the high-altitude
+solutions.  In the all-altitudes retrieval, the prior high-altitude
+solutions would be ``locked in,'' so the lower-altitude retrievals would
+have lower cost.  Generalizing, perhaps an ``onion peeling'' strategy
+might be profitable.
+
+\item If when processing a chunk starts an adjacent chunk has already
+finished, using the solution in the overlap region might be sufficiently
+better than apriori that the number of iterations would be reduced.  This
+might be especially beneficial for reprocessing: Launch solvers for even
+numbered chunks; then when they're done launch solvers for odd-numbered
+ones.
+
+\end{enumerate}
+
+The first two would require software development.  The last two could
+be done in the l2cf alone.
+
+With some modifications to the forward model, the ``onion peeling''
+strategy might allow to reduce forward model run time, by keeping
+intermediate results from the high altitudes as well as just the state
+vector solutions -- assuming we have room to keep them.
+
+\label{lastpage}
+\end{document}
+% $Id$

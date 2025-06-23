@@ -1,0 +1,5 @@
+! Read antenna pattern file and populate the antenna pattern
+! database
+subroutine ReadAntennaPatterns (fileName)
+   character(len=*), intent(in) :: filename
+end subroutine

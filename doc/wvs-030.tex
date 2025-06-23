@@ -1,0 +1,765 @@
+\documentclass[11pt]{article}
+
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{xr-hyper}
+\externaldocument[146-]{\logdir/wvs-146}
+\externaldocument[131-]{\logdir/wvs-131}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-030r8}
+\newcommand{\docdate}{17 April 2020}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+\renewcommand{\d}{\text{d}}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Van\\
+Subject: \>Points on line and surface of ellipsoid that are nearest
+to each other\\
+From: \>Van Snyder\\
+References: \>wvs-131 \hr{wvs-131}
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+%=========================================================================
+\section{Projective Geometry}
+
+\begin{enumerate}
+
+\item
+
+    A point on the line can be specified by $\vec{C}$, a vector to some
+    point on the line, and a scalar multiple of an unit vector $\vec{U}$
+    in the direction of the line
+
+\begin{equation}\label{line-1}
+\mathcal{L}(t) = \vec{C} + t\,\vec{U} \,.
+\end{equation}
+
+\item\label{two}
+
+    \emph{Lemma}: The point on the ellipsoid that is nearest to
+    $\mathcal{L}$ lies on the plane defined by the origin and
+    $\mathcal{L}$.
+
+\item
+
+    The ellipsoid is represented by the $4\times4$ matrix
+    %
+    $$\mathbf{C} =
+    \begin{pmatrix} 
+      1/a^2 & 0 & 0 & 0 \\
+      0 & 1/b^2 & 0 & 0 \\
+      0 & 0 & 1/c^2 & 0 \\
+      0 & 0 & 0 & -1
+    \end{pmatrix}$$
+    %
+    and a point on the ellipsoid by the homogeneous coordinates $P=
+    (\alpha x,\alpha y,\alpha z,\alpha)$ such that $P^\top \mathbf{C} P
+    =0$, giving the familiar equation $F =
+    \frac{x^2}{a^2}+\frac{y^2}{b^2}+\frac{z^2}{c^2}-1=0$
+
+\item
+
+\begin{minipage}[t]{4.25in}
+    The plane in 3D that is tangent to the ellipsoid at the point closest
+    to $\mathcal{L}$ is perpendicular to the plane defined in step
+    (\ref{two}) above, and parallel to $\mathcal{L}$.  A normal to this
+    plane is the vector $\vec{r}$ to the point on $\mathcal{L}$ that is
+    closest to the origin.  The vector $\vec{r}$ is necessarily orthogonal
+    to $\mathcal{L}$.  The point on the ellipsoid nearest to $\mathcal{L}$
+    is on a plane having this normal (or indeed any normal parallel to
+    it), but the point is not necessarily on a line collinear with
+    $\vec{r}$.  The normal $\vec{r}$ from the origin is given by
+\end{minipage}
+\hspace*{5pt}
+\begin{minipage}[t]{2in}
+\vspace*{0pt} % Graphic doesn't align with text without this
+\includegraphics{wvs-030-nearest}
+\end{minipage}
+    %
+    $$
+    \vec{r} = \vec{C} - ( \vec{C} \cdot \vec{U}\, )\, \vec{U} = (i,j,k)
+    \,.
+    $$
+    %
+    The homogeneous coordinates of this plane are
+    $W=(i,j,k,-\ell)$ with normal direction $\vec{r}$
+    and unknown distance from the origin
+    %
+    $$d=\frac{\ell}{|\vec{r}\,|} = \frac{\ell}{\sqrt{i^2+j^2+k^2}}\,.$$
+
+\item
+
+    To make sure the plane is tangent to the ellipsoid we set $W^\top
+    \mathbf{C}^{-1} W =0$ and solve for
+    %
+    $$\ell = \pm\sqrt{a^2 i^2 + b^2 j^2 + c^2 k^2}\,,$$
+    %
+    where the sign of $\ell$ is chosen to put the plane on the side of the
+    ellipsoid nearest to $\mathcal{L}$.
+
+\item
+
+    The point on the ellipsoid where the tangent plane touches (the point
+    closest to $\mathcal{L}$) is defined in homogeneous coordinates by
+    $P=\mathbf{C}^{-1} W$,
+    %
+    $$ P=(\alpha x, \alpha y, \alpha z, \alpha) = (a^2 i,b^2 j,c^2 k,-\ell)
+    $$
+    or
+    $$ \boxed{ \vec{P} = \begin{pmatrix} x \\ y \\ z \end{pmatrix} =
+    \frac{1}\ell
+    \begin{pmatrix} a^2 i \\ b^2 j \\ c^2 k \end{pmatrix} }
+    $$
+
+\item
+
+    $\mathcal{L}$ is parallel to the tangent plane, so the distance from
+    the plane to $\mathcal{L}$, the tangent height, is $h = |\vec{r}\,| -
+    d$. The point on $\mathcal{L}$ nearest to $P$ can be found by solving
+    for the intersection of $\mathcal{L}(t)$ with $\vec{P} + h \nabla
+    F(\vec{P})$, i.e., by solving $\vec{C} + t \vec{U} = \vec{P} + h
+    \nabla F(\vec{P})$ for $t$.  This gives three equations for $t$, e.g.
+    $t = \left( x ( 1 + 2h/a^2 ) - x_c \right) / x_u$, where $x_c$ and
+    $x_u$ are components of $\vec{C}$ and $\vec{U}$, respectively.  All of
+    these for which the component of $\vec{U}$ is nonzero should give the
+    same result.  By construction, $\mathcal{L}$ and $\nabla F(\vec{P})$
+    are orthogonal (and therefore not parallel).  The other two
+    possibilities for nonparallel lines in 3D are that they intersect
+    (which they ought to do by construction since $P + h\nabla F(\vec{P})$
+    is in the plane defined by $\mathcal{L}$ and the origin), or they
+    don't.  If the lines don't intersect, the results will not be
+    consistent.  Alternatively, $t = | \vec{P} + h \nabla F(\vec{P}) -
+    \vec{C}\, | / |\vec{U}\,| = | \vec{P} + h \nabla F(\vec{P}) -
+    \vec{C}\, | = ( \vec{P} + h \nabla F(\vec{P}) - \vec{C} ) \cdot
+    \vec{U}$.  The last expression arises because $\vec{P} + h \nabla
+    F(\vec{P})$ and $\vec{C}$ are on $\mathcal{L}$, and the distance
+    between them, $t$, is the difference of their projections onto
+    $\mathcal{L}$.
+
+\end{enumerate}
+
+%=========================================================================
+\section{Method of Lagrange Multipliers}
+
+\begin{enumerate}
+\item
+    Given a line $\mathcal{L}(t) = \mathbf{C} + t\, \mathbf{U}$ where
+    $\mathbf{C}$ is a vector to a point on the line, and $\mathbf{U}$ is
+    an unit vector along the line.  Given an ellipsoid defined by
+    $F(\mathbf{P}) = \mathbf{P}^T \mathbf{M} \mathbf{P} = 1$, where
+    $\mathbf{M} =
+    \text{Diag}\left(\frac1{a^2},\frac1{b^2},\frac1{c^2}\right)$. A line
+    $\mathcal{L}_P(t) = \mathbf{P} + t\, \mathbf{U}$, where $\mathbf{P}$
+    is a point on $F(\mathbf{P})$, is parallel to  $\mathcal{L}(t)$.  The
+    distance from $\mathcal{L}_P(t)$ to $\mathcal{L}(t)$ is the difference
+    of their distances from the origin. Let $d(\mathcal{L}(t))$ be the
+    distance from $\mathcal{L}(t)$ to the origin, and
+    $d(\mathcal{L}_P(t))$ be the distance from $\mathcal{L}_P(t)$ to the
+    origin.  Assuming $\mathcal{L}(t)$ and $F(\mathbf{P})$ do not
+    intersect, minimizing $d(\mathcal{L}(t)) - d(\mathcal{L}_P(t))$ is
+    equivalent to maximizing $d(\mathcal{L}_P(t))$ (or maximizing
+    $d(\mathcal{L}_P(t))^2$, which is easier).  The vector $\mathbf{R}$
+    from the origin to $\mathcal{L}_P(t)$ and perpendicular to
+    $\mathcal{L}_P(t)$ is
+    $$\mathbf{R} =
+      \mathbf{C} - ( \mathbf{C} \cdot \mathbf{U} ) \mathbf{U}
+    $$
+    from which $d(\mathcal{L}_P(t))^2 = \mathbf{R} \cdot \mathbf{R}$.
+\item
+    The maximum of $ d(\mathcal{L}_P(t))^2 $ subject to the constraint
+    $F(\mathbf{P}) = 1$ can be found using the method of Lagrange
+    multipliers: 
+
+    Construct two equations:
+%
+    $$ \nabla d(\mathcal{L}_P(t))^2 = \lambda \nabla F(\mathbf{P}) $$
+    $$ F(\mathbf{P}) = 1 \,.$$
+
+    The gradients $\nabla(d(\mathcal{L}_P(t))^2 = 2 \mathbf{P} + 2
+    \mathbf{U} ( \mathbf{P} \cdot \mathbf{U} ) ( \mathbf{U} \cdot
+    \mathbf{U} - 2 )$ and $\nabla F(\mathbf{P}) = 2 \mathbf{M}
+    \mathbf{P}$.  The first equation above becomes
+    $$ \mathbf{P} + \mathbf{U} ( \mathbf{P} \cdot \mathbf{U} ) (
+    \mathbf{U} \cdot \mathbf{U} - 2 ) = \lambda \mathbf{M} \mathbf{P}\,,
+    $$
+    
+    which is three equations for the components of $\mathbf{P}$.  Thus we
+    have four equations for four unknowns, $(\mathbf{P}_x, \mathbf{P}_y,
+    \mathbf{P}_z, \lambda)$.
+
+\end{enumerate}
+
+%=========================================================================
+\section{Solve equations for line, ellipsoid, gradient, orthogonality}
+
+Define the line by $\mathcal{L}(t) = \mathbf{C} + t\, \mathbf{U}$,
+where $\mathbf{C}$ is a point on the line, and $\mathbf{U}$ is an unit
+vector along the line.
+
+Let $\mathbf{M} = \text{Diag}\left( \frac1{a^2}, \frac1{b^2}, \frac1{c^2}
+\right)$.
+
+Let $\mathbf{X} = [ x, y, z ]^T$ be a point on the ellipsoid.
+
+Then the equation of the ellipsoid is
+%
+\begin{equation}\label{ellipsoid}
+\mathbf{F} = \mathbf{X}^T \mathbf{M} \mathbf{X} = 1\,.
+\end{equation}
+
+The line between the point on $\mathcal{L}(t)$ nearest $\mathbf{F}$, and the
+point on $\mathbf{F}$ nearest $\mathcal{L}(t)$, must be perpendicular to
+$\mathcal{L}(t)$ and normal to $\mathbf{F}$.
+
+The vector normal to $\mathbf{F}$ is $\nabla \mathbf{F} = \mathbf{M}
+\mathbf{X}$.
+
+The condition that this normal vector intersect $\mathcal{L}(t)$ is
+%
+\begin{equation}\label{intersect}
+\mathbf{X} + h\, \nabla \mathbf{F} = \mathcal{L}(t)
+\text{, or }\left( h\, \mathbf{M} +
+\mathbf{I} \right) \mathbf{X} = \mathcal{L}(t)\,,
+\end{equation}
+
+where $h$ is the tangent height.  $\nabla\mathbf{F}$ is perpendicular to
+$\mathcal{L}(t)$ if
+%
+\begin{equation}\label{normal}
+\nabla \mathbf{F} \cdot \mathbf{U} = 0$, or
+$\mathbf{U}^T \mathbf{M} \mathbf{X} = 0\,.
+\end{equation}
+
+Solving Equation (\ref{intersect}) for $\mathbf{X}$ gives
+%
+\begin{equation}\label{X}
+\mathbf{X} = \mathbf{Y}(h) \mathcal{L}(t) \text{ where }
+ \mathbf{Y}(h) = ( h\, \mathbf{M} + \mathbf{I} )^{-1}
+\end{equation}
+
+Inserting Equation (\ref{X}) into Equations (\ref{ellipsoid}) and
+(\ref{normal}) gives two equations $\{E=0,\, N=0\}$ for $h$ and $t$, where:
+%
+\begin{equation}\label{five}
+E =
+\mathcal{L}(t)^T \mathbf{Y}(h)^T \mathbf{M}
+ \mathbf{Y}(h) \mathcal{L}(t) - 1 =
+ \mathcal{L}(t)^T \mathbf{Y}(h)^2 \mathbf{M} \mathcal{L}(t) - 1
+\end{equation}
+\vspace*{-20pt}
+\begin{equation}\label{six}
+N =
+\mathbf{U}^T \mathbf{M} \mathbf{Y}(h)
+ \mathcal{L}(t) =
+\mathbf{U}^T \mathbf{M} \mathbf{Y}(h)
+ ( \mathbf{C} + t\, \mathbf{U} ) \,,
+\end{equation}
+
+where the second form of Equation (\ref{five}) arises because
+$\mathbf{Y}(h)$ and $\mathbf{M}$ are diagonal, and can therefore be
+permuted. In component form, these become
+%
+\begin{equation}\label{ellipsoid-c}
+E =
+\frac{a^2(C_x + t\, U_x)^2}{(a^2+h)^2} +
+\frac{b^2(C_y + t\, U_y)^2}{(b^2+h)^2} +
+\frac{c^2(C_z + t\, U_z)^2}{(c^2+h)^2} - 1
+\end{equation}
+%
+\begin{equation}\label{normal-c}
+N =
+\frac{(C_x + t\, U_x)\, U_x}{a^2+h} +
+\frac{(C_y + t\, U_y)\, U_y}{b^2+h} +
+\frac{(C_z + t\, U_z)\, U_z}{c^2+h} \,.
+\end{equation}
+
+Solving $N=0$ using Equation (\ref{six}) for $t$ gives
+%
+\begin{equation}
+t = -\frac{ \mathbf{U}^T \mathbf{M} ( h\, \mathbf{M} + \mathbf{I} )^{-1}
+            \mathbf{C} }
+          { \mathbf{U}^T \mathbf{M} ( h\, \mathbf{M} + \mathbf{I} )^{-1}
+            \mathbf{U} }
+  = -\frac{ \mathbf{U}^T ( \mathbf{M}^{-1} + h\, \mathbf{I} )^{-1}
+            \mathbf{C} }
+          { \mathbf{U}^T ( \mathbf{M}^{-1} + h\, \mathbf{I} )^{-1}
+            \mathbf{U} }
+\end{equation}
+
+Equation (\ref{ellipsoid-c}) is quadratic in $t$ and sixth order in $h$,
+while Equation (\ref{normal-c}) is linear in $t$ and quadratic in $h$. 
+All we really need is $t$, but we can't get it without solving for $h$.
+
+Equations (\ref{five}) and (\ref{six}) can be solved using a Newton
+iteration.  Using $\frac{\partial \mathcal{L}(t)}{\partial t} =
+\mathbf{U}$ and $\frac{\partial \mathbf{Y}(h)}{\partial h} = - \mathbf{M}
+\mathbf{Y}(h)^2$, the Jacobian matrix is
+
+\begin{equation}\begin{split}
+\mathbf{J} = \left[ \begin{array}{cc}
+ \frac{\partial E}{\partial t} & \frac{\partial E}{\partial h} \\ & \\
+ \frac{\partial N}{\partial t} & \frac{\partial N}{\partial h} \\
+ \end{array} \right] =\,&
+ \left[ \begin{array}{cc}
+ \mathcal{L}(t)^T \mathbf{Y}(h)^2 \mathbf{M} \frac{\partial
+ \mathcal{L}(t)}{\partial t} &
+ \mathcal{L}(t)^T \mathbf{Y}(h) \frac{\partial Y(h)}{\partial h}
+  \mathbf{M} \mathcal{L}(t) \\
+ & \\
+ \mathbf{U}^T \mathbf{M} \mathbf{Y}\frac{\partial \mathbf{L}(t)^T}{\partial t} &
+ -2 \mathbf{U}^T \mathbf{M} \frac{\partial \mathbf{Y}(h)}{\partial h}
+  \mathcal{L}(t) \\
+  \end{array} \right] \\ \,& \\
+= \,&
+\left[ \begin{array}{cc}
+ 2 \mathcal{L}(t)^T \mathbf{Y}(h)^2 \mathbf{M} \mathbf{U} &
+ -2 \mathcal{L}(t)^T \mathbf{M}^2 \mathbf{Y}(h)^3 \mathcal{L}(t) \\ & \\
+ \mathbf{U}^T \mathbf{M} \mathbf{Y} \mathbf{U} &
+ - \mathbf{U}^T \mathbf{M}^2 \mathbf{Y}(h)^2 \mathbf{U} \\
+ \end{array} \right]
+\end{split}
+\end{equation}
+
+%=========================================================================
+\section{Approximation using an ellipsoid with slightly different axes}
+
+%-------------------------------------------------------------------------
+\subsection{Co\"ordinate approach}
+
+Define an ellipsoid $\mathcal{S}(r)$
+%
+\begin{equation}\label{spheroid}
+\frac{x^2}{a^2} + \frac{y^2}{b^2} + \frac{z^2}{c^2} = r^2
+\end{equation}
+
+and a line $\mathcal{L}(t)$
+%
+\begin{equation}\begin{split}\label{line}
+x =\,& x_1 + x_2 t \\
+y =\,& y_1 + y_2  t \\
+z =\,& z_1 + z_2 t \,.
+\end{split}\end{equation}
+
+There is a value of $r$ such that these intersect in one point specified
+by $t$, that is, $\mathcal{L}(t)$ is tangent to $\mathcal{S}(r)$.  At
+that point, the gradient of $\mathcal{S}(r)$ is orthogonal to
+$\mathcal{L}(t)$.  Substitute Equation (\ref{line}) into Equation
+(\ref{spheroid}) giving
+%
+\begin{equation}\label{spheroid-t}
+\frac{(x_1+x_2 t)^2}{a^2} + \frac{(y_1+y_2 t)^2}{b^2} +
+\frac{(z_1+z_2 t)^2}{c^2} = r^2 \,.
+\end{equation}
+
+Substitute Equation (\ref{line}) into the gradient  of Equation
+(\ref{spheroid}), take the inner product with the vector parallel to
+$\mathcal{L}(t)$, \emph{viz.} $(x_2,y_2,z_2)$, and set the result to
+zero, giving
+%
+\begin{equation}
+\frac{x_2(x_1+x_2 t)}{a^2} + \frac{y_2(y_1+y_2 t)}{b^2} +
+\frac{z_2(z_1+z_2 t)}{c^2} = 0 \,.
+\end{equation}
+
+Solve for $t$ giving
+%
+\begin{equation}\label{t}
+t = -\frac{\frac{x_1 x_2}{a^2} + \frac{y_1 y_2}{b^2} + \frac{z_1 z_2}{c^2}}
+          {\frac{x_2^2}{a^2} + \frac{y_2^2}{b^2} + \frac{z_2^2}{c^2}}
+\end{equation}
+
+Substituting this value into Equation (\ref{spheroid-t}) gives $r$, while
+substituting it into Equation (\ref{line}) gives $(x_0,y_0,z_0)$, the
+point where $\mathcal{L}(t)$ intersects $\mathcal{S}(r)$.  If $r < 1$ then
+$\mathcal{L}(t)$ intersects $\mathcal{S}(1)$ in two places.  If $r = 1$
+$\mathcal{L}(t)$ is tangent to $\mathcal{S}(1)$.  Otherwise,
+$(x_0,y_0,z_0)$ is the point on $\mathcal{L}(t)$ that is nearest to
+$\mathcal{S}(1)$, and $(x_0/r,y_0/r,z_0/r)$ is close to the point on
+$\mathcal{S}(1)$ that is closest to $\mathcal{L}(t)$.
+
+To find the point on $\mathcal{S}(1)$ that is nearest to $\mathcal{L}$,
+define the surface of $\mathcal{S}(1)$ parametrically in spherical
+co\"ordinates, where $\theta$ is reduced latitude (also called parametric
+latitude, or eccentric anomaly in astronomy -- see the figure in Section
+\ref{146-latitudes} in \h{wvs-146}):
+%
+\begin{equation}\label{spherical}\begin{split}
+x =\,& a \cos \theta \cos \lambda \\
+y =\,& b \cos \theta \sin \lambda \\
+z =\,& c \sin \theta \,.
+\end{split}\end{equation}
+
+The square of the distance, $s^2$, from ($x_0,y_0,z_0$) to
+$\mathcal{S}(1)$ as defined using Equation (\ref{spherical}) is
+%
+\begin{equation}\begin{split}
+s^2 =\,& (x-x_0)^2 + (y-y_0)^2 + (z-z_0)^2\\
+    =\,& (a\cos\lambda\cos\theta-x_0)^2+(b\sin\lambda\cos\theta-y_0)^2+(c\sin\theta-z_0)^2
+\,.
+\end{split}\end{equation}
+
+The derivatives with respect to $\lambda$ and $\theta$ are
+\begin{equation}\begin{split}\label{derivs}
+\frac{\partial s}{\partial \lambda} =\,&
+\cos^2\theta \sin2 \lambda ( b^2 - a^2 ) +
+  2 \cos\theta ( a x_0 \sin\lambda - b y_0 \cos\lambda ) \\
+\frac{\partial s}{\partial \theta} =\,&
+ \sin 2\theta ( c^2 - a^2 \cos^2\lambda - b^2 \sin^2\lambda) +
+    2 \sin\theta ( a x_0 \cos\lambda + b y_0 \sin\lambda ) -
+     2 c z_0 \cos\theta )
+\,.
+\end{split}\end{equation}
+
+Setting $b=a$ and both derivatives to zero, and solving for $\lambda$ and
+$\theta$, gives
+%
+\begin{equation}\label{on-ellipse}\begin{split}
+\lambda =\,& \tan^{-1} \frac{y_0}{x_0} \\
+\theta   =\,& \tan^{-1} \frac{g}{1 - v}
+\end{split}\end{equation}
+
+where $g = \frac{c z_0}{a \rho_0}$, $\rho_0^2 = x_0^2+y_0^2$,
+$ v^4 - 2v^3 + (1+g^2-h^2)v^2 + 2 h^2 v - h^2 = 0$,
+$h = \frac{e^2}{a \rho_0}$, and $e^2 = a^2-c^2$.
+As a sanity check, consider the case $a=c$, equivalently $h=0$.  We have
+$v^4 - 2v^3 + (1+g^2)v^2 = 0$, or $v = \{0,0,1+ig,1-ig\}$, giving for the
+real roots, as expected, $\theta = \tan^{-1}g =
+\tan^{-1}\frac{z_0}{\rho_0}$.
+
+Let $(x_2,y_2,z_2) = (a \cos\theta \cos\lambda, a \cos\theta \sin\lambda, c
+\sin\theta)$.  The point on $\mathcal{L}(t)$ nearest to $(x_2,y_2,z_2)$ is given by
+%
+\begin{equation}\label{on-line}
+t_2 = \frac{(x_2-x_1)x_2+(y_2-y_1)y_2+(z_2-z_1)z_2}
+      {x_2^2+y_2^2+z_2^2}
+\,.
+\end{equation}
+
+If $|(x_2,y_2,z_2) - (x_2,y_1,z_1)| <
+    |(x_2/r, y_1/r, z_1/r) - (x_2,y_1,z_1)|$,
+Equations (\ref{line}), (\ref{on-ellipse}) and (\ref{on-line}) can be
+iterated.
+
+If $a \neq b$, Equations (\ref{on-ellipse}) are much more complicated.
+
+%-------------------------------------------------------------------------
+\subsection{Vector approach}
+
+Define a point $\mathbf{p}(t)$ on a line $\mathcal{L}(t)$
+%
+\begin{equation}\label{p}
+\mathbf{p}(t) = \mathbf{C} + t \, \mathbf{U}
+\end{equation}
+
+where $\mathbf{C} = [ x_1, y_1, z_1 ]^T$ and
+      $\mathbf{U} = [ x_2, y_2, z_2 ]^T$.
+
+Define an ellipsoid $\mathcal{S}(r)$ with axes in co\"ordinate directions
+and center at $\mathbf{p}_0 = [x_0,y_0,z_0]$, and substitute Equation
+(\ref{p}), giving
+%
+\begin{equation}\label{E}
+\left(\mathbf{M}( \mathbf{p}(t) - \mathbf{p}_0 )\right)^T
+ \left(\mathbf{M}( \mathbf{p}(t) - \mathbf{p}_0 )\right) =
+\left(\mathbf{M}(\mathbf{C} - \mathbf{p}_0 + t \mathbf{U})\right)^T 
+\left(\mathbf{M}(\mathbf{C} - \mathbf{p}_0 + t \mathbf{U})\right) = r^2
+\end{equation}
+
+where
+%
+\begin{equation}
+\mathbf{M} = \left[ \begin{array}{ccc} \frac1a & 0 & 0 \\
+                                       0 & \frac1b & 0 \\
+                                       0 & 0 & \frac1c \\
+                    \end{array} \right]
+\end{equation}
+
+and $a$, $b$, and $c$ are the semi-minor axis lengths.  Let $\mathbf{D} =
+\mathbf{C} - \mathbf{p}_0$.  Computing the gradient of Equation (\ref{E})
+gives
+%
+\begin{equation}
+\frac12\, \mathbf{G} =
+ \mathbf{M}^T \mathbf{M} ( \mathbf{p}(t) - \mathbf{p}_0 ) =
+ \mathbf{M}^T \mathbf{M} (\mathbf{D} + t\, \mathbf{U}) \,.
+\end{equation}
+
+There is a value of $r$ such that $\mathcal{L}(t)$ and $\mathcal{S}(r)$
+intersect in one point.  At this point, $\mathbf{G}$ is orthogonal to
+$\mathbf{U}$, i.e.,
+%
+\begin{equation}
+\frac12\, \mathbf{G} \cdot \mathbf{U} =
+ \left(\mathbf{M} \mathbf{p}(t)\right)^T \mathbf{M}\mathbf{U} =
+ \left(\mathbf{M} \mathbf{(\mathbf{D} +
+  t \mathbf{U})}\right)^T \mathbf{M}\mathbf{U} =
+ \left(\mathbf{M} \mathbf{D}\right)^T \mathbf{M}\mathbf{U} +
+ t \left(\mathbf{M} \mathbf{U}\right)^T \mathbf{M}\mathbf{U}
+  = 0 \,.
+\end{equation}
+
+Solving for $t$ we have
+%
+\begin{equation}\label{tv}
+t =
+-\frac{\left(\mathbf{M}\mathbf{D}\right)^T
+       \left(\mathbf{M}\mathbf{U}\right)}
+      {\left(\mathbf{M}\mathbf{U}\right)^T
+       \left(\mathbf{M}\mathbf{U}\right)} =
+-\frac{\frac{(x_1-x_0) x_2}{a^2} + \frac{(y_1-y_0) y_2}{b^2} +
+       \frac{(z_1-z_0) z_2}{c^2}}
+      {\frac{x_2^2}{a^2} + \frac{y_2^2}{b^2} + \frac{z_2^2}{c^2}} \,.
+\end{equation}
+
+Substituting Equation (\ref{tv}) into Equation(\ref{E}) gives a value for
+$r$, while substituting it into Equation (\ref{p}) gives the point
+$\mathbf{p}(t)$ where $\mathcal{L}(t)$ intersects $\mathcal{S}(r)$.  If $r
+< 1$, $\mathcal{L}(t)$ intersects $\mathcal{S}(1)$; otherwise
+$\mathbf{p}(t)$ is a point on $\mathcal{L}(t)$ that is nearest to
+$\mathcal{S}(1)$.
+
+Let $\mathbf{N} = \mathbf{p}(t) + u \, \mathbf{G}$ be a normal to
+$\mathcal{S}(1)$ that intersects $\mathbf{p}(t)$.  Then the point on
+$\mathcal{S}(1)$ that is close to the nearest point on $\mathbf{p}(t)$ is
+the point where $\mathbf{N}$ intersects $\mathcal{S}(1)$.  This is
+described in wvs-131 \hr{wvs-131}.
+
+%=========================================================================
+\section{Approach based upon finding an intersection}
+
+Expanding Equation (\ref{E}) to produce a polynomial in $t$, we have
+
+\begin{equation}\label{t-poly}
+(\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, t^2 +
+2 (\mathbf{M} \mathbf{D} )^T \cdot (\mathbf{M}\, \mathbf{U})\, t +
+(\mathbf{M} \mathbf{D} )^T \cdot (\mathbf{M} \mathbf{D} ) = r^2 \,.
+\end{equation}
+
+This is the same as Equation (\ref{131-five}) in \h{wvs-131}, with $s$
+replaced by $t$, and the right-hand side replaced by $r^2$.  This equation
+has one solution for $t$, i.e., $\mathcal{L}(t)$ is tangent to
+$\mathcal{S}(r)$, if and only if its discriminant is zero, \emph{viz}.
+
+\begin{equation}
+\left( 2 (\mathbf{M} \mathbf{D} )^T \cdot (\mathbf{M}\, \mathbf{U}) \right)^2
+- 4 (\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, 
+\left[ (\mathbf{M} \mathbf{D} )^T \cdot (\mathbf{M} \mathbf{D} ) - r^2 \right]
+ = 0 \,.
+\end{equation}
+
+Assuming the discriminant is zero, the solution of Equation (\ref{t-poly})
+is
+
+\begin{equation}\label{tv2}
+t =
+-\frac{\left(\mathbf{M}\mathbf{D}\right)^T
+       \left(\mathbf{M}\mathbf{U}\right)}
+      {\left(\mathbf{M}\mathbf{U}\right)^T
+       \left(\mathbf{M}\mathbf{U}\right)} \,.
+\end{equation}
+
+This is the same solution as Equation (\ref{tv}).
+
+Having $t$, one can calculate $\mathbf{p}(t)$ using Equation (\ref{p}). 
+Assuming $\mathbf{C}$ and $\mathbf{U}$ are represented using ECR, this
+gives $\mathbf{p}(t)$ in ECR.  Fukushima's method (\h{wvs-159}) can be
+used to determine geodetic co\"ordinates $(\lambda,\phi,h)$.
+
+Parenthetically, the value of $r$ for which the discriminant is zero is
+given by
+
+\begin{equation}\label{discriminant-solution}
+r^2 = \det(\mathbf{M})^2
+      \frac{ \left( \mathbf{M}^{-1} \mathbf{N} \right)^T \cdot
+             \left( \mathbf{M}^{-1} \mathbf{N} \right) }
+           { \left( \mathbf{M}\mathbf{U} \right )^T \cdot
+                 \left( \mathbf{M}\mathbf{U} \right ) }
+    = \det(\mathbf{M})^2
+      \frac{ | \mathbf{M}^{-1} \mathbf{N} |^2}
+           { | \mathbf{M}\mathbf{U} |^2 }
+    = \left( \det(\mathbf{M}) \, \frac{ | \mathbf{M}^{-1} \mathbf{N} | }
+                        { | \mathbf{M} \mathbf{U} | } \right)^2 \,,
+\end{equation}
+
+where $\mathbf{N} = \mathbf{C}\times\mathbf{U}$ and we used the identity
+
+\begin{equation}
+| \mathbf{a} \times \mathbf{b} |^2
+ = |\mathbf{a}|^2 \, |\mathbf{b}|^2 \sin^2\theta
+ = |\mathbf{a}|^2 \, |\mathbf{b}|^2 (1 - \cos^2\theta )
+ = |\mathbf{a}|^2 \, |\mathbf{b}|^2 - (\mathbf{a}\cdot\mathbf{b})^2 \,.
+\end{equation}
+
+For an oblate spheroid, if M is written as
+
+\begin{equation}
+\mathbf{M} = \left[ \begin{array}{ccc}
+ 1 & 0 & 0 \\
+ 0 & 1 & 0 \\
+ 0 & 0 & \sqrt{1-e^2} \\
+\end{array} \right] \,,
+\end{equation}
+
+where $e = \sqrt{1-\frac{c^2}{a^2}}$, the eccentricity of an oblate
+spheroid, and $\mathcal{S}(r)$ is written as
+
+\begin{equation}
+( \mathbf{M} \mathbf{D} )^T ( \mathbf{M} \mathbf{D} ) = r^2 \,,
+\end{equation}
+
+then the value of $r$ is given by
+
+\begin{equation}\label{discriminant-solution-oblate}
+r^2 = \frac{ \left( \mathbf{M}^{-1} \mathbf{N} \right)^T \cdot
+             \left( \mathbf{M}^{-1} \mathbf{N} \right) }
+           { (1-e^2) \left( \mathbf{M}\mathbf{U} \right )^T \cdot
+                 \left( \mathbf{M}\mathbf{U} \right ) }
+    = \frac{ | \mathbf{M}^{-1} \mathbf{N} |^2}
+           { (1-e^2) | \mathbf{M}\mathbf{U} |^2 }
+    = \left( \frac{a}{c} \, \frac{ | \mathbf{M}^{-1} \mathbf{N} | }
+                        { | \mathbf{M} \mathbf{U} | } \right)^2 \,,
+\end{equation}
+
+The value of $r$ was not needed above. Incidentally, if $r<a$,
+$\mathcal{L}(t)$ intersects the Earth (see \h{wvs-131}).
+
+% %=========================================================================
+% \subsection{When the ellipsoid is an oblate spheroid}
+% 
+% The equation of an oblate spheroid, i.e., $b=a$, using geodetic
+% co\"ordinates (Equation (\ref{146-geodetic}) in \h{wvs-146}) is
+% 
+% \begin{equation}\label{geodetic}
+% \mathbf{r}(\lambda,\phi) =
+% \frac{a}{\sqrt{1-e^2\sin^2\phi}}
+% \left[ \begin{array}{l}
+% \cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ (1-e^2) \sin\phi \\
+% \end{array} \right] \,,
+% \end{equation}
+% 
+% where $e^2 = 1-\frac{c^2}{a^2}$ is the square of the eccentricity.
+% 
+% Because every ellipsoid $\mathcal{S}(r)$ with $b=a$ has the same
+% eccentricity, the position vectors are parallel, their (unit) gradients
+% (Equation (\ref{146-unit-gradient}) in \h{wvs-146}),
+% 
+% \begin{equation}
+% \mathbf{g} = \left[ \begin{array}{l}
+%  \cos\phi \cos\lambda \\ \cos\phi \sin\lambda \\ \sin\phi \\
+% \end{array} \right]
+% \end{equation}
+% 
+% are parallel, and the geodetic angular co\"ordinates of the point on the
+% ellipsoid with semi-major axis $a \, (r=1)$ that is nearest to the line
+% are the same as the geodetic angular co\"ordinates of the tangent point to
+% the ellipsoid with semi-major axis $a'>a\,(r<1)$.
+% 
+% The position $\mathbf{p}$ on the line that is nearest to the ellipsoid can
+% be calculated by substituting $t$ from Equation (\ref{tv2}) into
+% Equation (\ref{line-1}).  The geodetic angles can be calculated from
+% $\mathbf{p} = \mathbf{r}$ using Equation (\ref{geodetic}), \emph{viz}.
+% 
+% \begin{equation}\begin{split}
+% \phi = \,& \tan^{-1} \frac{p_3}{(1-e^2) \sqrt{p_1^2 + p_2^3}} \\[5pt]
+% \lambda = \,& \tan^{-1} \frac{p_2}{p_1}\,.
+% \end{split}\end{equation}
+% 
+% Substituting these values into Equation (\ref{geodetic}) allows to
+% calculate the nearest distance $|\mathbf{p}-\mathbf{r}|$ between the line
+% and the ellipsoid.
+
+\label{lastpage}
+\end{document}
+% $Id$
+
+% $Log$
+% Revision 1.10  2020/04/17 22:49:07  vsnyder
+% Add identity for norm of cross product
+%
+% Revision 1.9  2020/04/14 00:54:28  vsnyder
+% Improve discussion of value of r for oblate spheroid case
+%
+% Revision 1.8  2020/04/09 02:01:01  vsnyder
+% Remove final subsection because it was (mostly) wrong. Add remark to
+% compute geodetic coordinates from ECR using Fukushima's method. Include
+% correct material from final subsection.
+%
+% Revision 1.7  2020/03/28 04:12:29  vsnyder
+% Correct multiply defined label
+%
+% Revision 1.6  2020/03/28 04:08:57  vsnyder
+% Add method based upon intersection
+%
+% Revision 1.5  2019/05/22 02:16:10  vsnyder
+% Add Jacobian{E,N}{t,h}
+%
+% Revision 1.4  2016/09/02 20:41:06  vsnyder
+% Correct equation for ellipsoid in Section 2
+%
+% Revision 1.3  2016/05/19 01:15:09  vsnyder
+% Include three exact methods in addition to the approximation
+%
+% Revision 1.2  2016/03/02 02:26:00  vsnyder
+% Add vector derivation
+%
+% Revision 1.1  2008/06/11 20:14:52  vsnyder
+% Initial commit

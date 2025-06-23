@@ -1,0 +1,113 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-065}
+\newcommand{\docdate}{7 December 2007}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Summary of Mie parameters\\
+From: \>Van Snyder\\
+Reference: \>wvs-058
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Compute
+\begin{equation}\begin{split}
+\beta_{c\_e} =\,& \pi \int_0^\infty n(r) r^2 \xi_e(r)\, \text{d}r \text{ and}\\
+\beta_{c\_s} =\,& \pi \int_0^\infty n(r) r^2 \xi_s(r)\, \text{d}r
+\end{split}\end{equation}
+where $\xi_e(r)$ and $\xi_s(r)$ are
+%
+\begin{equation}
+\xi_s = \frac2{\chi^2} \sum_{n=1}^{n_\text{cut}}
+      (2 n + 1 ) ( |a_n|^2 + |b_n|^2 ) \text{ and }
+\xi_e = \frac2{\chi^2} \sum_{n=1}^{n_\text{cut}}
+      (2 n + 1 ) \Re( a_n + b_n )\,,
+\end{equation}
+%
+$\chi = \frac{2 \pi r}{\lambda}$, $r$ is particle radius,
+%
+$\lambda$ is wavelength,
+\begin{equation}
+a_n = \frac{(A_n/m + n/\chi) \Re W_n - \Re W_{n-1}}
+           {(A_n/m + n/\chi) W_n - W_{n-1}}\,, \,
+b_n = \frac{(m A_n + n/\chi) \Re W_n - \Re W_{n-1}}
+           {(m A_n + n/\chi) W_n - W_{n-1}}\,,\\
+\end{equation}
+%
+$W_n = \chi h^{(2)}_n (\chi)$, $h^{(2)}_n (\chi)$ is the spherical
+Hankel function of the second kind and order $n$ = $j_n(\chi) -
+i y_n(\chi)$, $j_n(\chi)$ and $y_n(\chi)$ are spherical Bessel functions
+of the first and second kind, respectively,
+%
+\begin{equation}
+A_n = -\frac{n}{m \chi} + \frac{j_{n-1}(m \chi)}
+                               {j_n(m \chi)}\,,
+\end{equation}
+%
+$m = \sqrt{\epsilon}$ is the complex refractive index, and $\epsilon$ is
+the complex dielectric constant.
+
+Let $D = 2r$.  Then
+\begin{equation}\begin{split}
+ n(D) =\,& \frac1{\rho_{\text{ice}}} \left\{
+           N_1 D \exp(-\alpha D) +
+            \frac{N_2}D \exp \left[ -\frac12 \left(
+              \frac{\log(D/D_0) - \mu}\sigma \right)^2\right] \right\}
+       \text{ where} \\
+ N_1 =\,& \frac{\text{IWC}_{<100} \alpha^5}{4 \pi}
+ \text{ and }
+ N_2 = \frac6{\sqrt{2 \pi^3}}
+       \frac{\text{IWC}_{>100}}
+            {D_0 \sigma \exp( 3 \mu + 4.5 \sigma^2)}\,,
+\end{split}\end{equation}
+%
+\begin{equation}\begin{split}
+ & \text{IWC}_{<100} = \min[\text{IWC},
+                            0.252(\text{IWC}/\text{IWC}_0)^{0.837}]\,, \\
+ & \text{IWC}_{>100} = \text{IWC} - \text{IWC}_{<100}\,, \\
+ & \alpha = -4.99\times 10^{-3} + 0.0494
+              \log_{10} (\text{IWC}_{<100}/\text{IWC}_0)\,, \\
+ & \mu = (5.2 + 0.0013 T) + (0.026 - 1.2 \times 10^{-3}T)
+          \log_{10} (\text{IWC}_{>100}/\text{IWC}_0)\,, \\
+ & \sigma = (0.47 + 2.1 \times 10^{-3}T) + (0.018 - 2.1 \times 10^{-4} T)
+             \log_{10} (\text{IWC}_{<100}/\text{IWC}_0)\,,
+\end{split}\end{equation}
+%
+IWC is the ice water content of the atmosphere in g/m$^3$, IWC$_0$ = 1 g/m$^3$,
+$D_0 = 1 \mu$m, $\rho_{\text{ice}} = 0.91$ g/m$^3$, and $T$ is the atmospheric
+temperature in Kelvins.
+
+\label{lastpage}
+\end{document}
+% $Id$

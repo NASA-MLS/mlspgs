@@ -1,0 +1,122 @@
+\documentclass[11pt,twoside]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+\evensidemargin -0.25in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\settowidth{\hW}{\bf wvs-016r2}
+%\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    8 September 2003\hfill\parbox[t]{\hW}{{\bf wvs-016r2}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Mike, Bill, Nathaniel\\
+Subject: \>Alternative formulation for polarized radiance derivatives\\
+From: \>Fred Krogh, by way of Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+For polarized radiative transfer, we want to compute
+
+\begin{equation}\label{begin}
+ {\bf I} = \sum_{i=1}^n \mathbf{\tau}_i \Delta B_i,
+ \text{ where }
+ \mathbf{\tau}_i = \mathbf{P}_i \mathbf{P}_i^\dagger,~
+ \mathbf{P}_i =  \prod_{k=2}^i \mathbf{E}_k \text{ and }
+ \mathbf{E}_i =  \exp \left( - \int_{s_i}^{s_{i-1}} \mathbf{G} (s^\prime)
+               \text{d} s^\prime \right )
+\end{equation}
+
+and its derivative
+
+\begin{equation}\label{deriv}
+  \frac{\partial \bf I}{\partial x} = \sum_{i=1}^n
+   \left [ \frac{\partial {\bf \tau}_i}{\partial x} \Delta B_i +
+           {\bf \tau}_i \frac{\partial \Delta B_i}{\partial x}\right ],
+   \text{ where from equation (\ref{begin}) }
+  \frac{\partial {\bf \tau}_i}{\partial x} =
+   \frac{\partial {\bf P}_i {\bf P}_i^\dagger}{\partial x} \text{ .}
+\end{equation}
+
+$\mathbf{E}$ is a layer quantity.  $\mathbf{E}_1$ is the incremental
+transmissivity from the spacecraft to the top of the atmosphere, which is
+identity.  Therefore, we start with $\mathbf{E}_2$.
+
+Applying Laplace's differentiation rule to $\mathbf{P}_i = \prod_{k=2}^i
+{\bf E}_k$, we had written
+
+{\begin{equation}\label{mess}
+ \begin{split}
+  \frac{\partial\mathbf{\tau}_i}{\partial x}
+  = & \sum_{k=2}^i \left [ \mathbf{E}_2 \dots \mathbf{E}_{k-1}
+       \frac{\partial\mathbf{E}_k}{\partial x} \mathbf{E}_{k+1} \dots
+       {\bf E}_i {\bf P}_i^\dagger +
+       {\bf P}_i {\bf E}_i^\dagger \dots {\bf E}_{k+1}
+       \frac{\partial\mathbf{E}_k^\dagger}{\partial x}
+       \mathbf{E}_{k-1}^\dagger \dots \mathbf{E}_2^\dagger \right ]
+\\
+  = & \sum_{k=2}^i \left [ {\bf P}_{k-1}
+       \frac{\partial\mathbf{E}_k}{\partial x} \mathbf{P}_k^{-1} {\bf \tau}_i
+     + \mathbf{\tau}_i^\dagger \mathbf{P}_k^{-\dagger}
+       \frac{\partial\mathbf{E}_k^\dagger}{\partial x} \mathbf{P}_{k-1}^\dagger \right ]
+       \text{ .}
+ \end{split}
+\end{equation}
+
+If we instead write $\mathbf{P}_i = \mathbf{P}_{i-1} \mathbf{E}_i$, with
+$\mathbf{P}_1 = \mathbf{1}$ (we use $\mathbf{1}$ for the identity matrix
+because $\mathbf{I}$ is the radiance), we have
+
+\begin{equation}\label{dP}
+ \frac{\partial\mathbf{P}_i}{\partial x} =
+  \frac{\partial\mathbf{P}_{i-1}}{\partial x} \mathbf{E}_i +
+   \mathbf{P}_{i-1} \frac{\partial\mathbf{E}_i}{\partial x}
+\end{equation}
+
+(keep in mind that $\mathbf{P}_1 = \mathbf{1}$ so
+$\frac{\partial\mathbf{P}_1}{\partial x} = \mathbf{0}$).  Differentiating
+$\mathbf{\tau}_i$ without expanding $\mathbf{P}_i$ gives
+
+\begin{equation}\label{final}
+ \frac{\partial\mathbf{\tau}_i}{\partial x} =
+  \frac{\partial\mathbf{P}_i\mathbf{P}_i^\dagger}{\partial x} =
+  \frac{\partial\mathbf{P}_i}{\partial x} \mathbf{P}_i^\dagger +
+  \mathbf{P}_i \frac{\partial\mathbf{P}_i^\dagger}{\partial x} =
+  \frac{\partial\mathbf{P}_i}{\partial x} \mathbf{P}_i^\dagger +
+  \mathbf{P}_i \left(\frac{\partial\mathbf{P}_i}{\partial x}\right)^\dagger =
+  \frac{\partial\mathbf{P}_i}{\partial x} \mathbf{P}_i^\dagger +
+  \left(\frac{\partial\mathbf{P}_i}{\partial x} \mathbf{P}_i^\dagger\right)^\dagger
+  \text{ .}
+\end{equation}
+
+This is a much simpler expression than equation (\ref{mess}), and doesn't
+involve calculation of $\mathbf{P}_k^{-1}$.  There is also some speculation
+that equation (\ref{mess}) is unstable because of the $\mathbf{P}_k^{-1}$;
+using equations (\ref{dP}) and (\ref{final}) avoids this question altogether.
+
+As expected, $\frac{\partial\tau_i}{\partial x}$ is Hermitian, so we only
+need to compute the real parts of the diagonal elements, and one off-diagonal
+element.
+
+\label{lastpage}
+\end{document}
+% $Id$

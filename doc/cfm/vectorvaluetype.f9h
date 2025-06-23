@@ -1,0 +1,21 @@
+type VectorValue_T
+    type (QuantityTemplate_T) :: TEMPLATE ! Template for this quantity.
+    integer :: index            ! Index of this quantity into vector database
+    real(r8), dimension(:,:), pointer :: VALUES => NULL() ! The dimensions of
+    ! VALUES are Auxiliary coordinates (or 1) * Frequencies (or 1) * Vertical
+    ! Coordinates (or 1), and Horizontal Instances (scan or profile or 1). 
+    ! These are taken from (template%noAux * template%noChans *
+    ! template%noSurfs, template%noInstances).
+    character, dimension(:,:), pointer :: MASK => NULL() ! MASK is used to
+    ! control whether elements of vectors are of interest. If MASK is not
+    ! associated, every element is of interest.  Otherwise,the dimensions of
+    ! MASK are the same as VALUES.  Bits of MASK(i,j) are used to determine
+    ! what is not interesting.  Zero means something about VALUES(i,j) is
+    ! interesting, and one means it is not.  The low-order bit is used for
+    ! linear algebra.  Other bits can be used for other purposes.
+    ! Actually the mask bits are got at from the ichar(mask)
+    ! Inversely, given the integer representation of the bits, we get the mask
+    ! by mask = char(int)
+    integer :: label = 0        ! Not used
+end type VectorValue_T
+

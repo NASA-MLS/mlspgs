@@ -1,0 +1,19 @@
+;$Id$
+;; calladvancedhiresmodel-r1
+;; Take the current 'state' and produces a full forward
+;; model estimate of bands 1, 22, 32, 34
+
+;; Setup the vectors
+begin Fill
+  Transfer, source=state, destination=r1X_HR
+end Fill
+
+;; Do a sids calculation
+begin Retrieve
+  !ifdef(flagSkipAdvancedSids,{},{
+  sids, fwdModelIn=state, fwdModelOut=[r1Y_HR], $
+        forwardModel=[r1LSetupModel_HR,r1RSetupModel_HR,r1PSetupModel_HR]})
+end Retrieve
+
+;$Log$
+

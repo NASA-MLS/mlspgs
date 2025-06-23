@@ -1,0 +1,250 @@
+!divert(-1)
+; $Id$
+;; Copy those quantities that were stored
+;; using DirectWrite commands in Join sections during the loop of chunks
+;; to individual files.
+!divert!dnl
+
+;; Do we need ascend/descend info?
+!ifdef(flagAscendDescend,{
+;; We ought to have a different quantity type for ascend/descend instead of
+;; resorting to this trickery
+begin Fill
+  Fill, quantity=aPriori.surfaceType, method=ascenddescend, $
+    ptanQuantity=apriori.ptanGHz
+end Fill
+begin Join
+  Label, quantity=aPriori.surfaceType, label='Ascend(+1)Descend(-1)'
+  DirectWrite, hdfVersion=5, $
+  type=l2dgg, source=aPriori.surfaceType
+end Join
+;; What if we wish to Copy APriori values to attributes?
+!define(copyAscDescToAttributei, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='Ascend(+1)Descend(-1)', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', $
+    /toAttribute
+})
+})
+begin Output
+
+;; We might make up a bunch of m4 flags to control the next two things
+Sleep, time=10000us
+Catenate
+
+;; These macros relate to storing standard products
+;; Special cases are handled by lists ending with 'StdProds' mostly
+;; Some are stored at high resolution: HiResStdProds
+;; Some are stored accompanied by a column abundance: ColumnStdProds
+;; Some are stored w/o a column abundance: NonColumnStdProds
+!define(HiResStdProds,{H2O, Temperature, RHI, GPH})!dnl
+;; We're planning on only O3 accompanying its column
+!ifdef(ColumnStdProds,{},{!define(ColumnStdProds,{O3})})!dnl
+;; (OH, IWC and RHI will be treated separately below)
+!ifdef(NonColumnStdProds,{},{!define(NonColumnStdProds,{BrO,CH3CN,CH3Cl,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,SO2,Temperature,GPH})})!dnl
+
+!ifdef(flagCopyStandardProducts,{
+
+   ;;  ----- This idea, despite good intentions, proved disastrous when
+   ;;      Band 11 was off starting Jan 10 2010
+   ;;      We'll have to come up with a better system for detecting skipped phases
+   ;;      ;; Don't copy anything if we skipped some phases
+   ;;      BrOEmpty: Boolean, formula="false"
+   ;;      isSwathEmpty, type=l2dgg, swath='BrO-StdProd', file='DGG', Boolean=BrOEmpty
+   ;;      Dump, Boolean=BrOEmpty
+   ;;      Skip, Boolean=BrOEmpty  ;; No need if we skipped the BrO phase
+;; Here we carry out the idea of copying standard Products out of the
+;; DGG file and into their "proper" l2gp files
+;;
+;; for this to work, we must have added an invocation of
+;; storeStandardProductWithColumn or
+;; storeStandardProductWithoutColumn to the template
+;; l2cf for each of the Standard Products
+;; Otherwise, Output will complain "Swath not found"
+;; and the run will stop
+;;
+
+!define(copyStandardProductWithoutColumn, {!dnl
+!define(StdProductPhase,{$1-!phase$1})!dnl
+Copy, $
+!ifdef(flagNRT,
+{  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='!StdProductPhase', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1', $
+    /create
+},
+{  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1', $
+    /create
+})!dnl
+})
+;; What if we wish to Copy APriori?
+!define(copyApriori, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName($1)'
+})
+
+!forall(copyStandardProductWithoutColumn,!NonColumnStdProds)
+!ifdef(flagCopyAPiori,{
+!forall(copyApriori,!NonColumnStdProds)
+})
+
+!ifdef(flagNRT,{
+!ifdef(flagSkipOtherStdProds,{
+},{
+;; OK, seem to have flagNRT, plus we want other std prods
+!forall(copyStandardProductWithoutColumn,!ColumnStdProds)
+!forall(copyApriori,!ColumnStdProds)
+})
+},{
+
+!define(copyStandardProductWithColumn, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd column,$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1 column,$1', $
+    /create
+})
+;; This is the way we'll do it if we store both column abundances
+;; (one found using mls tropopause, the other using the GMAO tropopause)
+!define(copyStandardProductWith2Columns, {Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='!DGGFileName', swath='$1-StdProd column-MLS,$1-StdProd column-GEOS5,$1-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName($1)', rename='$1 column-MLS,$1 column-GEOS5,$1', $
+    /create
+})
+
+!ifdef(flagUseGEOS5PTrop,{!dnl
+!forall(copyStandardProductWith2Columns,!ColumnStdProds)
+},{!dnl
+!forall(copyStandardProductWithColumn,!ColumnStdProds)
+})
+!ifdef(flagCopyAPiori,{
+!forall(copyApriori,!ColumnStdProds)
+})
+
+;; --------------------------------- Other files ---
+;; The IWC, RHI files require special treatment
+;; In each case we copy two related swaths into the same l2gp file
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='CloudTopPressure-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(CloudTopPressure)', rename='CloudTopPressure', $
+    /create
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='IWC-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(IWC)', rename='IWC', $
+    /create
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='IWP-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(IWC)', rename='IWP'
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='RHI-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)', rename='RHI', $
+    /create
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='UTRHI-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)', rename='UTRHI'
+
+!ifdef(flagCopyAPiori,{
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='RHI-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)'
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='UTRHI-APriori', inputtype=l2dgg, $
+    file='!l2gpFileName(RHI)'
+
+})
+
+!ifdef(flagCopyBothHNO3,{
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='HNO3-190', inputtype=l2dgg, $
+    file='!l2gpFileName(HNO3)'
+
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='HNO3-240', inputtype=l2dgg, $
+    file='!l2gpFileName(HNO3)'
+
+})
+
+!ifdef(flagUseGEOS5PTrop,
+{!dnl
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='WMOTPPressure-StdProd-MLS', inputtype=l2dgg, $
+    file='!l2gpFileName(Temperature)', rename='WMOTPPressure-MLS'
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='WMOTPPressure-StdProd-GEOS5', inputtype=l2dgg, $
+    file='!l2gpFileName(Temperature)', rename='WMOTPPressure-GEOS5'
+},{!dnl
+Copy, type=l2gp, hdfVersion=!hdfVersion, $
+    inputFile='!DGGFileName', swath='WMOTPPressure-StdProd', inputtype=l2dgg, $
+    file='!l2gpFileName(Temperature)', rename='WMOTPPressure'
+
+})
+!ifdef(flagAscendDescend,{
+!forall(copyAscDescToAttributei,!NonColumnStdProds,!ColumnStdProds,IWC)
+})
+})
+end Output
+
+;; Separate OH into its own section
+;; so it may be skipped for days when Band15 is off
+begin Output
+
+  ;; Copy OH swath out to l2gp file unless empty
+  Band15OFFALLDAY: Boolean, formula="false"
+  isSwathEmpty, type=l2dgg, swath='OH-StdProd', file='!DGGFileName', Boolean=Band15OFFALLDAY
+  Dump, Boolean=Band15OFFALLDAY
+  Skip, Boolean=Band15OFFALLDAY  ;; No need to create OH if THz is off
+  !copyStandardProductWithoutColumn({OH})
+  !ifdef(flagCopyAPiori,{
+    !copyApriori(OH)
+  })
+end Output
+
+;; Add ExtraNotes attribute if OH swath empty
+begin Output
+  SOMEGOODOH: Boolean, formula="not Band15OFFALLDAY"
+  Dump, Boolean=SOMEGOODOH
+  Skip, Boolean=SOMEGOODOH  ;; Don't write attribute if some OH good
+  WriteFileAttribute, attrName='ExtraNotes', attrValue='No good OH profiles', $
+    type=l2dgg, file='!DGGFileName'
+  WriteFileAttribute, attrName='ExtraNotes', attrValue='No good OH profiles', $
+    type=l2aux, file='!DGMFileName'
+})
+end Output
+!divert(-1)
+; $Log$
+; Revision 1.9  2017/05/17 22:28:04  pwagner
+; flagSkipOtherStdProds can be used by (b) task of dual-l2 nrt
+;
+; Revision 1.8  2016/06/15 22:04:29  pwagner
+; We organize control flow around flagNRT more rationally
+;
+; Revision 1.7  2014/12/10 23:07:20  pwagner
+; Asc/Desc quantity alculations needs ptanQuantity
+;
+; Revision 1.6  2014/11/19 21:33:51  pwagner
+; Automatically write ExtraNotes attribute if no good OH profiles
+;
+; Revision 1.5  2014/10/01 00:09:48  pwagner
+; Changes used in producing v4.13 l2cf
+;
+; Revision 1.4  2014/08/20 20:23:23  pwagner
+; Comment-out the BrOEmpty-dependent Skip; a better idea is needed
+;
+; Revision 1.3  2014/04/16 00:56:47  pwagner
+; May copy both HNO3 swaths to stdprod file
+;
+; Revision 1.2  2014/03/13 20:34:11  pwagner
+; Fixed error that caused toolkitless runs
+;
+; Revision 1.1  2013/10/18 22:49:38  pwagner
+; Split outputstate.l2cf into 3 files
+;
+!divert!dnl

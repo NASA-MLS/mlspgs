@@ -1,0 +1,195 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-081r2}
+\newcommand{\docdate}{27 June 2008}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Alyn\\
+Subject: \>Variable projection applied to retrieval\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+The solution of the radiative transfer equation, in quadrature form, after
+integrating by parts, is
+%
+\begin{equation}\label{one}
+I \approx \sum_i \frac{\partial B_i(T_i)}{\partial s_i}
+      \mathcal{T}_i (T_i, f_i^k)\, \Delta s_i \approx
+    \sum_i \Delta B_i (T_i)\, \mathcal{T}_i (T_i, f_i^k)\,,
+\end{equation}
+%
+where $I$ is radiance, $i$ is the index of a point on the ray, $B_i$ is the
+Planck function, $T_i$ is temperature, $f_i^k$ is the mixing ratio of the
+$k^{\text{th}}$ species, and $\mathcal{T}_i$ is given by (again in quadrature
+form):
+%
+\begin{equation}\label{two}
+ \mathcal{T}_i (T_i, f_i^k) \approx
+   \exp \left( - \sum_{j=2}^i \Delta \delta_{j \rightarrow j-1}
+                                           ( T_j, f_j^k)\, \Delta s_j
+        \right )\,,
+\end{equation}
+%
+where $j$ is the index of a point on the ray and $\Delta \delta_{j \rightarrow
+j-1}$ is given by
+%
+\begin{equation}\label{three}
+ \Delta \delta_{j \rightarrow j-1} ( T_j, f_j^k) = \sum_k f_j^k \beta ( T_j )\,,
+\end{equation}
+%
+where $\beta$ is a nonlinear function of $T$.
+
+It is desired to solve for $T$ and $f^k$ on a grid, through which Equation
+(\ref{one}) is integrated along a very large number of paths.  We use linear
+interpolation from the grid to the integration path. The solution method
+consists of the following steps.
+
+\begin{enumerate}
+
+\item Given an initial guess for $T_i$, evaluate $\Delta B_i (T_i)$.
+
+\item \label{second}Given measured values $\hat I$ for $I$ at several
+  frequencies and several viewing angles, and $\Delta B_i (T_i)$, solve
+  Equation (\ref{one}) for $\mathcal{T}_i (T_i, f_i^k)$.  This is a linear
+  problem.
+
+\item \label{third}Take the logarithm of Equation (\ref{two}) and solve for
+  $\Delta \delta_{j \rightarrow j-1} ( T_j, f_j^k)$.  This is a linear problem.
+
+\item\label{fourth} Solve Equation (\ref{three}) for $f_j^k$ and $T_j$.  This
+  is a \emph{separable} nonlinear problem in which $f_j^k$ appears linearly and
+  $T_j$ appears nonlinearly.  Separable problems are best solved by using the
+  \emph{Variable Projection}\footnote{G. Golub and V. Pereyra, ``Separable
+  nonlinear least squares: the variable projection method and its
+  applications,'' Technical Report SCCM-02-07, Department of Computing Science,
+  Stanford University,  Stanford, CA 94305, USA, July 2002. {\tt
+  http://www-sccm.stanford.edu/pub/sccm/sccm02-07.ps.gz}.} method, which keeps
+  the linear variables $(f_j^k)$ on a solution consistent with the nonlinear
+  variables $(T_j)$ at every iteration, thereby converging much more quickly
+  and reliably.
+
+\item\label{fifth} Using the newly-calculated values of $T_i$, evaluate
+  $\Delta B_i (T_i)$ and then Equation (\ref{one}).
+
+\item If $| \hat I - I|$ is too large, repeat from step \ref{second}.
+
+\end{enumerate}
+
+Because of the logarithm in step \ref{third}, the statistics of the solution are
+log-normal instead of normal.  The covariance matrix of the solution has to be
+interpreted in this context.
+
+I have not given any thought to antenna convolution, frequency averaging, or
+sideband folding.  At least the first two of these are linear, so incorporating
+them shouldn't be difficult.
+
+An alternative that might converge more rapidly is to replace step \ref{fifth}
+above with the following steps.
+
+\begin{enumerate}
+  \makeatletter
+  \renewcommand{\theenumi}{\ref{fifth}\@alph\c@enumi}
+  \makeatother
+
+\item\label{fifth.a} Evaluate $\Delta B_i(T_i)$ and $\frac{\partial \Delta
+  B_i(T_i)}{\partial T_i}$ using the new values of $T_i$ from step \ref{fourth}.
+
+\item Use $\frac{\partial \delta_{j \rightarrow j-1}}{\partial T_j}$, which are
+  necessarily calculated in step \ref{fourth}, together with $\Delta B_i$ and
+  $\frac{\partial \Delta B_i(T_i)}{\partial T_i}$ evaluated in step
+  \ref{fifth.a}, to calculate $\frac{\partial I}{\partial T_i}$ and a new value
+  of $I$.
+
+\item\label{fifth.c} Solve $\frac{\partial I}{\partial T_i}\, \delta T_i \sim
+  \hat I - I$ for $\delta T_i$.
+
+\item Replace $T_i$ from step \ref{fourth} by $T_i + \delta T_i$.
+
+\item Evaluate $\Delta B_i(T_i)$.
+
+\item\label{fifth.f} Use $\delta T_i$ from step \ref{fifth.c} to re-evaluate
+  $\beta(T_j) \leftarrow \beta(T_j) + \frac{\partial \beta(T_j)}{\partial
+  T_j}\, \delta T_j$ (evaluating $\beta(T_j)$ is very expensive). 
+  $\frac{\partial \beta(T_j)}{\partial T_j}$ are necessarily calculated in step
+  \ref{fourth}.
+
+\item\label{fifth.g} Evaluate $I$ using values of $f_j^k$ from step
+  \ref{fourth} and $\beta(T_i)$ from step \ref{fifth.f}.
+
+\end{enumerate}
+
+In order to use the first-order approximation in step \ref{fifth.f}, the values
+of $\beta(T_j)$ and $\frac{\partial\beta(T_j)}{\partial T_j}$ would have to be
+interpolated from the path back to the grid, and then the updated values
+interpolated back to the path.  Alternatively, they could be evaluated on the
+grid instead of the path, and then interpolated to the path.  Either way, the
+memory requirements might be prohibitive.
+
+Although the instrument has only $\sim$1750 channels, we might need to evaluate
+$\beta(T_j)$ and $\frac{\partial\beta(T_j)}{\partial T_j}$ at as many as 600,000
+frequencies, and then average these computations, weighted with the filter
+shape for each channel, so as to model the shapes of the spectral lines
+accurately.  This leads to a requirement for about 17 gigawords of storage.
+
+If step \ref{fifth.f} is too expensive, use $\mathcal{T}_i$ from step
+\ref{second} in step \ref{fifth.g}.
+
+\label{lastpage}
+\end{document}
+
+\newpage
+
+The radiative transfer equation in differential form is
+%
+\begin{equation}
+\frac{\text{d}\,I}{\text{d}s} = \delta I + B
+\end{equation}
+%
+In integral form, after integrating by parts, the solution is
+%
+\begin{equation}\label{five}
+I = \int_0^\infty \frac{\partial B}{\partial s}\,
+ \exp \left( - \int_0^s \delta(\sigma)\, \text{d} \sigma \right)
+  \text{d} s
+\end{equation}
+%
+where $\delta(\sigma) = \sum_k f^k(\sigma)\, \beta^k(\sigma)$.  $B$ and
+$\beta$ also depend upon temperature and frequency.  Temperature is a function
+of $s$, but frequency is not.
+
+Equation (\ref{one}) is a quadrature form of Equation (\ref{five}).
+
+\label{lastpage}
+\end{document}
+% $Id$

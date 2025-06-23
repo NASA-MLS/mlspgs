@@ -1,0 +1,334 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-110r2}
+\newcommand{\docdate}{20 November 2012}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{\textnormal{dvi}}, \href{#1.pdf}{\textnormal{pdf}}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill\\
+Subject: \>Incorporating Hessian information into the Newton method\\
+From: \>Van Snyder\\
+Reference: \> \h{wvs-100} \h{wvs-102} \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Given $\mathbf{f}(\mathbf{x})$, a vector function of a vector argument, a
+least-squares solution of $\mathbf{f}(\mathbf{x}) \simeq 0$ seeks
+$\mathbf{x}$ that minimizes $\mathbf{f}\cdot\mathbf{f} = |\mathbf{f}|^2$. 
+In the context of MLS L2, $\mathbf{f}$ is the difference between computed
+and measured radiance, and $\mathbf{x}$ is the state vector of mixing
+ratios, temperatures, extinction, \dots.
+
+Herein, we use the Einstein summation convention, which is to sum over
+identical indices that appear as both super- and subscripts.  An identity
+tensor $\eta_{ij} = \eta^{ij}$ is used as a formalism for raising and
+lowering indices, e.g. $f^i = \eta^{il} f_l$; its derivatives are zero,
+and applying it has no computational cost and does not change any matrix
+or vector elements.  We use the notations
+
+\begin{equation}
+f_{i,j} = \frac{\partial f_i}{\partial x^j} \text{ and }
+f^i_{,j} = \frac{\partial f^i}{\partial x^j}
+\end{equation}
+
+for the derivatives of $f_i$ and $f^i$ with respect to $x^j$. In this
+notation, $\mathbf{f}\cdot\mathbf{f} = \eta^{il} f_l f_i = f^i f_i =
+\sum_i f_i^2$, as expected.  Assuming $\mathbf{f}$ is continuously
+differentiable, minimizing $\mathbf{f}\cdot\mathbf{f}$ is equivalent to
+finding $\mathbf{x}$ such that the gradient $\mathbf{g} \equiv
+\nabla(\mathbf{f}\cdot\mathbf{f}) = 0$.  The Newton iteration to solve
+$\mathbf{g} = 0$ is $[\mathbf{g}^\prime \delta \mathbf{x}]_n =
+-[\mathbf{g}]_n$, wherein $\delta \mathbf{x}_n =
+\mathbf{x}_{n+1}-\mathbf{x}_n$, and $n$ is an iteration number, not a
+co{\"o}rdinate index. The gradient $\mathbf{g}$ is
+
+\begin{equation}
+g_j =
+ \frac{\partial}{\partial x^j}\left( \eta^{il} f_i f_l \right)
+ = \left(  f_i f_l \right)_{,j}
+ = \eta^{il} ( f_{i,j} f_l + f_i f_{l,j} ) =
+   f^l_{,j} f_l + f_i f^i_{,j} = 2 f^i_{,j} f_i =
+   2 \mathbf{J}^i_j\, f_i\,,
+\end{equation}
+
+where $\mathbf{J}_{ij} = f_{i,j}$ is the Jacobian matrix, and
+$\mathbf{J}^i_j = f^i_{,j} = \eta^{il}\mathbf{J}_{lj}$.  In the Newton
+iteration, the factor of 2 cancels, and is omitted in the sequel.  The
+derivative $\mathbf{g}^\prime$ is given by
+
+\begin{equation}
+g_{j,k} =
+ \frac{\partial}{\partial x^k} \left( \mathbf{J}^i_j f_i \right) =
+ \frac{\partial}{\partial x^k} \left( f^i_{,j} f_i \right) =
+ \left( f^i_{,j} f_i \right)_{,k} =
+ \mathbf{J}^i_{j,k} f_i +
+ \mathbf{J}^i_j f_{i,k} =
+ \mathbf{H}^i_{jk}\, f_i + \mathbf{J}^i_j \mathbf{J}_{ik} =
+ f^i_{,jk} f_i + f^i_{,j} f_{i,k}
+       \,,
+\end{equation}
+
+where $\mathbf{H}^i_{jk}$ is the Hessian tensor
+
+\begin{equation}
+\mathbf{H}^i_{jk} = \mathbf{J}^i_{j,k} = f^i_{,jk} =
+ \frac{\partial^{\,2}\! f^i}
+      {\partial x^j \partial x^k} \,.
+\end{equation}
+
+The Newton iteration is therefore
+
+\begin{equation}
+\left[ g_{j,k}\, \delta x^k \right]_n =
+ \left[ \left( \mathbf{H}^i_{jk} f_i +
+               \mathbf{J}^i_j
+               \mathbf{J}_{ik} \right)
+ \delta x^k \right]_n =
+ \left[ \left( f^i_{,jk} f_i + f^i_{,j} f_{i,k} \right)
+ \delta x^k \right]_n =
+ -[g_j]_n \,.
+\end{equation}
+
+In problems where $\mathbf{f}\cdot\mathbf{f} \approx 0$ when $\delta
+\mathbf{x}_n \approx 0$, or where $\mathbf{f}$ is not strongly nonlinear,
+and therefore $\mathbf{H}^i_{jk}$ is ``small'' (for some definition of
+``small''), $\mathbf{H}^i_{jk} f_i$ can usually be ignored. 
+In matrix-vector notation, $\mathbf{J}^i_j \mathbf{J}_{ik}$ is written
+$\mathbf{J}^T \mathbf{J}$, and $\mathbf{J}^i_j f_i$ is written
+$\mathbf{J}^T \mathbf{f}$, giving the more familiar Gauss-Newton iteration
+
+\begin{equation}
+\mathbf{J}^T \mathbf{J}\, \delta \mathbf{x} =
+ - \mathbf{J}^T \mathbf{f} \,.
+\end{equation}
+
+There is no counterpart in matrix-vector notation to the term
+$\mathbf{H}^i_{jk}f_i$.
+
+If the diagonal of $\mathbf{H}^i_{jk}f_i$ is not small compared to the
+diagonal of $\mathbf{J}^i_j \mathbf{J}_{ik}$, or $\mathbf{J}^i_j
+\mathbf{J}_{ik}$ is a poorly-conditioned matrix, omitting
+$\mathbf{H}^i_{jk} f_i$ can cause slow (or no) convergence of the Newton
+iteration.  Several methods have been proposed to incorporate an
+approximation of $\mathbf{H}^i_{jk} f_i$.  One that is commonly used is
+the Broydon-Fletcher-Goldfarb-Shanno (BFGS) method, or variations on it
+such as described by Philip Gill and Michael Leonard in
+\emph{Reduced-Hessian quasi-Newton methods for unconstrained
+optimization}, which appeared in {\bf SIAM Journal of Optimization 12}, 1
+(2001) pp 209-237.  These methods use differences between successive
+gradients, i.e., $[\mathbf{g}]_n - [\mathbf{g}]_{n-1}$, as approximations
+to subspaces of $\mathbf{H}^i_{jk}f_i$.
+
+An alternative for MLS L2 is to use tabulated values of
+$\mathbf{H}^i_{jk}$, perhaps only in subspaces known to be troublesome
+(e.g., when $j$ and $k$ index H$_2$O, and $i$ indexes a band in which
+H$_2$O is visible), and even then perhaps to use only diagonal elements,
+i.e., $\mathbf{H}^i_{jk}=0$ if $j \neq k$.
+
+If we were to compute only the $\mathbf{H}^i_{kk}$ elements of
+$\mathbf{H}$, the space to store it would be comparable to
+$\mathbf{J}^i_k$, the corresponding block of the Jacobian.  The work to
+compute it would be reduced if $\mathbf{J}^i_k$ is also computed, because
+of reuse of common expressions, as will become clear in the sequel. 
+$\mathbf{H}^i_{kk}$ is dense, and therefore ought to be stored as a {\tt
+MatrixElement_t} instead of using the {\tt [H, i, j, k]} tuple currently
+used to represent Hessians, as the latter would require four times as much
+space.
+
+The $\mathbf{H}^i_{kk}f_i$ term is a diagonal matrix. Assuming
+$\mathbf{H}^i_{kk}$ is available, incorporating the $\mathbf{H}^i_{kk}
+f_i$ term into the Newton iteration would require the same amount of work
+as a matrix-vector multiply, followed by addition of the result to the
+diagonal of $\mathbf{J}^i_j \mathbf{J}_{ik}$ before factoring to solve for
+$\delta\mathbf{x}$.  If $\mathbf{H}^i_{kk}$ is represented as a matrix,
+i.e., not as tuples, the product $\mathbf{H}^i_{kk} f_i$ could be computed
+by a {\tt MatrixModule_0} routine, producing a vector quantity.  There is
+a routine to add a vector to the diagonal of the normal equations, which
+is presently used to incorporate the apriori covariance in the case it is
+approximated by a diagonal matrix.
+
+To compute $\mathbf{H}^i_{kk}$, abbreviate $\T(s_1,s_2)$ for frequency
+$\nu_i$ to $\T^i$ in Equation (8) from Section 5 of \h{wvs-102}, giving
+
+\begin{equation}\label{seven}
+\T^i_{,jk} =
+ \frac{\partial^2 \T^i}{\partial x^j \partial x^k} =
+  \frac1{\T^i} \frac{\partial \T^i}{\partial x^j}
+           \frac{\partial \T^i}{\partial x^k} -
+  \T^i \int_{s_1}^{s_2}
+   \frac{\partial^2 \alpha(s)}{\partial x^j \partial x^k}\, \d s =
+ \frac1{\T^i} \T^i_{,j} \T^i_{,k} -
+  \T^i \int_{s_1}^{s_2} \alpha^i_{,jk}(s)\, \d s \,.
+\end{equation}
+
+in which there is no summation over $i$ because it appears only as a
+superscript.  The second term is zero for species for which $\beta(s)$
+does not depend upon $x$ and, for purposes of approximation, it could be
+dropped in all cases.  Taking $j=k$, we have the approximation
+
+\begin{equation}\label{eight}
+\T^i_{,kk} \approx \frac1{\T^i} \left( \T^i_{,k} \right)^2
+ (i \text{ and } k\text{ not summed})
+\end{equation}
+
+which is exact if $\beta(s)$ does not depend upon $x$.  The representation
+used in MLSL2 for the radiative transfer equation for frequency $\nu_i$ is
+
+\begin{equation}
+f^i(s_m) = \left( f^i(s_0) - B(s_0) \right) \T^i(s_0,s_m) + B(s_m) +
+ \int_{B(s_0)}^{B(s_m)} \T^i(s,s_m)\, \d B \,.
+\end{equation}
+
+Taking the derivative with respect to $x^k$ gives
+
+\begin{equation}\label{ten}
+f^i_{,k} = \mathbf{J}^i_k =
+ \left( f^i(s_0) - B(s_0) \right) \T^i_{,k}(s_0,s_m) +
+  \int_{B(s_0)}^{B(s_m)} \T^i_{,k}(s,s_m)\, \d B \,.
+\end{equation}
+
+One further differentiation gives
+
+\begin{equation}
+f^i_{,kk} = \mathbf{H}^i_{kk} = 
+  \left( f^i(s_0) - B(s_0) \right) \T^i_{,kk}(s_0,s_m) +
+   \int_{B(s_0)}^{B(s_m)} \T^i_{,kk}(s,s_m) \, \d B \,.
+\end{equation}
+
+Substituting Equation (\ref{eight}) gives
+
+\begin{equation}
+\mathbf{H}^i_{kk} \approx
+ \left( f^i(s_0) - B(s_0) \right)
+  \frac1{\T^i} \left( \T^i_{,k}(s_0,s_m) \right)^2 +
+  \int_{B(s_0)}^{B(s_m)}
+   \frac1{\T^i} \left( \T^i_{,k}(s,s_m)\right)^2 \, \d B \,.
+\end{equation}
+
+Substituting Equation (7) from \h{wvs-100}, i.e.,
+
+\begin{equation}\label{thirteen}
+\T^i_{,k}(s,s_m) =
+ -\T^i(s,s_m) \int_s^{s_m} \alpha^i_{,k}(\sigma) \,\d \sigma\,,
+\end{equation}
+
+gives
+
+\begin{equation}\label{fourteen}
+\mathbf{H}^i_{kk} \approx
+ \left( f^i(s_0) - B(s_0) \right)
+   \frac1{\T^i} \left( \T^i_{,k}(s_0,s_m) \right)^2 +
+   \int_{B(s_0)}^{B(s_m)} \T^i(s(B),s_m) \left(
+    \int_{s(B)}^{s_m} \alpha^i_{,k}(\sigma) \, \d \sigma \right)^2 \,\d B
+                           \,.
+\end{equation}
+
+Substituting Equation (\ref{thirteen}) into Equation (\ref{ten}) gives,
+for comparison,
+
+\begin{equation}
+\mathbf{J}^i_k =
+ \left( f^i(s_0) - B(s_0) \right) \T^i_{,k}(s_0,s_m) -
+  \int_{B(s_0)}^{B(s_m)} \T^i(s(B),s_m)
+   \left( \int_{s(B)}^{s_m} \alpha^i_{,k}(\sigma)\, \d \sigma \right) \,
+  \d B \,.
+\end{equation}
+
+The inner integral is represented by the MLSL2 program variable {\tt
+d_delta_df}.  Therefore, Equation (\ref{fourteen}) could be evaluated by a
+simple modification of the {\tt rad_tran} module.  $\mathbf{H}^i_{kk}$
+would need to be frequency averaged and convolved with the antenna
+response function, exactly as is done for $\mathbf{J}^i_k$.  Experiments
+would show whether the running time of the forward model would increase
+intolerably.
+
+Igor has already put the computation of $\mathbf{H}^i_{jk}$ in place.  A
+simple modification of Igor's work could restrict it to the case $j=k$,
+i.e., Equation (\ref{fourteen}), and represent $\mathbf{H}^i_{kk}$ as a
+{\tt MatrixElement_t}.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.2  2012/09/14 01:39:23  vsnyder
+% Regularize notation
+%
+% Revision 1.1  2012/08/22 02:04:28  vsnyder
+% Initial commit
+%

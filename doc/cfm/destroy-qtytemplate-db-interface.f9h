@@ -1,0 +1,3 @@
+subroutine DestroyQuantityTemplateDatabase ( database )
+   type (QuantityTemplate_T), dimension(:), pointer :: DATABASE
+end subroutine

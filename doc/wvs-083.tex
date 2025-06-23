@@ -1,0 +1,86 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-083r1}
+\newcommand{\docdate}{18 December 2012}
+
+\usepackage{graphicx}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>2-d linear interpolation\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+Given data at the 11, 12, 21 and 22 points with coordinates of the $ij$ point
+$= (x_i,y_j)$, interpolate using linear interpolation to $z(x,y)$.
+
+{\includegraphics[scale=1.25]{./wvs-083-grid}}
+
+\par
+ 
+Let $\xi_1 = \frac{x_2-x}{x_2-x_1}$, $\xi_2 = \frac{x-x_1}{x_2-x_1} =
+1-\xi_1$,
+$\eta_1 = \frac{y_2-y}{y_2-y_1}$ and $\eta_2 = \frac{y-y_1}{y_2-y_1} =
+1-\eta_1$,
+$\xi = [\xi_1, \xi_2]$, $\eta = [\eta_1, \eta_2]$ and
+$Z = \left| \begin{array}{cc} z_{11} & z_{12} \\ z_{21} & z_{22}\\
+            \end{array} \right|$.
+
+The interpolation can be done either by interpolating in $x$ to $z_c =
+\xi_1 z_{11} + \xi_2 z_{12}$ and $z_d = \xi_1 z_{21} + \xi_2 z_{22}$
+and then in $y$ to $z = \eta_1 z_c + \eta_2 z_d$, or interpolating in
+$y$ to $z_a = \eta_1 z_{11} + \eta_2 z_{21}$ and $z_b = \eta_1 z_{12} +
+\eta_2 z_{22}$ and then in $x$ to $z = \xi_1 z_a + \xi_2 z_b$.  The two
+orders of interpolation are equivalent.  When expanded, both orders give
+
+\begin{equation*}
+z(x,y) = \xi_1 \eta_1 z_{11} + \xi_2 \eta_1 z_{12} +
+\xi_1 \eta_2 z_{21} + \xi_2 \eta_2 z_{22},
+\end{equation*}
+
+which can be written in matrix-vector notation as
+
+\begin{equation*}
+z(x,y) = \eta^T Z \xi.
+\end{equation*}
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.1  2010/05/28 23:06:35  vsnyder
+% Initial commit
+%

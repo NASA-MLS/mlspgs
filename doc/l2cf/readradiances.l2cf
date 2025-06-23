@@ -1,0 +1,73 @@
+;; We'll set a Boolean telling us if we'e missing Merra2
+;; so we can complain and exit with an error
+;; This shows how to use 
+;;           --- isFileAbsent ---
+begin ReadApriori
+  MissingMerra: Boolean, formula="false"
+  isFileAbsent, file='MERRA2', type=merra_2, $
+    Boolean=MissingMerra
+  Skip, formula="not MissingMerra"
+  Dump, text="Sorry; missing Merra2 files so must stop"
+  Dump, /stopWithError
+end ReadApriori
+
+;; Here's another way to do the same thing
+;; We first attempt to read the merra-2 and then check to see if it's empty
+;; This shows how to use 
+;;           --- isGridEmpty ---
+begin ReadApriori
+  merra2GPHInput1: gridded, origin=none
+  readGriddedData, grid=merra2GPHInput1, origin=merra_2, field='H', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' 
+end ReadApriori
+begin MergeGrids
+  isGridEmpty, grid=merra2GPHInput1, Boolean=MissingMerra
+  Skip, formula="not MissingMerra"
+  Dump, text="Sorry; missing Merra2 files so must stop"
+  Dump, /stopWithError
+end MergeGrids
+
+begin Construct
+  ;; We'll set a Boolean telling us if Band 12 is off
+  ;; That will let us skip any phases later on that require its radiances
+  ;; to retrieve, say, N2O
+  ;; This shows how to use 
+  ;;           --- anyGoodValues ---
+  Band12OK: Boolean, formula="true"
+  ;; Here's one way: This assumes w have already read the radiances and their
+  ;; precisions for this chunk
+  anyGoodValues, quantity=measurement.band12, precision=measurementNoise.band12, $
+    Boolean=Band12OK
+
+  ;; Here's another way: It will go out and read only the radiance
+  ;; precisions for this signal and chunk before checking
+  ;; This shows how to use 
+  ;;           --- anyGoodRadiances ---
+  anyGoodRadiances, signal='R4:640.B12F:N2O', $
+    Boolean=Band12OK
+  Band12OFF: Boolean, formula="not Band12OK"
+end Construct
+
+;; We'll Copy the swath to its standard product file, but only if
+;; the swath exists and it contains non-negative precisions and even status
+;; Separate OH into its own section
+;; so it may be skipped for days when Band15 is off
+begin Output
+  ;; Copy OH swath out to l2gp file unless empty
+  ;; This shows how to use 
+  ;;           --- isSwathEmpty ---
+  Band15OFFALLDAY: Boolean, formula="false"
+  isSwathEmpty, type=l2dgg, swath='OH-StdProd', file='DGG', Boolean=Band15OFFALLDAY
+  Dump, Boolean=Band15OFFALLDAY
+  Skip, Boolean=Band15OFFALLDAY  ;; No need to create OH if THz is off
+  Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='OH-StdProd', inputtype=l2dgg, $
+    file='L2GP-OH', rename='OH', $
+    /create
+
+    Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='OH-APriori', inputtype=l2dgg, $
+    file='L2GP-OH'
+end Output

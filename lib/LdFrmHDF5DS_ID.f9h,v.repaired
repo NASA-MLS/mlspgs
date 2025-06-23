@@ -1,0 +1,55 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!   subroutine LdFrmHDF5DS_ID_* ( locID, name, value, &
+!     & start, count, stride, block )
+!     ! This routine loads a predefined array with values from a DS
+!     integer, intent(in) :: LOCID          ! Where to place it (group/file)
+!     character (len=*), intent(in) :: NAME ! Name for this dataset
+!     type(*), intent(out) :: VALUE(:,...)  ! The array itself
+!     integer, dimension(:), optional, intent(in) :: start
+!                                  ! Starting coordinatess of hyperslab
+!     integer, dimension(:), optional, intent(in) :: count
+!                                  ! Num of blocks to select from dataspace
+!     integer, dimension(:), optional, intent(in) :: stride
+!                                  ! How many elements to move in each direction
+!     integer, dimension(:), optional, intent(in) :: block
+!                                  ! Size of element block
+
+!     character(len=*), parameter :: Sfx = '*' ! Type and rank in subr name
+
+! $Id$
+
+    ! Local variables
+    type (MLSFile_T)   :: MLSFile
+    integer :: STATUS                   ! Flag from HDF5
+
+    ! Executable code
+    call trace_begin ( 'LdFromHDF5DS_ID_'//sfx, cond=.false. )
+    status = InitializeMLSFile ( MLSFile, type=l_hdf, access=DFACC_RDONLY, &
+      & name='unknown', shortName='unknown', HDFVersion=HDFVERSION_5 )
+    MLSFile%fileID%f_id = locID
+    MLSFile%stillOpen = .true.
+    call LoadFromHDF5DS ( MLSFile, name, value, &
+    & start, count, stride, block )
+    call trace_end ( 'LdFromHDF5DS_ID_'//sfx, cond=.false. )
+!   end subroutine LdFrmHDF5DS_ID_*
+
+! $Log$
+! Revision 2.3  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
+! Revision 2.2  2011/11/03 23:47:07  pwagner
+! Corrected mistaken use sd_id instead of f_id for locID
+!
+! Revision 2.1  2008/05/09 23:27:17  vsnyder
+! Initial commit
+!

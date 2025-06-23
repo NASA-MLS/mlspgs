@@ -1,0 +1,482 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+\usepackage{array}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-105}
+\newcommand{\docdate}{23 May 2011}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Paul, Vince\\
+Subject: \>Init_Tables generator\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-004} \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\section{Introduction}
+
+The {\tt Type_Generator} program can be used to generate the contents of
+{\tt init_tables}.
+
+\section{Usage}
+
+Its usage is {\tt Type_Generator [options] [input file name]} where
+{\tt options} are single letters preceded by a hyphen.  Any number of
+letters can follow the hyphen, or each option can be in a separate command
+field, and preceded by a hyphen.  The recognized option letters are
+
+\newcolumntype{C}{>{\bfseries}c}
+\begin{longtable}{C|l}
+\normalfont{Option} & Action \\
+\hline
+A& Dump the abstract syntax tree before type checking\\
+a& Dump the decorated abstract syntax tree after type checking\\
+c& Trace type checking\\
+d& Dump the declaration table\\
+g& Trace code generation\\
+l& Trace the lexer\\
+p& Trace the parser\\
+s& Dump the string table\\
+t& Trace entering names into the declaration table\\
+anything else& print the usage and quit\\
+\end{longtable}
+
+If an input file name is not specified the program asks for one.
+
+\section{Syntax of the input file}
+\subsection{General}
+
+The syntax of the input file is a subset of the syntax of MLS
+configuration files.
+
+Section names are arbitrary but must be the same on corresponding {\tt
+begin} and {\tt end} statements.  The names can be used for documentary
+purposes.  Section sequences are not checked.
+
+Parameter declarations of the form {\tt name =} \emph{expr} are not
+allowed.
+
+All specifications must have a label.
+
+All labels for each kind of specification must be unique, but they can be
+reused for different specifications.
+
+\subsection{Recognized specifications}
+
+Six specifications are recognized:
+
+\newcolumntype{L}{>{\bfseries}l}
+\begin{longtable}{L|p{5in}}
+\normalfont{Spec} & Defines \\
+\hline
+type & An enumerated type and its literals; \\
+param & A parameter name and the type of its
+  \emph{expression}; \\
+function & A function name and the types of its arguments; \\
+field & A field name and the types of its values; \\
+spec & A specification and the allowed fields; \\
+section & A section name and the {\tt spec} and {\tt param};
+statements that are allowed to appear within it. \\
+\end{longtable}
+
+\subsection{Type specification}
+
+The label of a {\tt type} specification is a type name.  The fields are
+positional fields that consist only of names.  Each name is a literal of
+the type.
+
+If there are no literals, a specification is not generated.  This is used
+to allow reference to the names of intrinsic types.  If you need any of
+the intrinsic types that {\tt init_tables} understands, include any of
+the following that are necessary:
+
+{\tt\begin{verbatim}
+  boolean: type
+  numeric: type
+  numeric_range: type
+  string: type
+  instrument: type
+  polarization: type
+\end{verbatim}}
+
+Here's an example of a type from {\tt mlsl2}:
+
+{\tt\begin{verbatim}
+  module: type, GHz, THz
+\end{verbatim}}
+
+\subsection{Param specification}
+
+The {\tt param} specification defines the name of a parameter and
+specifies the type its \emph{expr} is allowed to be.
+
+At least for now, only one field is allowed.
+
+It can be a type name, or a specification of the form {\tt x.y.z\dots},
+where each of {\tt x}, {\tt y}, {\tt z} \dots\ are the labels of {\tt
+spec} specifications.
+
+\subsection{Function specification}
+
+The {\tt function} specification defines the name of a function and
+specifies the types of arguments it is allowed to have.
+
+It can have any number of positional fields.
+
+If it has no fields the function's argument types are not checked.
+
+Otherwise, each field can be a type name, or a specification of the form
+{\tt x.y.z\dots}, where each of {\tt x}, {\tt y}, {\tt z} \dots\ are the
+labels of {\tt spec} specifications.
+
+\subsection{Field specification}
+
+A {\tt field} specification defines the name of a field and specifies the
+types of values it is allowed to have.
+
+The {\tt field} specification has five fields:
+
+\newcolumntype{T}{>{\tt}l}
+\begin{longtable}{T|p{5in}}
+\normalfont{Field} & Specifies \\
+\hline
+/no_dup & That the field cannot be duplicated \\
+/required & That the field is required \\
+/scalar & That the field's value must be scalar,
+  i.e., it cannot be of the form [~\emph{expr}, \emph{expr}~\dots ] \\
+type=\emph{type-expr} & The type the field is
+  allowed to have.  The \emph{type-expr} can be a type name, or a
+  specification of the form {\tt x.y.z\dots}, where each of {\tt x}, {\tt
+  y, z} \dots\ are the labels of {\tt spec} specifications. \\
+/unchecked & That the field's type is not checked. \\
+\end{longtable}
+
+Either the {\tt type=} or {\tt /unchecked} field is required.  The others
+are optional.
+
+Unlike in MLS configuration files, the form \emph{name}={\tt true} is not
+allowed as an alternative to /\emph{name}.
+
+\subsection{Spec specification}
+
+The {\tt spec} specification defines the name of a specification and
+specifies the fields it is allowed to have.
+
+The {\tt spec} specification has four fields.
+
+\begin{longtable}{T|p{5in}}
+\normalfont{Field} & Specifies \\
+\hline
+/all_req & That all fields are required \\
+/no_dup & That duplicate fields are not allowed \\
+/no_positional & That positional fields are not allowed \\
+field= & The names of fields that are allowed.  Each
+  name is required to be the label of a {\tt field} spec.  If more than
+  one field is allowed the list of names must be enclosed in [\dots] and
+  separated by commas.  The {\tt field=} field cannot be duplicated. \\
+\end{longtable}
+
+All fields are optional.
+
+\subsection{Section specification}
+
+The {\tt section} specification defines the name of a section name and
+specifies which {\tt spec} specifications and {\tt param} specifications
+can appear in that section.
+
+The {\tt section} specification can have any number of fields.
+
+Each field must be the name of a {\tt spec} specification, the name of a
+{\tt param} specification, or {\tt /unchecked}.  If it is {\tt
+/unchecked} the section can include parameter definitions, and the types
+of their values are not checked.
+
+\section{Output}
+
+The {\tt TypeGenerator} program produces 15 files in the current
+directory.
+
+\begin{longtable}{T|p{5in}}
+\normalfont{File} & Contains \\
+\hline
+field_parm.f9h & Fortran parameter declarations for field names \\
+field_add.f9h & References to {\tt add_ident} to add field names to the
+  symbol table \\
+function_parm.f9h & Fortran parameter declarations for function names \\
+function_add.f9h & References to {\tt add_ident} to add function names to
+  the symbol table \\
+lit_parm.f9h & Fortran parameter declarations for literal names \\
+lit_add.f9h & References to {\tt add_ident} to add literal names to the
+  symbol table \\
+param_parm.f9h & Fortran parameter declarations for parameter names \\
+param_add.f9h & References to {\tt add_ident} to add parameter names to
+  the symbol table \\
+section_parm.f9h & Fortran parameter declarations for section names \\
+section_add.f9h & References to {\tt add_ident} to add section names to
+  the symbol table \\
+spec_parm.f9h & Fortran parameter declarations for spec names \\
+spec_add.f9h & References to {\tt add_ident} to add spec names to the
+  symbol table \\
+type_parm.f9h & Fortran parameter declarations for type names \\
+type_add.f9h & References to {\tt add_ident} to add type names to the
+  symbol table \\
+tree_gen.f9h & References to {\tt make_tree} to create the type checking
+  tree \\
+\end{longtable}
+
+Each of these files would be incorporated into {\tt init_tables} using a
+Fortran {\tt include} line.
+
+\newpage
+\section{Alternative syntax}
+
+\subsection{Type specification}
+
+A {\tt type} specification is of the form
+
+\emph{label}: {\tt type}, \emph{lit}s
+
+where the label is the type name.  The fields are positional fields that
+consist only of names.  Each name is a literal of the type.
+
+If there are no literals, a specification is not generated.  This is used
+to allow reference to the names of intrinsic types.  If you need any of
+the intrinsic types that {\tt init_tables} understands, include any of
+the following that are necessary:
+
+{\tt\begin{verbatim}
+  boolean: type
+  numeric: type
+  numeric_range: type
+  string: type
+  instrument: type
+  polarization: type
+\end{verbatim}}
+
+Here's an example of a type from {\tt mlsl2}:
+
+{\tt\begin{verbatim}
+  module: type, GHz, THz
+\end{verbatim}}
+
+\subsection{Unit specification}
+
+A {\tt unit} specification is of the form
+
+\emph{label}: {\tt unit}, \emph{base-unit-name} or
+
+\emph{label}: {\tt unit}, \emph{base-unit-name}, \emph{transform}
+
+where \emph{transform} is either \emph{scale} or \emph{scale:offset}.
+
+\emph{scale:offset} means ``multiply by scale and add offset.''  Offset
+is assumed to be zero if it's not present.  If \emph{scale:offset} doesn't
+appear it means ``1:0''.
+
+Examples:
+
+{\tt\begin{verbatim}
+  K: unit, temperature
+  C: unit, temperature, 1:273.15
+  F: unit, temperature, 5/9:459.67
+
+  s: unit, time
+  seconds: unit, time
+
+  MHz: unit, frequency
+  Hz: unit, frequency, 1.0e-6
+  GHz: unit, frequency, 1000
+\end{verbatim}}
+
+\subsection{Function specification}
+
+The function specification is of the form
+
+\emph{label}: func, \emph{arg}s
+
+The \emph{label} defines the name of a function.  the \emph{arg}s
+specify the types of arguments it is allowed to have.
+
+It can have any number of \emph{arg}s
+
+If it has no \emph{arg}s the function's argument types are not checked.
+
+Otherwise, each \emph{arg} can be \emph{type}, or a specification of the
+form {\tt x.y.z\dots}, where each of {\tt x}, {\tt y}, {\tt z} \dots\ are
+the labels of {\tt spec} specifications.  A \emph{type} can be the label
+of a {\tt type} spec, or {\tt numeric}:\emph{unit} where \emph{unit} is
+the label of a {\tt unit} spec.
+
+\subsection{Spec specification}
+
+The {\tt spec} specification is of the form
+
+\emph{label}: {\tt spec}, \emph{field}s
+
+It can have any number of \emph{field}s.
+
+The first three kinds of \emph{field} are
+
+\begin{list}{}{\itemsep -2pt \topsep 0pt}
+\item[{\bf\tt /all_req}] Specifies that all fields are required,
+\item[{\bf\tt /no_dup}] Specifies that duplicate fields are not allowed, and
+\item[{\bf\tt /no_positional}] Specifies that positional fields are not
+  allowed.
+\end{list}
+
+The rest are of the form \emph{name=stuff} where
+
+\begin{list}{}{\itemsep -2pt \topsep 0pt}
+\item[{\bfseries\emph{name}}] is a field name allowed for the spec,
+\item[{\bfseries\emph{stuff}}] can either be one \emph{thing} or several
+  \emph{thing}s enclosed in square brackets, and
+\item[{\bfseries\emph{thing}}] is either
+  \begin{list}{$\bullet$}{\itemsep -2pt \topsep 0pt}
+  \item \emph{type-name},
+  \item {\tt numeric :} \emph{unit-name},
+  \item \emph{spec-name},
+  \item \emph{spec-name}.\emph{spec-name}\dots \emph{spec-name},
+  \item {\tt /no_dup}, indicating the field cannot be duplicated,
+  \item {\tt /required}, indicating the field is required,
+  \item {\tt /scalar}, indicating the field cannot be an array, or
+  \item {\tt /unchecked}, indicating the field's type and/or units aren't
+    checked.
+  \end{list}
+\end{list}
+
+All fields are optional.
+
+Example:
+
+{\tt\begin{verbatim}
+vGrid: spec, /no_dup, /no_positional, $
+             type = vGridType, $
+             coordinate = vGridCoordinate, $
+             formula = numeric_range, $
+             number = numeric, $
+             resolution = numeric, $
+             start = numeric, $
+             stop = numeric, $
+             values = numeric, $
+             sourceL2GP = l2gp
+
+fill: spec, /no_dup, /no_positional, $
+            quantity = vector.template.quantities, $
+            method = method, $
+            explicitValues = numeric, $
+            ...
+
+retrieve: spec, /no_dup, /no_positional, $
+                apriori = vector, $
+                ...
+                forwardModel = [ forwardModel, /required ], $
+                ...
+                outputCovariance = matrix
+                ...
+\end{verbatim}}
+
+\subsection{Section spec}
+
+A section spec is of the form
+
+\emph{label}: {\tt section}, \emph{field}s
+
+where each field is either
+
+\begin{itemize}
+\item {\tt /unchecked}, indicating parameter names and types in the
+  section are not checked,
+\item \emph{spec-name},
+\item \emph{param-name = type-name}, or
+\item \emph{param-name =} {\tt numeric :} \emph{unit-name}
+\end{itemize}
+
+Examples:
+
+{\tt\begin{verbatim}
+globalSettings, section, $
+                outputVersionString = string, $
+                instrument = instrument, $
+                binSelector, dump, directWriteFile, ....
+
+algebra: section, /unchecked, columnScale, combineChannels, $
+                  cyclicJacobian, disjointEquations, normalEquations, $
+                  reflect, regularization, rowScale
+\end{verbatim}}
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$

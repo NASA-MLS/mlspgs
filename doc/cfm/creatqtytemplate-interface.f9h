@@ -1,0 +1,51 @@
+type(QuantityTemplate_T) function CreateQtyTemplate_maf (quantityType, firstL1Maf, lastL1Maf, &
+    filedatabase, avgrid, ahgrid, afgrid, qInstModule, qMolecule, qLogBasis, &
+    qMinValue, qSignal, qRadiometer, qBadValue, qName) result(qty)
+
+    ! an integer representing a quantity type, see CFM documentation appendix
+    integer, intent(in) :: quantityType
+    ! firstL1Maf and last1Maf describe the maf range in
+    ! L1BOA file for major frame quantities and minor frame
+    ! quantities that need information from L1BOA file.
+    ! If this quantity is neither a major frame quantity
+    ! nor a minor frame quantity, then firstL1Maf
+    ! and lastL1Maf can be any number as long as its 
+    ! difference is equal to the number of instances
+    ! of this quantity (the VectorValue_T object that
+    ! owns this QuantityTemplate_T).
+    integer, intent(in) :: firstL1Maf
+    integer, intent(in) :: lastL1Maf
+    ! is an array of open files (see CFM_MLSSetup)
+    type (MLSFile_T), dimension(:), pointer, optional ::     FILEDATABASE
+    ! The z-coordinate samples of the spacecraft's path.
+    ! Information in this grid will be copied over.
+    type(VGrid_T), intent(in), optional :: avgrid
+    ! the (x,y) coordinate samples of the spacecraft's path
+    ! Information in this grid will be copied over.
+    type(HGrid_T), intent(in), optional :: ahgrid
+    ! the frequency in which the data is gathered
+    ! Information in this grid will be copied over.
+    type(FGrid_T), intent(in), optional :: afgrid
+    ! instrument module, a case-insensitive string, either "THz" or "GHz"
+    character(len=*), optional :: qInstModule
+    ! an integer representing one of the molecules listed in the CFM document.
+    integer, optional :: qMolecule
+    ! if type is "radiance", then a qSignal must be provided
+    character(len=*), optional :: qSignal
+    ! tells whether the value of avgrid and ahgrid
+    ! is on logarithmic scale. The default value is .false..
+    logical, optional :: qLogBasis
+    ! is used only qLogBasis is .true., in which case
+    ! it is the threshold to which greater or equal coordinate values are recorded
+    ! as their logarithmic equivalent. The default value is 1.0.
+    real(r8), optional :: qMinValue
+    ! If the quantity only associates with a radiometer
+    ! and not a signal, then use qRadiometer instead of 
+    ! qSignal.
+    character(len=*), optional :: qRadiometer
+    ! a number to indicate that a data point shouldn't be used. Default
+    ! is -huge(0.0_r8)
+    real(r8), optional :: qBadValue
+    ! name of the quantity as string
+    character(len=*), optional :: qName
+end function

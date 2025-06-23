@@ -1,0 +1,82 @@
+\section{Reference}
+\label{sec:Reference}
+
+The ICFM software is made of two parts: the server, which is an
+executable, and the client, which is an IDL library. The two
+communicate with each other via PVM. The users of ICFM have to 
+start PVM on the machine where the server and the client run,
+then start the server, then use procedures provided in the IDL 
+library to invoke the forward model.
+
+How to run the server will be shown in Appendix~\ref{app:Example}.
+This section will focus on the IDL library pertaining to ICFM.
+Although the example will involve the use of a few AtGod
+procedures, it is only an illustration of ICFM's compatibility
+to AtGod library, and those AtGod procedures won't be
+discuss here.
+
+\subsection{Data types}
+\label{sec:DataTypes}
+
+\subsubsection{\snippet{Vector}}
+Vector is an anonymous data type that contains a list of quantities.
+To access a quantity inside the vector, the users use the dot 
+notation: \snippet{[vector].[quantity name]}. Vector should be created and 
+manipulated via the procedures provided in Section~\ref{sec:Procedures}
+only.
+
+\subsubsection{\snippet{Quantity}}
+This is another anonymous data type.  It lays out a collection of
+profiles (`instances') for a given quantity (temperature, composition,
+tangent pressure, radiance etc.).  It is similar to CFM's 
+QuantityTemplate\_T type. For more information, please refer to 
+Section~\ref{sec:QuantityTemplates} in \citet{NguyenEtal10}. However,
+unlike QuantityTemplate\_T, Quantity can contains both the quantity's
+value and its mask. Not every Quantity object is the same, because
+there are fields that some quantities have and others don't.
+Consequently, users should only create quantities via CreateQuantity
+procedure described below. 
+
+\subsection{Procedures and Functions}
+\label{sec:Procedures}
+
+This subsection describes the procedures/functions the users will
+need to invoke in order to create the input data for and to invoke
+the forward model.  They are presented in alphabetical order.  
+The example given in Appendix~\ref{app:Example} illustrates their 
+invocation and logical flow.
+
+\subsubsection{\snippet{AddQuantity2Vector}}
+\lstinputlisting{addquantity2vector-interface.pro}
+
+\subsubsection{\snippet{Core2Qty}}
+This procedure is to help convert AtGod relaxed data type into
+the stricter Quantity data type.
+
+\lstinputlisting{core2qty-interface.pro}
+
+\subsubsection{\snippet{CreateQuantity}}
+\lstinputlisting{createquantity-interface.pro}
+
+\subsubsection{\snippet{CreateVector}}
+\lstinputlisting{createvector-interface.pro}
+
+\subsubsection{\snippet{ForwardModel}}
+\lstinputlisting{forwardmodel-interface.pro}
+
+\subsubsection{\snippet{ICFM\_Cleanup}}
+\lstinputlisting{icfm-cleanup-interface.pro}
+
+\subsubsection{\snippet{ICFM\_SendQuantity}}
+\lstinputlisting{icfm-sendquantity-interface.pro}
+
+\subsubsection{\snippet{ICFM\_SendVector}}
+\lstinputlisting{icfm-sendvector-interface.pro}
+
+\subsubsection{\snippet{ICFM\_Setup}}
+\lstinputlisting{icfm-setup-interface.pro}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "icfm"
+%%% End: 

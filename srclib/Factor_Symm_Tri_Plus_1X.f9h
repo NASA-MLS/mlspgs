@@ -1,0 +1,55 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Factor_Symm_Tri_Plus_1X_r* ( D, H, R, U, C )
+    ! Factor a symmetric tridiagonal matrix augmented by the same
+    ! nonzero element in the top right and bottom left corners (so it's
+    ! still symmetric).
+
+    ! We could use Factor_Symm_Tri to factor the top left n-1 X n-1 block
+    ! of A, and then compute D(n), C and R, but what we do here fuses the
+    ! loops.
+
+    real(rk), intent(inout) :: D(:) ! (1:n) Diagonal of the matrix on input,
+                                    ! Inverse of diagonal of L on output
+                                    ! Subdiagonal of L is H(1:n-2)
+                                    !   and R(n-1)
+    real(rk), intent(in) :: H(:)    ! (1:n) ((1:n-1) super- and subdiagonal of
+                                    ! input, H(n) is the corners
+    real(rk), intent(out) :: R(:)   ! (1:n-1) Bottom row of L, except
+                                    !   for D(n)
+    real(rk), intent(out) :: U(:)   ! (1:n-2) Superdiagonal of U, except (n,n-1)
+                                    ! Diagonal of U is 1
+    real(rk), intent(out) :: C(:)   ! (1:n-1) Right column of U, except (n,n)
+
+    integer :: K, N
+
+    n = size(d)
+    d(1) = 1.0 / d(1)
+    c(1) = h(n) * d(1)
+    r(1) = h(n)
+    do k = 2, n-2
+      u(k-1) = h(k-1) * d(k-1)
+      d(k) = 1.0 / ( d(k) - h(k-1) * u(k-1) )
+      c(k) = - h(k-1) * c(k-1) * d(k)
+      r(k) = - r(k-1) * u(k-1)
+    end do
+    u(n-2) = h(n-2) * d(n-2)
+    d(n-1) = 1.0 / ( d(n-1) - h(n-2) * u(n-2) )
+    c(n-1) = ( h(n-1) - h(n-2) * c(n-2) ) * d(n-1)
+    r(n-1) = h(n-1) - r(n-2) * u(n-2)
+    d(n) = 1.0 / ( d(n) - dot_product(r(1:n-1),c) )
+
+! end subroutine Factor_Symm_Tri_Plus_1X_r*
+
+! $Id$
+
+! $Log$

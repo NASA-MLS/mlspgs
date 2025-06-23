@@ -1,0 +1,11 @@
+begin Fill
+  Repeat, formula='count < OKLimit'
+  Reevaluate, Boolean=OKIter, manipulation="c+1", $
+    inputBoolean=OKIter, /literal
+  dump, Boolean=OKIter
+  ; stdout should contain
+  ;                        okiter = 1.0
+  ;                        okiter = 2.0
+  ;                        '   '   '
+  ;                        okiter = OKLimit
+end Fill

@@ -1,0 +1,18 @@
+! Fill the quantity with data from L1B files with maf range
+! specified by firstL1Maf and lastL1Maf
+subroutine FillVectorQuantityFromL1B_maf (quantity, firstL1Maf, lastL1Maf, &
+    filedatabase, isPrecision, suffix, precisionQuantity, BOMask)
+    ! The quantity to be filled
+    type(VectorValue_T), intent(inout) :: quantity
+    ! The maf range of the data to be read from L1B files
+    integer, intent(in) :: firstL1Maf, lastL1Maf
+    ! the filedatabase containing L1B files
+    type(MLSFile_T), dimension(:), pointer :: filedatabase
+    ! is this a precision quantity
+    logical, intent(in) :: isPrecision
+    character(len=*), intent(in), optional :: suffix
+    type(VectorValue_T), intent(in), optional :: precisionQuantity
+    ! If isPrecision is .true. and BOMask is not 0, then
+    ! bright object status is read from L1BOA file
+    integer, intent(in), optional :: BOMask
+end subroutine

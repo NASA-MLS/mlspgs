@@ -1,0 +1,162 @@
+! Copyright 2007, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+! subroutine dumpTable_DOUBLE ( VALUES, HEADERS, HEADSIDE, FORMAT, FORMATS )
+!   double precision, dimension(:,:), intent(in)         :: values
+!   character(len=*), dimension(:), intent(in)           :: HEADERS
+!   character(len=*), intent(in)                         :: HEADSIDE
+!   character(len=*), intent(in), optional               :: FORMAT
+!   character(len=*), dimension(:), intent(in), optional :: FORMATS
+  ! Internal variables
+  integer :: col1, col2
+  character(len=30) :: FormatSpec
+  integer :: I, J
+  integer :: nRows, nCols
+  character(len=1) :: SIDE
+  integer, dimension( max(size(values,2), size(values, 1)) + 1 ) :: TS_TABLE
+  integer :: last, width
+  ! Executable
+  FormatSpec = '*'
+  if ( present(format) ) formatSpec = format
+  last = 1
+  ! Is HEADSIDE among the recognized sides (tblr)?
+  side = lowercase(HEADSIDE(1:1))
+  if ( index( 'tblr', side ) < 1 ) then
+    side = 't' ! defaults to top layout
+  endif
+  select case (side)
+  case ('t') ! top
+    nRows = size(values, 1)
+    nCols = size(values, 2)
+    do j=1, nCols
+      if ( present(formats) ) formatSpec = formats(j)
+      width = len_trim(HEADERS(j))
+      do i=1, nRows
+        width = max( width, len_trim( numToChars( values(i, j), formatSpec ) ) )
+      enddo
+      TS_TABLE(j) = last + width + 2
+      last = ts_table(j)
+    enddo
+    col2 = 0
+    do j=1, nCols
+      col1 = col2 + 1
+      col2 = ts_table(j)
+      call alignToFit( trim(headers(j)), (/ col1, col2-1 /), 'r' )
+    enddo
+    call newline
+    do i=1, nRows
+      col2 = 0
+      do j=1, nCols
+        col1 = col2 + 1
+        col2 = ts_table(j)
+        if ( present(formats) ) formatSpec = formats(j)
+        call alignToFit( values(i, j), (/ col1, col2-1 /), 'r', formatSpec )
+      enddo
+      call newline
+    enddo
+  case ('b') ! bottom
+    nRows = size(values, 1)
+    nCols = size(values, 2)
+    do j=1, nCols
+      if ( present(formats) ) formatSpec = formats(j)
+      width = len_trim(HEADERS(j))
+      do i=1, nRows
+        width = max( width, len_trim( numToChars( values(i, j), formatSpec ) ) )
+      enddo
+      TS_TABLE(j) = last + width + 2
+      last = ts_table(j)
+    enddo
+    do i=1, nRows
+      col2 = 0
+      do j=1, nCols
+        col1 = col2 + 1
+        col2 = ts_table(j)
+        if ( present(formats) ) formatSpec = formats(j)
+        call alignToFit( values(i, j), (/ col1, col2-1 /), 'r', formatSpec )
+      enddo
+      call newline
+    enddo
+    col2 = 0
+    do j=1, nCols
+      col1 = col2 + 1
+      col2 = ts_table(j)
+      call alignToFit( trim(headers(j)), (/ col1, col2-1 /), 'r' )
+    enddo
+    call newline
+  case ('l') ! left
+    nRows = size(values, 2)
+    nCols = size(values, 1)
+    width = 0
+    do i=1, nRows
+      width = max(width, len_trim(headers(i)))
+    enddo
+    ts_table(1) = last + width + 2
+    last = ts_table(1)
+    do j=1, nCols
+      width = 0
+      do i=1, nRows
+        if ( present(formats) ) formatSpec = formats(i)
+        width = max( width, len_trim( numToChars( values(j, i), formatSpec ) ) )
+      enddo
+      TS_TABLE(j+1) = last + width + 2
+      last = ts_table(j+1)
+    enddo
+    do i=1, nRows
+      col2 = 0
+      col1 = col2 + 1
+      col2 = ts_table(1)
+      call alignToFit( trim(headers(i)), (/ col1, col2-1 /), 'r' )
+      if ( present(formats) ) formatSpec = formats(i)
+      do j=1, nCols
+        col1 = col2 + 1
+        col2 = ts_table(j+1)
+        call alignToFit( values(j, i), (/ col1, col2-1 /), 'r', formatSpec )
+      enddo
+      call newline
+    enddo
+  case ('r') ! right
+    nRows = size(values, 2)
+    nCols = size(values, 1)
+    width = 0
+    do j=1, nCols
+      width = 0
+      do i=1, nRows
+        if ( present(formats) ) formatSpec = formats(i)
+        width = max( width, len_trim( numToChars( values(j, i), formatSpec ) ) )
+      enddo
+      TS_TABLE(j) = last + width + 2
+      last = ts_table(j)
+    enddo
+    do i=1, nRows
+      width = max(width, len_trim(headers(i)))
+    enddo
+    ts_table(nCols+1) = last + width + 2
+    do i=1, nRows
+      col2 = 0
+      if ( present(formats) ) formatSpec = formats(i)
+      do j=1, nCols
+        col1 = col2 + 1
+        col2 = ts_table(j)
+        call alignToFit( values(j, i), (/ col1, col2-1 /), 'r', formatSpec )
+      enddo
+      col1 = col2 + 1
+      col2 = ts_table(nCols+1)
+      call alignToFit( trim(headers(i)), (/ col1, col2-1 /), 'r' )
+      call newline
+    enddo
+  case default
+  end select
+! end subroutine dumpTable_DOUBLE
+! $Log$
+! Revision 2.1  2007/10/18 23:36:53  pwagner
+! First commit
+!

@@ -1,0 +1,4 @@
+! This routine initializes the quantity template properties.
+! This is the routine one needs to update when one introduces a new quantity type.
+subroutine InitQuantityTemplates
+end subroutine

@@ -1,0 +1,299 @@
+
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $RCSFile: $
+! $Id$
+
+! subroutine *HFTIM ( A, B, TAU, KRANK, RNORM, IP )
+
+!     ------------------------------------------------------------------
+!          This subr solves the least squares problem
+
+!                          A * X  ~=~  B
+
+!     where A is a given M x N matrix, B is a given M x KB matrix and
+!     X is the N x KB solution matrix to be determined.
+
+!          This subr permits M > N, M = N, or M < N.  This subr
+!     determines the "pseudorank", i.e. the estimated rank, of A based
+!     on a user-provided tolerance.  If the pseudorank is less than N,
+!     the minimal length solution, i.e. the pseudoinverse solution, to
+!     the problem is computed.
+
+!          This subr can be used to compute the pseudoinverse
+!     of a matrix, A.  Set B to the M x M identity matrix and the
+!     solution matrix, X, will be the pseudoinverse of A.
+
+!          The algorithm is HFTI from the L & H book.  This method does
+!     a Householder QR decomposition from the left.  Then if the
+!     pseudorank is less than N it does a second Householder QR
+!     decomposition from the right.
+
+!          The results returned in A(,), RNORM(), and IP() can be used
+!     by subroutine SCOV1 or DCOV1 to compute the covariance matrix of
+!     the solution vectors.
+!     ------------------------------------------------------------------
+!                     SUBROUTINE ARGUMENTS
+
+!     A(,)     (In/Out)  On input, contains the M x N matrix, A.  Permit
+!              M > N, M = N, or M < N.  On return A(,) will contain an
+!              upper triangular matrix of order KRANK that can be used
+!              by subr _COV2 to compute a covariance matrix when
+!              KRANK = N.
+
+!     B(,)     (In/Out)  If KB > 0, the array B(,) must initially
+!              contain the right-side matrix, B, having M rows and KB
+!              columns.  On return the array B(,) will contain the
+!              N x KB solution matrix X.
+!              If KB = 0, this subr will not reference the array B(,).
+
+!     TAU      (In)  Absolute tolerance parameter provided by user for
+!              pseudorank determination.  If not present 0.0 is used
+
+!     KRANK    (Out)  Set by subr to indicate the pseudorank of A.
+!              This means that the first KRANK diagonal elements in the
+!              the upper triangular factor matrix derived from A each
+!              exceed TAU in magnitude.  Either KRANK = Min( M, N), or
+!              the the magnitude of the diagonal element in position
+!              KRANK + 1 is less than or equal to TAU.
+
+!     RNORM()  (Out)  On return, RNORM(J) will contain the euclidean
+!              norm of the residual vector for the problem defined by
+!              the Jth column vector of the input matrix, B, for
+!              J = 1, ..., KB.
+
+!     IP()    (Work/Out)  Integer array of length at least N in which
+!              the subr will store column permutation information.
+
+!          This code was originally developed by Charles L. Lawson and
+!     Richard J. Hanson at Jet Propulsion Laboratory in 1973.  The
+!     original code was described and listed in the book,
+
+!                  Solving Least Squares Problems
+!                  C. L. Lawson and R. J. Hanson
+!                  Prentice-Hall, 1974
+
+      INTEGER :: LDB, KB
+      INTEGER :: I, II, J, JB, K, KP1, L, LDIAG, LMAX, M, N, MyIP(size(a,2))
+      REAL(rk) :: HFAC, MyTau, SM1, SMALL, TMP, UPARAM, WORK(size(a,2))
+      logical :: COMSQR
+      real(rk), parameter :: ONE = 1.0_rk, ZERO=0.0_rk, FACTOR = 1000.0_rk
+      logical, parameter :: COL = .true., ROW = .false.
+!     -----------------------------------------------------------------
+
+      M = size(a,1)
+      N = size(a,2)
+      ldb = size(b,1)
+      kb = size(b,2)
+
+      if ( m < 1 .or. n < 0 .or. kb < 0 .or. ldb < m ) then
+         call ERMSG ( 'HFTI',1,0, &
+     &   'Bad argument values.  Require size(A,1) >= 1, size(A,2) >= 0,', ',' )
+         call ERMOR ( 'size(B,2) >= 0, and size(B,1) >= size(A,1)', ',' )
+         call ERV1 ( 'size(A,1)', m, ',' )
+         call ERV1 ( 'size(A,2)', n, ',' )
+         call ERV1 ( 'size(B,1)', ldb, ',' )
+         call ERV1 ( 'size(B,2)', kb, '.' )
+         if ( present(krank) ) KRANK = 0
+         return
+      else if ( kb == 0 ) then
+         if ( ldb <= 0 ) then
+            call ERM1 ( 'HFTI',2,0, &
+     &         'Require size(B,1) >= 1 when size(B,2) == 0', &
+     &         'size(B,1)', ldb, '.' )
+            if ( present(krank) ) KRANK = 0
+            return
+         end if
+      else if ( ldb < max(m,n) ) then
+         call ERM1 ( 'HFTI',3,0, &
+     &      'Require size(B,1) >= max(size(A,1),size(A,2)) when size(B,2) >= 1', &
+     &      'size(B,2)',  kb, ',' )
+         call ERV1 ( 'size(B,1)', ldb, '.' )
+         if ( present(krank) ) KRANK = 0
+         return
+      end if
+      if ( present(ip) ) then
+        if ( size(ip) < n ) then
+          call ERM1 ( 'HFTI',3,0, &
+     &      'Require size(IP) >= size(A,2)', 'size(IP)', size(ip), ',' )
+          call ERV1 ( 'size(A,2)', n, '.' )
+        end if
+      end if
+
+      if ( N == 0 ) then
+         if ( present(rnorm) ) then
+            do J = 1, KB
+               RNORM(J) = NRM2(B(:,J))
+            end do
+         end if
+         if ( present(krank) ) KRANK = 0
+         return
+      end if
+!                                 Here we have M > 0 and N > 0.
+      SMALL = FACTOR * epsilon(1.0_rk)
+      LDIAG = MIN(M,N)
+      myTau = 0.0_rk
+      if ( present(tau) ) myTau = tau
+
+      do J = 1, LDIAG
+        if ( J == N ) then
+!       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+!            Special for J = N.  This case is much simpler than J < N
+!            since there are no more columns of A beyond the jth to be
+!            considered for interchange or to be triangularized.
+
+          myIP(N) = N
+          call HTGEN ( 1, N, N+1, M, A(:,N), UPARAM, B, COL )
+!       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        else
+!       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+!                                                    Here we have J < N.
+          if ( J == 1 ) then
+             COMSQR = .TRUE.
+          ELSE
+!                   Update scaled squared column lengths and set LMAX.
+
+             LMAX = J
+             do L = J,N
+                WORK(L) = WORK(L) - (HFAC * A(J-1,L))**2
+                if ( WORK(L) > WORK(LMAX)) LMAX = L
+             end do
+             COMSQR =  WORK(LMAX) <= SMALL
+          end if
+
+          if ( COMSQR ) then
+
+!               Compute scaled squared column lengths and set LMAX.
+!               Scaling using HFAC protects against overflow of squared
+!               numbers.
+
+             LMAX = J
+             do L = J, N
+                WORK(L) = NRM2(A(J:M,L))
+                if ( WORK(L) > WORK(LMAX)) LMAX = L
+             end do
+             if ( WORK(LMAX) == ZERO ) then
+                HFAC = ONE
+             else
+                HFAC = ONE/WORK(LMAX)
+             end if
+             do L = J,N
+                WORK(L) = (HFAC * WORK(L))**2
+             end do
+          end if
+
+!                                DO COLUMN INTERCHANGES IF NEEDED.
+
+          myIP(J) = LMAX
+          if ( myIP(J) /= J ) then
+             do I = 1, M
+                TMP = A(I,J)
+                A(I,J) = A(I,LMAX)
+                A(I,LMAX) = TMP
+             end do
+             WORK(LMAX) = WORK(J)
+          end if
+
+!           Compute the J-th transformation and apply it to A and B.
+!           Since we treated J = N as a special case we here have J < N
+!           so the reference to A(1,J+1) is valid.
+
+          call HTGEN ( 1, J, J+1, M, A(:,J), UPARAM, A(:,J+1:N), COL )
+          call HTGEN ( 2, J, J+1, M, A(:,J), UPARAM, B, COL )
+!       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        end if
+      end do
+
+!              DETERMINE THE PSEUDORANK, K, USING THE TOLERANCE, TAU.
+
+      K = LDIAG
+      do J = 1, LDIAG
+         if ( ABS(A(J,J)) <= MyTAU ) then
+            K = J - 1
+            exit
+         end if
+      end do
+      KP1 = K + 1
+
+!                         COMPUTE THE NORMS OF THE RESIDUAL VECTORS.
+
+      if ( present(rnorm) ) then
+         do JB = 1, KB
+            TMP = ZERO
+            do I = KP1,M
+               TMP = TMP + B(I,JB)**2
+            end do
+            RNORM(JB) = SQRT(TMP)
+         end do
+      end if
+!                          Special termination when Pseudorank = 0
+      if ( K == 0 ) then
+         b = 0.0_rk
+         if ( present(krank) ) krank = 0
+         return
+      end if
+
+!               IF THE PSEUDORANK IS LESS THAN N COMPUTE HOUSEHOLDER
+!               DECOMPOSITION OF FIRST K ROWS.
+
+      if ( K /= N ) then
+         do II = 1, K
+            I = KP1-II
+            call HTGEN ( 1, I, KP1, N, A(I,:), WORK(I), A(:I-1,:), ROW )
+         end do
+      end if
+
+      do JB = 1, KB
+
+!                        SOLVE THE K BY K TRIANGULAR SYSTEM.
+
+         do L = 1, K
+            I = KP1 - L
+            if ( I < K ) then
+               SM1 = DOT_PRODUCT(A(I,I+1:K),B(I+1:K,JB))
+            ELSE
+               SM1 = ZERO
+            END IF
+            B(I,JB) = (B(I,JB)-SM1) / A(I,I)
+         end do
+
+!     COMPLETE COMPUTATION OF SOLUTION VECTOR.
+!    ..
+         if ( K /= N ) then
+            B(KP1:N,JB) = ZERO
+            do I = 1, K
+            call HTGEN ( 2, I, KP1, N, A(I,:), WORK(I), B, COL )
+            end do
+         end if
+!                    RE-ORDER THE SOLUTION VECTOR TO COMPENSATE FOR THE
+!                    COLUMN INTERCHANGES.
+
+         do J = LDIAG, 1, -1
+            if ( myIP(J) /= J ) then
+               L = myIP(J)
+               TMP = B(L,JB)
+               B(L,JB) = B(J,JB)
+               B(J,JB) = TMP
+            end if
+         end do
+      end do
+      if ( present(krank) ) KRANK = K
+      if ( present(ip) ) ip(:n) = myIP
+      return
+!     end subroutine *hftim
+
+! $Log$
+! Revision 2.2  2006/03/23 03:04:33  vsnyder
+! OOPS, need to get ER[VM]1 from ermsg_m
+!
+! Revision 2.1  2006/03/22 02:07:04  vsnyder
+! Initial commit
+!

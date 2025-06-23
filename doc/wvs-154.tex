@@ -1,0 +1,238 @@
+% To make the graphic
+% tgif -print -epsi wvs-154-1.obj; epstopdf wvs-154-1.eps
+% tgif -print -jpeg wvs-154-1.obj
+
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-154r3}
+\newcommand{\docdate}{16 February 2020}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+   
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\renewcommand\d{\text{d}}
+\newcommand\T{\mathcal{T}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>MLS group\\
+Subject: \>Angle between two vectors\\
+From: \>Van Snyder\\
+%Reference: \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+
+The formula usually used to compute the angle between two vectors $x$ and
+$y$ is
+
+\begin{equation}\label{one}
+\theta = \cos^{-1} z \text{ where }
+ z = \frac{ x \cdot y }{ ||x|| \,\, ||y|| } \,.
+\end{equation}
+
+In general, to first order, the error in computing a function $f(z)$ is
+$\delta f(z) \approx \delta z f^\prime (z)$.
+
+The derivative of $\cos^{-1} z$ is
+
+\begin{equation*}
+\frac{ \d \, \cos^{-1} z }{ \d z } = \frac{-1}{\sqrt{1-z^2}} \,,
+\end{equation*}
+
+which becomes singular as $|z| \rightarrow 1$, i.e., when $x$ and $y$ are
+nearly parallel or nearly antiparallel, and therefore $|\delta \theta|$
+becomes arbitrarily large.
+
+In three dimensions, one can use
+
+\begin{equation}\label{two}
+\theta = \left\{
+ \begin{array}{ll}
+  \sin^{-1} \left( \frac{ || x \times y || }{ || x || \, || y || }
+            \right) & x \cdot y \geq 0 \\
+  \pi - \sin^{-1} \left( \frac{ || x \times y || }{ || x || \, || y || }
+                 \right) & x \cdot y < 0
+ \end{array} \right.
+\end{equation}
+
+but this has the same sort of singularity when $x$ and $y$ are nearly
+orthogonal.  This also only works in three dimensions.  Analogs in higher
+dimensions have increasing complexity.
+
+For unit vectors $u$ and $v$, it is easy to verify that $u-v$ and $u+v$
+are orthogonal:
+
+\begin{equation*}
+( u - v ) \cdot ( u + v ) =
+ u \cdot u + u \cdot v - v \cdot u - v \cdot v = 0 \,.
+\end{equation*}
+
+From
+
+\includegraphics{wvs-154-1}
+
+it is easy to see that the angle $\theta$ between $u$ and $v$ is
+
+\begin{equation*}
+\theta = \left \{ \begin{array}{ll}
+ 2\, \tan^{-1} z & x \cdot y \geq 0 \\
+ \pi - 2\, \tan^{-1} z & x \cdot y < 0 \\
+ \end{array} \right.
+ \text{ where } z = \left( \frac{ \frac12 || u - v || }
+                                { \frac12 || u + v || } \right)
+                  = \left( \frac{ || u - v || }
+                                { || u + v || } \right) \,.
+\end{equation*}
+
+If each of the vectors $x$ and $y$ are scaled by the other's length, which
+is equivalent to considering unit vectors parallel to $x$ and $y$ but
+doesn't require dividing each by its norm (which might be zero), we have
+
+\begin{equation}\label{three}
+\theta = \left \{ \begin{array}{ll}
+ 2\, \tan^{-1} z & x \cdot y \geq 0 \\
+ \pi - 2\, \tan^{-1} z & x \cdot y < 0 \\
+ \end{array} \right.
+ \text{ where }
+ z = \left( \frac{ \left|\left|\frac{x}{||x||} - \frac{y}{||y||}\right|\right|}
+                 { \left|\left|\frac{x}{||x||} + \frac{y}{||y||}\right|\right|} \right)
+   = \left( \frac{ || \, ( x || y || - y || x || ) \,|| }
+                 { || \, ( x || y || + y || x || ) \,|| }
+     \right) \,.
+\end{equation}
+
+If either $||x|| = 0$ or $||y|| = 0$, $\theta = \tan^{-1} \frac00$.  In
+this case, one can arbitrarily assign $\theta = 0$ or $\theta =
+\frac{\pi}2$ or $\theta = \pm \pi$. To avoid trying to compute $\frac00$,
+use the two-argument arctangent function. In Fortran, {\tt atan2(y,0)} is
+defined to be a processor-dependent approximation to $\pm\frac{\pi}2$,
+regardless of whether {\tt y} is zero.  If the processor distinguishes
+between positive and negative zero, the result has the same sign as {\tt
+y}.
+
+The derivative of $\tan^{-1} z$,
+
+\begin{equation*}
+\frac{\d \tan^{-1} z}{\d z} = \frac1{z^2+1} < 1 \,,
+\end{equation*}
+
+doesn't have any singularities for real $z$.  Equation (\ref{three}) is
+quite a bit more expensive than Equation (\ref{one}).
+
+Equations (\ref{one}) and (\ref{two}) have the same error at $|z| =
+\frac{\sqrt{2}}2 \approx 0.7071$, where the error is $\sqrt{2} \, \delta z
+\approx 1.414 \, \delta z$.
+
+Equations (\ref{one}) and (\ref{three}) have the same error at $|z| =
+\sqrt{3 - 2\sqrt{3}} \approx 0.6813$, where the error is
+$\frac1{\sqrt{4-2\sqrt{3}}} \, \delta z \approx 1.366 \, \delta z$.
+
+For a computational method that approximately minimizes the maximum error,
+and has good performance in three dimensions, first compute $z$.  In three
+dimensions, use  Equation (\ref{one}) for $z \leq \frac{\sqrt{2}}2$ and
+Equation (\ref{two}) otherwise.  For other dimensions, use Equation
+(\ref{one}) for $z \leq \sqrt{3 - 2\sqrt{3}}$, and Equation (\ref{three})
+otherwise.
+
+For maximum performance and minimum maximum error, use Equation
+(\ref{one}) for $|z| \leq \sqrt{3 - 2\sqrt{3}}$, use Equation
+(\ref{three}) for $|z| > \sqrt{3 - 2\sqrt{3}}$ in more than three
+dimensions, use Equation (\ref{three}) for $\sqrt{3 - 2\sqrt{3}} < |z| <
+\frac{\sqrt{2}}2$ in three dimensions, and use Equation (\ref{two}) for
+$|z| \geq \frac{\sqrt{2}}2$ in three dimensions.
+
+The difference between the errors in Equation (\ref{one}) at $|z| =
+\frac{\sqrt{2}}2$ and $|z| = \sqrt{3 - 2\sqrt{3}}$ is $\approx 0.048 \,
+\delta z$, so the same $|z|$ could be used for selecting the method in
+three dimensions or other dimensions.
+
+In Equation (\ref{three}), the error is $\frac2{z^2+1}\, \delta z < 2\,
+\delta z$. The error in Equation (\ref{one}) is equal to $2\, \delta z$
+for $|z| = \frac{\sqrt{3}}2$.  For higher average performance, Equation
+(\ref{one}) could be used for $|z| \leq \frac{\sqrt{3}}2 \approx 0.866$,
+if errors as large as $2\, \delta z$ are acceptable.
+
+\vspace*{-1pt} \label{lastpage} \end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.4  2019/12/10 23:27:59  vsnyder
+% Correct a typo
+%
+% Revision 1.3  2019/09/18 22:28:32  vsnyder
+% Add a graphic, explain derivations
+%
+% Revision 1.2  2019/09/17 03:20:26  vsnyder
+% Explain error calculations
+%
+% Revision 1.1  2019/09/12 02:51:53  vsnyder
+% Initial commit
+%

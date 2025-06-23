@@ -1,0 +1,42 @@
+; ===================================================================
+; ==================================================================== Phase: APriori
+; ===================================================================
+begin Fill
+  ;; This sets the phase name used in timings
+  APriori: Phase
+  
+  ;; The next vector is an instance of the VectorTemplate defined earlier
+  apriori: Vector, template=stateTemplate
+
+  ;; This sets the values of a Quantity according to specific Fill method
+  Fill, quantity=apriori.TEMPERATURE, method=gridded, $
+    sourceGrid=gridTEMPERATURE
+
+  ;; Now we use Subset to restrict the range of a Fill
+  Subset, quantity=apriori.h2o, height=[1000mb:1000mb], mask=fill
+  Fill, quantity=apriori.h2o, method=explicit, explicitValues=4000ppmv, /spread
+  Subset, quantity=apriori.h2o, mask=fill, /reset
+
+  ;; The Destroy command deallocates the datatype to conserve scarce meemory
+  Destroy, grid=mergedTemperature
+  Destroy, matrix=SaInitPtan
+  Destroy, vector=xInitPtan
+  
+  ;; Another instance of the VectorTemplate
+  state: Vector, template=stateTemplate
+
+  ;; This copies all the Quantities from one Vector to another
+  Transfer, source=apriori, destination=state
+  
+  ;; This puases execution if you're Snooping
+  Snoop, comment='Right before retrieve', phaseName='InitPtan'
+  
+  ;; Set precision -ve when worse than 50% apriori precision
+  NegativePrecision, precision=outputPrecision, aprioriPrecision=aprioriPrecision
+  
+
+  ;; Another data type is the matrix
+  ;; Construct and fill state covariance
+  SaInitR2: matrix, columns=aInitR2, type=spd
+  FillCovariance, matrix=SaInitR2, diagonal=sdInInitR2, /invert
+end Fill

@@ -1,0 +1,38 @@
+#$MLSF95.$MLSPLAT -- a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id$"
+ifndef USEMYFC
+FC = f95
+endif
+
+DUSTY = $(FOPTS) -dusty
+
+GC_IN_LDOPTS := $(shell echo ${LDOPTS} | grep '\-gc')
+ifeq ($(GC_IN_LDOPTS),)
+BAD_MATCH=-gc
+else
+BAD_MATCH=no -gc
+endif
+
+# How to prefix search paths for include and .mod files
+PATH_OPTS=-d -prefix=-I
+
+# Some macros needed to link successfully
+hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5_hl -lhdf5
+l_specials := $(l_specials) -lz -ldl
+hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+
+# $Log$
+# Revision 1.4  2010/09/21 22:17:54  pwagner
+# Now builds with tk5.2.17
+#
+# Revision 1.3  2010/02/03 01:08:10  pwagner
+# Moved link macros here from targets.h to simplify latter
+#
+# Revision 1.2  2009/08/24 20:27:02  pwagner
+# FC defined in .configure supersedes default
+#
+# Revision 1.1  2007/05/29 17:38:47  pwagner
+# First commit
+#

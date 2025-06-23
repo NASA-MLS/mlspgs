@@ -1,0 +1,14 @@
+$Id$
+
+The files getCF.f90 and tree_checker.f90 have exactly the same source
+text when used in L1, L2 and L3.  They depend, however, on
+init_tables_module, which is different in those three contexts.
+
+Therefore, getCF.f90 and tree_checker.f90 cannot be compiled and put
+into the library ../lib/libmls.a.
+
+The Makefiles for L1, L2 and L3 should refer to the sources here for
+getCF.f90 and tree_checker.f90, and put the .o and .mod files in
+their own directories.
+
+$Log$

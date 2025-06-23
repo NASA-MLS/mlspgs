@@ -1,0 +1,102 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.2in
+\textheight 9.2in
+
+\newcommand{\docname}{\bf wvs-039}
+\newcommand{\docdate}{7 July 2006}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Calculating $H_m$ in modification to {\tt metrics\_m}\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The basic formula for $H_m$ is $H_m = H_t / \cos \phi_m$, where $H_t$ is
+tangent height, which is derived from $\phi_m = \cos^{-1} \frac{H_t}{H_m}$. 
+{\tt metrics} thinks in terms of offsets from the equivalent circular earth
+radius, and from $\phi_t$, so the latter becomes
+
+\begin{equation}\label{one}
+\phi_m = \phi_t +
+ \cos^{-1}\frac{H_t+R^\oplus_\text{eq}}{H_m+R^\oplus_\text{eq}}\,,
+\end{equation}
+
+or (solving for $H_m$)
+
+\begin{equation}
+H_m = \frac{H_t+R^\oplus_\text{eq}}{\cos(\phi_m-\phi_t)} - R^\oplus_\text{eq}\,,
+\end{equation}
+
+at least when the ray is not an earth-intersecting ray.
+
+When there is an earth-intersecting ray, Equation (\ref{one}) becomes more
+complicated for the second half of the path, \emph{viz.}
+
+
+\begin{equation}\label{two}
+\phi_m = \phi_t +
+ \cos^{-1}\frac{H_t+R^\oplus_\text{eq}}{H_m+R^\oplus_\text{eq}} -
+ 2 \cos^{-1}\frac{N+R^\oplus_\text{eq}}{H_m+R^\oplus_\text{eq}}\,,
+\end{equation}
+
+where $N$ is the ``negative tangent height.''
+
+Let $h_m=H_m+R^\oplus_\text{eq}$, $h_t=H_t+R^\oplus_\text{eq}$ and $n =
+N+R^\oplus_\text{eq}$.  Then rearrange Equation (\ref{two}) a bit, and use
+addition and double-angle formulas for sine and cosine, giving
+
+\begin{equation}\begin{split}
+\cos(\phi_m-\phi_t) =\,&
+ \cos\left( \cos^{-1} \frac{h_t}{h_m} - 2 \cos^{-1}\frac{n}{h_m}\right) =
+\frac{h_t}{h_m}
+\left[2 \left(\frac{n}{h_m}\right)^2-1\right]
++\sin \cos^{-1}\frac{h_t}{h_m}
+ \sin 2 \cos^{-1}\frac{n}{h_m}\\
+ =\,& \frac{h_t\left(2 n^2-
+ h_m^2\right) + 2 n
+ \sqrt{h_m^2-h_t^2}
+ \sqrt{h_m^2-n^2}}
+ {h_m^3}\,.
+\end{split}\end{equation}
+
+This is a sixth-degree polynomial equation in $h_m$, \emph{viz}.
+
+\begin{equation}
+(h_m^3 \cos(\phi_m-\phi_t) - h_t\left(2 n^2-h_m^2\right))^2 =
+4 n^2 (h_m^2-h_t^2)(h_m^2-n^2)
+\end{equation}
+
+\label{lastpage}
+\end{document}
+% $Id$

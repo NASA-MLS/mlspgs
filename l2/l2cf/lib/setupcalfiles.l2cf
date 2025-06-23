@@ -1,0 +1,311 @@
+!divert(-1)
+;$Id$
+;; master input paths
+;; Make extensive use of the handy !defunlessdef macro
+;; which protects an already-defined setting from being overridden
+;; but otherwise gives it a default value
+!defunlessdef(calpath,!getdir(calpath))
+!defunlessdef(includecalpath,!getdir(includecalpath))
+!defunlessdef(pfaPath,!getdir(pfaPath))
+!defunlessdef(inpathl1boa,!getdir(inpathl1boa))
+!defunlessdef(inpathl1brad,!getdir(inpathl1brad))
+!defunlessdef(inpathl2pc,!getdir(inpathl2pc))
+!defunlessdef(inpathleapsec,!getdir(inpathleapsec))
+!defunlessdef(inpathcore,!getdir(inpathcore))
+!defunlessdef(inpathdao,!getdir(inpathdao))
+!defunlessdef(inpathgeos5pd,!getdir(inpathgeos5pd))
+!defunlessdef(inpathgeos5dd,!getdir(inpathgeos5dd))
+!defunlessdef(inpathgeos5pn,!getdir(inpathgeos5pn))
+!defunlessdef(inpathgeos5dn,!getdir(inpathgeos5dn))
+!defunlessdef(inpathcoreptan,!getdir(inpathcoreptan))
+!defunlessdef(inpathtruthl2gp,!getdir(inpathtruthl2gp))
+
+!defunlessdef(signalsPath,!getdir(signalsPath))
+!defunlessdef(spectroscopyPath,!getdir(spectroscopyPath))
+!defunlessdef(spectroscopyHDFPath,!getdir(spectroscopyHDFPath))
+!defunlessdef(sidebandPath,!getdir(sidebandPath))
+!defunlessdef(fovdirPath,!getdir(fovdirPath))
+!defunlessdef(systempPath,!getdir(systempPath))
+!defunlessdef(nbwPath,!getdir(nbwPath))
+!defunlessdef(antennaPath,!getdir(antennaPath))
+!defunlessdef(climatologyPath,!getdir(climatologyPath))
+!defunlessdef(filterPath,!getdir(filterPath))
+!defunlessdef(pfaPath,!getdir(pfaPath))
+!defunlessdef(pfgPath,!getdir(pfgPath))
+!defunlessdef(rccPath,!getdir(rccPath))
+
+; These may sometimes escape definition
+!defunlessdef(pfaVersion,!getdir(pfaVersion))
+!ifelse(!pfaVersion, {}, {
+!define(pfaVersion,{ME-03})
+})
+
+; Just in case the above paths were omitted from your overridepaths.sh file
+; Could we define a macro to help wih the following; e.g.
+; defunlessnotblank
+!ifelse(!includecalpath, {}, {
+!define(includecalpath,{!calpath})
+})
+!ifelse(!signalsPath, {}, {
+!define(signalsPath,{!includecalpath})
+})
+!ifelse(!spectroscopyPath, {}, {
+!define(spectroscopyPath,{!includecalpath})
+})
+!ifelse(!spectroscopyHDFPath, {}, {
+!define(spectroscopyHDFPath,{!calpath})
+})
+!ifelse(!sidebandPath, {}, {
+!define(sidebandPath,{!includecalpath/sbf-506})
+})
+!ifelse(!fovdirPath, {}, {
+!define(fovdirPath,{!includecalpath})
+})
+!ifelse(!systempPath, {}, {
+!define(systempPath,{!includecalpath})
+})
+!ifelse(!nbwPath, {}, {
+!define(nbwPath,{!includecalpath})
+})
+!ifelse(!antennaPath, {}, {
+!define(antennaPath,{!calpath})
+})
+!ifelse(!climatologyPath, {}, {
+!define(climatologyPath,{!calpath})
+})
+!ifelse(!filterPath, {}, {
+!define(filterPath,{!calpath})
+})
+!ifelse(!pfaPath, {}, {
+!define(pfaPath,{!calpath/PFA})
+})
+!ifelse(!pfgPath, {}, {
+!define(pfgPath,{!calpath})
+})
+!ifelse(!rccPath, {}, {
+!define(rccPath,{/users/pwagner/docs/mls})
+})
+
+
+!defunlessdef(signalsL2cf, {!signalsPath/MLS-Aura_L2Cal-Signals_v1-5-0_0000d000.l2cf})
+!defunlessdef(spectroscopyL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v4-0-3_0000d000.l2cf})
+!defunlessdef(spectroscopyFullL2cf, {!spectroscopyPath/MLS-Aura_L2Cal-Spectroscopy-all_v4-0-3_0000d000.l2cf})
+!defunlessdef(spectroscopyRtvlL2cf,{!spectroscopyL2cf})
+!defunlessdef(sidebandL2cf, {!sidebandPath/MLS-Aura_L2Cal-SBFraction_v5-0-6_2020d001.l2cf})
+!defunlessdef(fovdirL2cf, {!fovdirPath/MLS-Aura_L2Cal-FOV-Directions_v5-0-0_15adj_0000d000.l2cf})
+!defunlessdef(systempL2cf, {!systempPath/MLS-Aura_L2Cal-Tsys_v2-0-0_0000d000.l2cf})
+!defunlessdef(nbwL2cf, {!nbwPath/MLS-Aura_L2Cal-NBW_v2-0-0_0000d000.l2cf})
+!defunlessdef(rccASCII, {!rccPath/l2based_extended_residual_corrections.txt})
+
+; The next lot are arguments to forwardModelGlobal, so quoted.
+!ifdef(flagUsingPCF,{
+  !define(antennaFile,AAAP)
+  !define(climatologyFile,Climatologies)
+  !define(dacsFilterFile,DACSFilters)
+  !define(filterFile,-Filters)        ; Include - to avoid getting the DACSFilters file
+  !define(pfgFile,PFG_)               ; Include _ to avoid getting the PFG-rtvl file
+  !define(pfgRtvlFile,PFG)
+;   !define(pfaFiles,
+;   {['R1A', $
+;   'R1B', $
+;   'R2', $
+;   'R3', $
+;   'R4', $
+;   'R5H',$
+;   'R5V',$
+;   'DACS']})
+  !defunlessdef(PFAFiles, {5V,5H,R4,R3,R2,1B,1A,DACS})
+  !define(ElevOffsetHDF,{FOV})
+  !define(IsotopeRatioHDF,{IsotopeRatio})
+  !define(SBFractionHDF,{SBFraction})
+  !define(SystemTemperatureHDF,{SystemTemperature})
+  !define(NoiseBandwidthHDF,{NoiseBandwidth})
+  !define(MiscHDF,{Misc})
+  !define(spectroscopyHDF,{Spectroscopy})
+  !define(spectroscopyFullHDF,{Spectroscopy})
+  !define(spectroscopyRtvlHDF,{Spectroscopy})
+},{
+  !defunlessdef(climatologyVersion,{v1-7-8-WCM-CirT_2005-2014})
+  !defunlessdef(pfgVersion,{v3-0-0_0000d000})
+  !defunlessdef(antennaFile, {!antennaPath/MLS-Aura_L2Cal-AAAP_v2-0-0_0000d000.txt})
+  !defunlessdef(climatologyFile, {!climatologyPath/MLS-Aura_L2Cal-Climatologies_!climatologyVersion.txt})
+  !defunlessdef(filterFile, {!filterPath/MLS-Aura_L2Cal-Filters_v3-0-2_0000d000.txt})
+  !defunlessdef(dacsFilterFile, {!filterPath/MLS-Aura_L2Cal-DACSFilters_v1-5-1_0000d000.txt})
+  !defunlessdef(pfgFile, {!pfgPath/MLS-Aura_L2Cal-PFG_!pfgVersion.txt})
+  !defunlessdef(pfgRtvlFile,{!pfgFile})
+;  !defunlessdef(PFAFiles, 
+;   {['!pfaPath/PFA_R5V_!pfaVersion.h5', $
+;     '!pfaPath/PFA_R5H_!pfaVersion.h5', $
+;     '!pfaPath/PFA_R4_!pfaVersion.h5 ', $
+;     '!pfaPath/PFA_R3_!pfaVersion.h5 ', $
+;     '!pfaPath/PFA_R2_!pfaVersion.h5 ', $
+;     '!pfaPath/PFA_R1B_!pfaVersion.h5',$
+;     '!pfaPath/PFA_R1A_!pfaVersion.h5',$
+;     '!pfaPath/PFA_DACS_!pfaVersion.h5']})
+;   !define(pfaFiles,{!PFAFiles})
+  !defunlessdef(PFAFile5V,{!pfaPath/PFA_R5V_!pfaVersion.h5})
+  !defunlessdef(PFAFile5H,{!pfaPath/PFA_R5H_!pfaVersion.h5})
+  !defunlessdef(PFAFileR4,{!pfaPath/PFA_R4_!pfaVersion.h5})
+  !defunlessdef(PFAFileR3,{!pfaPath/PFA_R3_!pfaVersion.h5})
+  !defunlessdef(PFAFileR2,{!pfaPath/PFA_R2_!pfaVersion.h5})
+  !defunlessdef(PFAFile1B,{!pfaPath/PFA_R1B_!pfaVersion.h5})
+  !defunlessdef(PFAFile1A,{!pfaPath/PFA_R1A_!pfaVersion.h5})
+  !defunlessdef(PFAFileDACS,{!pfaPath/PFA_DACS_!pfaVersion.h5})
+  !defunlessdef(PFAFiles, {!PFAFile5V,!PFAFile5H,!PFAFileR4,!PFAFileR3,!PFAFileR2,!PFAFile1B,!PFAFile1A,!PFAFileDACS})
+  !defunlessdef(ElevOffsetHDF,{!calpath/MLS-Aura_L2Cal-ElevOffsets_v3-0-5_0000d000.h5})
+  !define(IsotopeRatioHDF,{!calpath/MLS-Aura_L2Cal-IsotopeRatios_v3-0-5_0000d000.h5})
+  !defunlessdef(SBFractionHDF,{!calpath/MLS-Aura_L2Cal-SBFractions_v3-0-5_0000d000.h5})
+  !define(SystemTemperatureHDF,{!calpath/MLS-Aura_L2Cal-SystemTemperatures_v3-0-5_0000d000.h5})
+  !define(NoiseBandwidthHDF,{!calpath/MLS-Aura_L2Cal-NoiseBandwidths_v3-0-5_0000d000.h5})
+  !define(MiscHDF,{!calpath/MLS-Aura_L2Cal-Misc_v3-0-5_0000d000.h5})
+  !defunlessdef(spectroscopyHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-PFA_v3-0-5_0000d000.h5})
+  !defunlessdef(spectroscopyFullHDF,{!spectroscopyHDFPath/MLS-Aura_L2Cal-Spectroscopy-all_v3-0-5_0000d000.h5})
+  !define(spectroscopyRtvlHDF,{!spectroscopyHDF})
+})
+!define(PFAFile, {!TrimLast2Chars(!getNthItem($1,!PFAFiles))})
+;; output paths
+!defunlessdef(outpathl2gp,!getdir(outpathl2gp))
+!defunlessdef(outpathl2aux,!getdir(outpathl2aux))
+!defunlessdef(outpathl2fwm,!getdir(outpathl2fwm))
+!defunlessdef(outpathl1brad,!getdir(outpathl1brad))
+!defunlessdef(outpathtmp,!getdir(outpathtmp))
+
+;;
+;; Default macro settings
+;; (These were once scattered among separate files in mlspgs/l2/l2cf/lib
+;; or in the l2cf template itself)
+;; What about lesserparams.l2cf?
+;; They may be overridden if you use a -Df macrosfile with expandl2cf.sh
+;; or else -Dvariable=value on the m4 command line
+!defunlessdef(scanModelPrecision,{30 m})
+!defunlessdef(flagAutoSplitSources,{1})
+;; This is the list of bands that the readradiances macro is to read
+;; from the level 1 data.
+!defunlessdef(relevantBands,{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,22,23,24,25,27,28,29,30,31,32,33,34})
+
+;; Print debugging info if m4 called ith cmdline option -Ddee=bug
+!ifelse(!dee,{bug},{
+!divert!dnl
+calpath:             !calpath
+includecalpath:      !includecalpath
+inpathgeos5pd:       !inpathgeos5pd
+inpathgeos5dd:       !inpathgeos5dd
+inpathgeos5pn:       !inpathgeos5pn
+inpathgeos5dn:       !inpathgeos5dn
+inpathtruthl2gp:     !inpathtruthl2gp
+
+signalsPath:         !signalsPath      
+spectroscopyPath:    !spectroscopyPath 
+spectroscopyHDFPath: !spectroscopyHDFPath
+sidebandPath:        !sidebandPath
+fovdirPath:          !fovdirPath
+systempPath:         !systempPath
+nbwPath:             !nbwPath
+antennaPath:         !antennaPath
+
+antennaFile:         !antennaFile  
+climatologyFile:     !climatologyFile  
+filterFile:          !filterFile  
+dacsFilterFile:      !dacsFilterFile  
+pfgFile:             !pfgFile  
+pfaFiles:            !pfaFiles 
+PFAFiles(1):    !getNthItem(1,!PFAFiles)
+PFAFiles(2):    !getNthItem(2,!PFAFiles)
+PFAFiles(3):    !getNthItem(3,!PFAFiles)
+PFAFiles(4):    !getNthItem(4,!PFAFiles)
+PFAFiles(5):    !getNthItem(5,!PFAFiles)
+PFAFiles(6):    !getNthItem(6,!PFAFiles)
+PFAFiles(7):    !getNthItem(7,!PFAFiles)
+PFAFiles(8):    !getNthItem(8,!PFAFiles)
+
+SBFractionHDF:       !SBFractionHDF  
+spectroscopyHDF:     !spectroscopyHDF  
+spectroscopyFullHDF: !spectroscopyFullHDF  
+
+outpathl2gp:         !outpathl2gp  
+outpathl2aux:        !outpathl2aux 
+outpathl2fwm:        !outpathl2fwm 
+outpathl1brad:       !outpathl1brad
+outpathtmp:          !outpathtmp   
+!divert(-1)
+})
+;$Log$
+;Revision 1.53  2021/08/05 22:33:45  pwagner
+;Correct file name of ElevOffsetHDF in PCF
+;
+;Revision 1.52  2021/07/22 23:10:56  pwagner
+;Allow user to define macro ElevOffsetHDF
+;
+;Revision 1.51  2020/03/05 23:52:32  pwagner
+;Cleaned quote-marks off macros; updated defaults for v5.00
+;
+;Revision 1.50  2019/12/12 00:56:22  pwagner
+;Makes use of new macros; prints if dee=bug
+;
+;Revision 1.49  2014/04/03 17:38:37  pwagner
+;May now predefine spectroscopyHDF
+;
+;Revision 1.48  2014/03/06 18:39:34  pwagner
+;Change default location for PFA files
+;
+;Revision 1.47  2012/05/02 16:49:02  pwagner
+;Corrected typo
+;
+;Revision 1.46  2012/04/05 19:14:56  pwagner
+;6 new cal files for filling lesser state qties
+;
+;Revision 1.45  2012/03/12 17:01:11  pwagner
+;Use latest Climatology that adds extinctionv2R3
+;
+;Revision 1.44  2010/04/12 17:43:43  pwagner
+;Uses new v1.7.7 Climatology file
+;
+;Revision 1.43  2010/03/31 18:22:15  pwagner
+;New Spectroscopy, PFA, and l2pc versions consistent with ME-03 series
+;
+;Revision 1.42  2010/02/10 00:47:42  pwagner
+;New default Climatology version
+;
+;Revision 1.41  2009/06/23 17:35:15  pwagner
+;Climatology now at version 1.7.4
+;
+;Revision 1.40  2008/11/06 23:07:05  pwagner
+;Brought up-to-date with v3.0.4 of Spectroscopy
+;
+;Revision 1.39  2008/08/22 17:22:41  pwagner
+;SBFraction version now 3-0-2
+;
+;Revision 1.38  2008/06/19 19:12:54  pwagner
+;All paths available from overridepaths.sh file
+;
+;Revision 1.37  2008/05/13 16:48:56  pwagner
+;PFA and Spectroscopy for FS series of v3 development tests
+;
+;Revision 1.36  2008/03/11 18:24:55  pwagner
+;The version used for !PFAversion-003 test
+;
+;Revision 1.35  2006/06/09 20:48:42  pwagner
+;Fixed bug when using PCF, PFAfiles
+;
+;Revision 1.34  2006/06/05 01:48:23  lambert
+;added full spectroscopy file
+;
+;Revision 1.33  2006/05/31 02:02:05  lambert
+;updated spectroscopy file to v2-0-6
+;
+;Revision 1.32  2006/05/26 16:51:39  lambert
+;updated climatology file to v1-7-3
+;
+;Revision 1.31  2006/05/23 00:16:08  pwagner
+;Added DACS PFA file for PCF-using runs
+;
+;Revision 1.30  2006/05/19 17:02:56  lambert
+;updated climatology file to v1-7-2
+;
+;Revision 1.29  2006/05/17 22:32:25  lambert
+;updated climatology file to v1-7-1
+;
+;Revision 1.28  2006/05/17 00:22:02  lambert
+;added PFAData_DACS_v2-0-5.h5 to PFA file list
+;
+!divert!dnl

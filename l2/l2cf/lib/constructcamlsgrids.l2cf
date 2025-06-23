@@ -1,0 +1,13 @@
+begin GlobalSettings
+
+  vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[37:12,7:6]
+  vGridMAFBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1mb, formula=[1:1]
+  vGridRefGPH: vGrid, type=Explicit, coordinate=Zeta, values=100mb
+
+
+  fGridStandard: fGrid, coordinate=IntermediateFrequency, $
+    values = [ 0 GHz ]
+end GlobalSettings
+

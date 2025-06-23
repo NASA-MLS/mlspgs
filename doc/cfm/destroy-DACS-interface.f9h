@@ -1,0 +1,3 @@
+! Deallcate memory allocated by ReadDACSFilterShapes
+subroutine Destroy_DACS_Filter_Database
+end subroutine

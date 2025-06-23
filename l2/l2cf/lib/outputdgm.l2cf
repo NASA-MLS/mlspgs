@@ -1,0 +1,24 @@
+!divert(-1)
+;; $Id$
+
+;; This l2cf fragment outputs the species joined by joindiagnostics.l2cf
+
+
+;; Only do the output if the output version has been defined
+!divert!dnl
+!ifdef(outputVersion,{
+  
+;  Notice also that I have commented-out stuff and inserted
+;  replacements below also to run with the toolkit panoply
+
+  Output, type=l2aux, quantities=[ $
+    joined_ptanGHz, joined_ptanTHz, $
+    joined_ptanGHz_precision, joined_ptanTHz_precision, $
+    joined_losVelGHz, joined_losVelTHz, $
+    joined_losVelGHz_precision, joined_losVelTHz_precision, $
+    !Alldgm ], $
+    file='!fileDGM'
+
+;    joined_losVelGHz_precision, joined_losVelTHz_precision ], $
+;    file='!outpath/MLS-Aura_L2GP_DGM_!outputVersion_!day.dat'
+})

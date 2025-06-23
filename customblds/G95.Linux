@@ -1,0 +1,44 @@
+# "$Id$"
+
+#	special options for compiling some modules--override .f90 rules
+
+# Should put this elsewhere--but in a hurry
+TABLES_DIR=../../tables
+
+# split_path.sh can split off a file name from any prefixed paths
+SPLIT_PATH=$(UTILDIR)/split_path.sh
+
+# FC_NAME may be something like f95 if we need a real compiler, or
+# mark_as_uptodate.sh if we're being asked just to touch targets
+FC_NAME := $(shell ${SPLIT_PATH} -f $(FC))
+
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+DUSTIER := $(DUSTY)
+
+# Where we and the configuration-specific files that include us are to be
+custom = $(CONFDIR)/customblds
+
+include $(custom)/Makefile.h
+
+# $Log$
+# Revision 1.7  2006/04/03 22:12:40  pwagner
+# Uniform changes to accommodate buggy Lahey optimizer in l1
+#
+# Revision 1.6  2005/09/08 00:25:01  pwagner
+# Fixed bug is build command for l1/EngTbls.o
+#
+# Revision 1.5  2004/08/19 00:07:46  pwagner
+# Fixed missing mod dependencies for machine.o
+#
+# Revision 1.4  2003/10/08 21:13:15  pwagner
+# Changed options to sort to tolerate duplicate entries
+#
+# Revision 1.3  2003/05/21 17:46:02  pwagner
+# Commands to build mol_...f9h now formatted correctly
+#
+# Revision 1.2  2003/05/17 00:04:52  pwagner
+# Now create mol_.. files in lib to be used by Molecules.f90 there
+#
+# Revision 1.1  2003/04/25 23:02:14  pwagner
+# First commit
+#

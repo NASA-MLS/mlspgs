@@ -1,0 +1,414 @@
+Command line options:
+   mlsl2 -slo1 -slo2 .. --mlo1 --mlo2 ..
+where slon are single-letter options and mlon are multiletter options
+E.g., mlsl2 -m -p --nmeta -S"glo,jac"
+Note: use "-T2" and not "--T2" because -T2 has one 'letter'
+(and yet, oddly, so do -S"mas,slv,.." and -T1h have only one 'letter')
+========================= mlsl2 =========================
+  -A[#]: Dump the un-decorated abstract syntax tree, including
+         type-checking subtrees if #>0.
+  -a[#]: Dump the decorated type-checked abstract syntax tree, including
+         type-checking subtrees if #>0.
+  -c: Trace expression evaluation and tree decoration.
+  -Dmodule1,module12,.. : Turn debugging on for module1, 2, ..
+  -d[#]: Dump the declaration table after type checking if # /= 0
+  -E: Send output to standard error unit
+  -f[digit]: Trace Forward model.  Bigger digit means
+                    more output.
+  -g[digit]: Trace "generation".  Bigger digit means 
+                    more output.
+  -h or -H or -?: This output.
+  -l: Trace lexical analysis.
+  -K: Case insensitive identifiers (default).
+  -k: Case sensitive identifiers.
+  -M: Send output through MLSMessage (default).
+  -m: Don't send output through MLSMessage.
+  -p: Trace parsing.
+  -Rstring: blocks any switches set by string; undoes unwanted -Sstring settings
+           (or which may have been set automatically)
+  -Sstring: Set "switches" = "string".  Characters in
+            "string" may control individual outputs.  If -S is
+            specified several times, the strings are combined.
+     (For help on specific strings and their effects, use -S"?")
+  -T[digit][letter]: Time some processes depending on digit
+     0: Time parsing, type checking and processing separately.
+     1: like 0, and summarize times within Fill, Retrieve, etc. at end of run
+     2: like 1, and show times within each section, too, as they happen
+     3: like 2, and show cumulative times, too
+    summarize times in units depending on letter
+     h: hours
+     m: minutes
+     s: seconds (default)
+  -t: Trace declaration table construction.
+  -Vmodule1,module12,.. : Set verboseness to TRUE for modules 1, 2, ..
+  -v: List the configuration file.
+  -w[p][integer]: Suppress printing identical warnings after integer (e.g. 100)
+        (if p present, don't restart count at each phase) (Missing integer=1)
+     -1: Print every warning without suppression
+      0: Suppress every warning
+      1: Print every warning only once
+  The above options cannot be concatenated after one hyphen,
+  because -D, -S, -R, -V, and -w take the rest of the option as its "string"
+  --[n]aura: The level 1 input files are [not] MLS-Aura (defaults to aura)
+  --backg[round]: run slaves in background
+  --check: Just check l2cf and quit
+  --chunk 'range': Run just the range defined by the expression 'range'
+     e.g., '7' means run only chunk '7', 
+       '1,3-9+2,12' means run chunks '1,3,5,7,9,12'
+     (Warning--output files will contain fillvalues for other chunks)
+  --[n]ckbk: Do [not] check the block calculations against full block algebra
+  --[n]clearOnAllocate: Do [not] set arrays etc. to zero on allocation.
+  --[n]countChunks: Do [not] just print the number of chunks and quit
+  --[n]crash[OnAnyError]: Any error will [not] cause crash with walkback
+  --defaults: Just print all default options and quit
+  --delay[ ]<amount>: Sleep <amount> micosecs at end of each trip through the 
+      master event loop; default is 200000; 0 means no sleeping
+  --dump <filename>: put output from special dumps in filename, not stdout
+  --fwmParallel: Run in forward model parallel mode.  Send each MAF of forward
+    model calculations out to a slave.
+  --host <name>: Fill HostName attribute with "name" in all product files
+      defaults to ProductionLocation
+  --idents <filename>: idents of the master task in a PVM setup that may be
+      compared with the slave's for verifying they run the same version
+     (in the next 3, n may be one of {4, 5, b} where b means both 4 and 5)
+  --inst <name>: Fill InstrumentName attribute with "name" in all product files
+      defaults to MLS-Aura
+  --l1b=n:   Assume hdfn when reading l1b files
+  --l2gpr=n: Assume hdfeosn when reading l2gp files
+  --l2gpw=n: Assume hdfeosn when writing l2gp files
+  --lac degree: Reduce output by degree; higher degree means less output
+     if degree is absent or 0, abbreviate module names and severity
+  --nlac:    Restore printing full module names and severity
+  --leak:    Check parse tree for potential leaks
+  --loc <PL>: Set ProductionLocation to PL, write to metadata, file attributes
+  --logAlloc <filename>: Log Allocates/Deallocates to filename
+  --master <filename>[:a:b]: This is the master task in a PVM setup
+    filename contains simply ascii list of slave host names
+    can list a machine more than once (e.g. for SMP slaves)
+    One can also append, after a colon, a colon separated range
+    of slaves within that file to use.
+  --maxChunkSize[ ]<amount> assume no chunk larger than <amount>
+      default is 21
+  --maxFailuresPerChunk[ ]<amount> abandon any chunk after <amount> failures
+      scf default is 10; sips default is 1; 1 means allow no failures
+  --maxFailuresPerMachine[ ]<amount> 
+      mark bad any machine after <amount> failures
+      scf default is 1; sips default is 2; 1 means allow no failures
+  --[n]memTrack[[ ]level]: Track memory usage (simple arrays only)
+      [n] or level <= 0 => no tracking, level == 1 (default) => leak checking,
+      level >= 2 => 1 + transaction reporting
+  --msgconf[=| ]string to set MLSMessageConfig using namelist input
+  --[n]oa: Do [not] require l1boa file (defaults to requiring)
+  --[n]patch: Don't [do] let run create file, swath on first directWrite
+    by default, the 1st directwrite obliterates an existing file
+    turning this option on will let you merely patch it instead
+  --pge <commandname>: What to put on slaves' commandline instead of mlsl2
+    when giving slaves their tasks (useful when using toolkit)
+  --pidf <filename>: slave reads its own processID from filename;          
+      writes "Finished" to the same file when done
+  --[n]quit:  [Don't] allow job to quit after a serious error
+      (--nquit will force it to keep running "no matter what")
+  --recl[ ]<number>: set the max record length size for l2cf to <number>
+     (In case the default value, 20000, is too small for some l2cfs).
+     This has effect only if the l2cf is not coming from standard input.
+  --set opt=val: Set command-line option opt to value val; may reuse
+     E.g., --set submit=l2q --set verbose=true
+  --setf opts_file: read one or more opt=val pairs from file opts_file
+    may also be used to set env values for wrapper script and for some
+    user-defined data types
+  --[n]shar[edPCF]: Do [not] adjust PCFids so levels 1 and 2 can share same PCF
+  --[n]skipDir[ectWrites]: Do [not] skip all the directWrites; speedy snooping
+  --[n]skipRetr[ieval]: Do [not] skip all the Retrievals; a pre-flight checkout
+  --skipPh[ases] 'list': Skip all the phases in list (e.g, 'CorePlusR2,Methanol')
+  --skipSec[tions] 'list': Skip all the sections in list (e.g, 'Join,Output')
+  --slave[ ]<master-tid>: This is a slave; <master-tid>
+    is the id of the master.  This option is set by a master
+    task and is not recommended for manual invocations.
+  --slaveMAF[ ]<number>: Set the MAF for a slave in fwmParallel mode.  This
+    option is set by the master task, and is not recommended for manual
+    invocations.
+  --snoop: Activate the snooping capability (which interacts with
+    an IDL diagnostics process)
+  --snoopname <name>: Distinguishing name to send to snooper (for use when
+    using the stand alone logger)
+  --state <value>: Fill state vectors with <value> if retrievals skipped
+  --nstdout: Avoid generating output
+  --stdout unit: Use the named unit to handle output; possible units are
+           log       : Toolkit log file
+           out       : stdout 
+           both      : both log and stdout
+           error     : standard error unit
+           unbuffered: unbuffered to selected destination
+           <filename>: filename
+  --stopAfter <section>: Stop run after <section>; e.g., 'chunk_divide'
+     (see also 'Dump, /stop' in l2cf)
+  --subblock <number>: Set the number of reals to consider when subblocking
+    the matrix multiply
+  --submit "command": In conjunction with --master, use the command
+    to submit the slave task to a batch queue system.
+  --[n]tk: Do [not] use the panoply of the PGS_toolkit (pcf, metadata, etc.)
+  --uId id_string: Set the unique id to id_string for the slave task
+  --[n]unlimdims: [Do not] Use unlimited dimensions when defining swaths
+  --verbose: set a goodly number of switches to increase output
+  --versId id_string: Set current version id to id_string
+  --version: Print current version number
+  --[n]wall: Use wall clock instead of CPU_TIME
+
+  Options a, c, f0, g0, l, p and t can be toggled in the 
+        configuration file
+  by @A, @C, @E, @G, @L, @P and @S respectively.  @L and 
+        @P are processed
+  synchronously with the input.  The others are 
+         examined later.
+  @T in the configuration file dumps the string table 
+         at that instant.
+Note that the stand-alone options file named in
+  --setf opts_file
+is recommended, being more flexible and reuseable. More info on it can
+be found via the mls wiki at
+ https://mls.jpl.nasa.gov/team/wiki/index.php/Level_2#The_options-file
+========================= end mlsl2 =========================
+
+Programmers' notes:
+The general pattern is to use one dash for single-letter options,
+and double dashes for strings. Some multiletter options may be submitted
+in an abbreviated form (e.g., --crash instead of --crashOnAnyError).
+
+(Add any more that are relevant to mlsl2,
+or separate sections for mlsl1 or mlsl3)
+
+(The equal signs in the section dividers above are to help
+sed dynamically update mlsl2 to show changes in the option
+usage automatically. Thus you only need to edit this file,
+not MLSL2.f90. Add your changes inside the space book-ended
+by the equal-signs -- stuff outside that space, like these
+comments, will be ignored when responding to mlsl2 -?)
+
+ $Log$
+ Revision 1.75  2018/05/22 23:33:12  pwagner
+ May set InstrumentName by cmdline option
+
+ Revision 1.74  2018/02/28 20:01:16  pwagner
+ Explain other advantages of -setf opts_file
+
+ Revision 1.73  2017/01/25 17:25:01  pwagner
+ May skip certain Phases named in phasesToSkip cmdline opt
+
+ Revision 1.72  2016/11/04 19:29:24  pwagner
+ --nquit is like Energizer Bunny(TM)
+
+ Revision 1.71  2015/09/24 22:11:39  pwagner
+ Added --maxChunkSize option
+
+ Revision 1.70  2015/03/10 00:23:47  pwagner
+ Note that HostName defaults to ProductionLocation
+
+ Revision 1.69  2014/09/05 00:34:35  vsnyder
+ Add [#] to -A, -a and -d options.  Add -E and --stdout error.  Delete
+ -pID.  Change description of --pidf (ought to be renamed).
+
+ Revision 1.68  2014/08/12 23:32:06  pwagner
+ commandline options --backg and --pidf noteFile added
+
+ Revision 1.67  2014/08/05 00:15:22  pwagner
+ Add --pId and --uId to set id_strings for slave task
+
+ Revision 1.66  2014/06/30 23:25:54  pwagner
+ Added --logAlloc
+
+ Revision 1.65  2014/06/20 20:24:59  pwagner
+ Added --set, --setf, and -versId
+
+ Revision 1.64  2014/03/26 17:54:01  pwagner
+ added cmdline option --loc to set ProductionLocation
+
+ Revision 1.63  2013/11/01 21:09:31  pwagner
+ Mention -D, -V options to set debug, verboseness by module
+
+ Revision 1.62  2013/09/14 01:11:14  vsnyder
+ Add MSGConf
+
+ Revision 1.61  2013/09/04 17:41:20  pwagner
+ Replaced '--cat' cmdline option; 'Catenate' now an Output section command
+
+ Revision 1.60  2013/08/20 16:39:21  pwagner
+ New cmdline arg relaxes some for non-Aura l1b datasets
+
+ Revision 1.59  2013/06/14 01:26:53  vsnyder
+ describe --stdout unbuffered
+
+ Revision 1.58  2013/02/14 23:27:50  pwagner
+ Removed outmoded [n]kit
+
+ Revision 1.57  2013/02/04 22:04:30  pwagner
+ Added '--verbose' option
+
+ Revision 1.56  2012/12/04 00:16:51  pwagner
+ Removed confisuion-causing OUTSIDEOVERLAPS and its cmdline option
+
+ Revision 1.55  2012/08/16 19:54:17  pwagner
+ Explains changes to [n]lac and stdout options
+
+ Revision 1.54  2012/07/02 20:58:20  pwagner
+ Improve messages
+
+ Revision 1.53  2012/03/28 20:17:34  pwagner
+ Removed stgmem option--slave tasks lost ability to join quantities
+
+ Revision 1.52  2012/02/09 02:45:28  vsnyder
+ Remove -C option -- I didn't notice --crash was already there
+
+ Revision 1.51  2012/02/09 01:48:20  vsnyder
+ Add -C option to crash on any error, to get traceback for debugging
+
+ Revision 1.50  2011/06/29 21:55:52  pwagner
+ Some cases may safely omit l1b files
+
+ Revision 1.49  2008/01/08 00:25:57  pwagner
+ Levels 1 and 2 can use same shared PCF now if --shared option set
+
+ Revision 1.48  2007/08/17 00:31:14  pwagner
+ Eliminated now redundant [n]everCrash
+
+ Revision 1.47  2007/01/12 00:32:03  pwagner
+ May set host name; may specifiy unbuffered stdout
+
+ Revision 1.46  2006/10/05 23:31:55  pwagner
+ skipSections can skip named sections
+
+ Revision 1.45  2006/08/10 22:25:49  pwagner
+ --chunk commandline option now synonym for --chunkRange
+
+ Revision 1.44  2006/07/29 03:39:45  vsnyder
+ Update --memtrack description
+
+ Revision 1.43  2006/07/27 03:50:10  vsnyder
+ Add --leak option
+
+ Revision 1.42  2006/07/22 00:22:06  pwagner
+ new state and stopAfter options
+
+ Revision 1.41  2006/04/11 23:12:31  pwagner
+ Whether to allow overlaps outside of processing range
+
+ Revision 1.40  2006/02/10 21:24:02  pwagner
+ --dump specialDumpFile explained
+
+ Revision 1.39  2005/03/12 00:45:19  pwagner
+ -w option added; changed note onconcatenating options
+
+ Revision 1.38  2005/03/03 00:24:32  pwagner
+ Added -Rs1,s2,.. Removeswitches option
+
+ Revision 1.37  2004/08/19 00:09:02  pwagner
+ Added crashing options, defaults
+
+ Revision 1.36  2004/08/05 22:46:04  pwagner
+ New --chunkRange option to run selected chunks in parallel mode
+
+ Revision 1.35  2004/04/27 23:57:01  pwagner
+ skipDirectWrites
+
+ Revision 1.34  2004/04/06 23:51:07  livesey
+ Added clearOnAllocate flag
+
+ Revision 1.33  2004/02/05 23:26:22  pwagner
+ Added --cat option
+
+ Revision 1.32  2004/01/07 20:44:36  pwagner
+ Correct, expand on patch option
+
+ Revision 1.31  2003/12/11 22:57:29  pwagner
+ idents option lets slave verify whether its version same as master
+
+ Revision 1.30  2003/12/05 00:56:38  pwagner
+ Note T[digit][letter] elaboration; also --patch
+
+ Revision 1.29  2003/11/15 00:33:37  pwagner
+ New commandline opts: maxfailuresperchunk, maxfailurespermachine
+
+ Revision 1.28  2003/11/14 23:42:21  pwagner
+ delay nnn option mentioned
+
+ Revision 1.27  2003/11/05 21:29:11  pwagner
+ Can enter range of chunks to be processed instead of single
+
+ Revision 1.26  2003/10/09 23:30:39  pwagner
+ ,-separated switches recommended
+
+ Revision 1.25  2003/09/05 23:25:17  pwagner
+ Adds --skipRetrieval
+
+ Revision 1.24  2003/08/01 20:02:52  pwagner
+ Added --pge 'commandname'
+
+ Revision 1.23  2003/06/13 23:55:57  vsnyder
+ Futzing
+
+ Revision 1.22  2003/06/13 20:02:23  vsnyder
+ Futzing
+
+ Revision 1.21  2003/06/12 20:50:38  pwagner
+ Removed [n]pcf
+
+ Revision 1.20  2003/05/13 04:48:32  livesey
+ Added stgmem
+
+ Revision 1.19  2002/12/07 22:24:46  livesey
+ Added the snoopname option
+
+ Revision 1.18  2002/10/05 00:47:16  livesey
+ Added slaveMAF and fwmParallel
+
+ Revision 1.17  2002/10/04 16:47:12  pwagner
+ Removed notes on little-used options
+
+ Revision 1.16  2002/10/03 23:00:04  pwagner
+ You can set l1b, l2gp hdfversions on command line
+
+ Revision 1.15  2002/08/29 21:48:38  livesey
+ Added the --subblock option
+
+ Revision 1.14  2002/06/12 17:57:51  livesey
+ Added --submit information
+
+ Revision 1.13  2002/05/24 17:35:31  pwagner
+ Added --recl option
+
+ Revision 1.12  2002/03/20 00:48:29  pwagner
+ Option -check just checks l2cf then quits
+
+ Revision 1.11  2002/02/12 00:26:05  pwagner
+ Added --version
+
+ Revision 1.10  2002/02/05 00:39:56  pwagner
+ garbage collecting options
+
+ Revision 1.9  2002/01/18 00:57:36  livesey
+ Added the --chunk option
+
+ Revision 1.8  2001/12/13 23:21:33  livesey
+ Added countChunks
+
+ Revision 1.7  2001/11/09 23:40:38  vsnyder
+ Add --wall option
+
+ Revision 1.6  2001/11/09 18:13:40  livesey
+ Added nckbk
+
+ Revision 1.5  2001/11/05 23:21:48  livesey
+ More stuff for --master
+
+ Revision 1.4  2001/10/04 23:51:42  livesey
+ Added ckbk option
+
+ Revision 1.3  2001/09/28 18:06:49  pwagner
+ New -T[digit] in place of old -T
+
+ Revision 1.2  2001/09/19 23:44:22  livesey
+ Added --snoop
+
+ Revision 1.1  2001/05/23 23:05:40  pwagner
+ First commit
+
+

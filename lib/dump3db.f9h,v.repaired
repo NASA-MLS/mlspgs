@@ -1,0 +1,179 @@
+! Copyright 2011, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+! subroutine DUMP_3D_COMPLEX ( ARRAY, NAME, &                 
+!   & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )            
+!   double precision, intent(in) :: ARRAY(:,:,:)             
+!   character(len=*), intent(in), optional :: NAME           
+!   double precision, intent(in), optional :: FILLVALUE      
+!   integer, intent(in), optional :: WIDTH                   
+!   character(len=*), intent(in), optional :: FORMAT         
+!   integer, intent(in), optional :: LBOUND  ! to print for first dimension              
+!   character(len=*), intent(in), optional :: options        
+!   integer :: I, J, K, L                                    
+!   integer :: NumZeroRows                                   
+!   double precision :: myFillValue                          
+!   character(len=64) :: myFormat                            
+!   integer :: nUnique                                       
+!   integer, dimension(MAXNUMELEMENTS) :: counts             
+!   double precision, dimension(MAXNUMELEMENTS) :: elements  
+    base = 2
+    if ( present(lbound) ) base = lbound + 1
+    myOptions = DEFAULTDUMPOPTIONS
+    MyWidth = 5
+    if ( present(width) ) MyWidth = width
+    if ( present(options) ) myOptions = options
+    indx2BSliced = 0
+    if ( optiondetail( myOptions, 'W' ) /= 'no' ) then
+      call readIntsFromChars( optiondetail( myOptions, 'W' ), indx2BSliced )
+    endif
+    numZeroRows = 0
+    if ( any(shape(array) == 0) ) then
+      call empty ( name )
+    else if ( size(array) == 1 ) then
+      if ( present(theShape) ) then
+        call name_and_size ( name, dopts(clean)%v, 1, theShape )
+      else
+        call name_and_size ( name, dopts(clean)%v, 1, '(1,1,1)' )
+      end if
+      call output ( base-1, before='(', after=') ' , advance='no' )
+      call output ( array(1,1,1), format=myFormat, advance='yes' )
+    else if ( size(array,1) == 1 ) then
+      if ( dopts(wholeArray)%v ) then
+        if ( present(theShape) ) then
+          call dump ( array(1,:,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape=theShape )
+        else
+          call dump ( array(1,:,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape='(1,:,:)' )
+        endif
+      else
+        call dump ( array(1,:,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      endif
+    else if ( size(array,2) == 1 ) then
+      if ( dopts(wholeArray)%v ) then
+        if ( present(theShape) ) then
+          call dump ( array(:,1,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape=theShape )
+        else
+          call dump ( array(:,1,:), name, &
+            & fillValue=fillValue, format=format, options=options, theShape='(:,1,:)' )
+        endif
+      else
+        call dump ( array(:,1,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      endif
+    else if ( size(array,3) == 1 ) then
+      if ( dopts(wholeArray)%v ) then
+        if ( present(theShape) ) then
+          call dump ( array(:,:,1), name, &
+            & fillValue=fillValue, format=format, options=options, theShape=theShape )
+        else
+          call dump ( array(:,:,1), name, &
+            & fillValue=fillValue, format=format, options=options, theShape='(:,:,1)' )
+        endif
+      else
+        call dump ( array(:,:,1), name, &
+          & fillValue=fillValue, format=format, options=options )
+      endif
+    else if ( indx2BSliced == 1 ) then
+      do iSlice=1, size(array, 1)
+        call output( '(' , advance='no' )
+        call output( iSlice , advance='no' )
+        call output( ',:,:)' , advance='no' )
+        call dump ( array(iSlice,:,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      enddo
+    else if ( indx2BSliced == 2 ) then
+      do iSlice=1, size(array, 2)
+        call output( '(:,' , advance='no' )
+        call output( iSlice , advance='no' )
+        call output( ',:)' , advance='no' )
+        call dump ( array(:,iSlice,:), name, &
+          & fillValue=fillValue, format=format, options=options )
+      enddo
+    else if ( indx2BSliced == 3 ) then
+      do iSlice=1, size(array, 3)
+        call output( '(:,:,' , advance='no' )
+        call output( iSlice , advance='no' )
+        call output( ')' , advance='no' )
+        call dump ( array(:,:,iSlice), name, &
+          & fillValue=fillValue, format=format, options=options )
+      enddo
+    else
+      call name_and_size ( name, dopts(clean)%v, size(array), theShape )
+      if ( present(name) .and. .not. dopts(laconic)%v ) &
+        & call newLine ( dont_make_blank_line=.true. )
+      do i = 1, size(array,1)
+        do j = 1, size(array,2)
+          do k = 1, size(array,3), myWidth
+            DumpTheseZeros = dopts(clean)%v .or. &
+              & any(array(i,j,k:min(k+2*MyWidth-1, size(array,3))) /= myFillValue) &
+              & .or. &
+              & ( k+MyWidth >= size(array,3) .and. &
+              & any(array(i,min(j+1, size(array,2)),1:min(1+MyWidth-1, size(array,3))) &
+              & /= myFillValue) &
+              & )
+            if (.not. dopts(clean)%v) then
+              if ( DumpTheseZeros ) then
+                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
+                  & k, size(array,3) /), numZeroRows, &
+                  & myFillValue, inc=3, format=myFormat )
+              else
+                numZeroRows = numZeroRows + 1
+              end if
+            end if
+            if ( DumpTheseZeros ) then
+              do l = k, min(k+myWidth-1, size(array,3))
+                call output ( array(i,j,l), format=myFormat , advance='no' )
+              end do
+              call newLine
+              numZeroRows = 0
+            endif
+          end do
+        end do
+      end do
+      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
+        & k-myWidth, size(array,3) /), numZeroRows, myFillValue, format=myFormat )
+   end if
+   call theDumpEnds
+! end subroutine DUMP_3D_DOUBLE
+! $Log$
+! Revision 2.9  2017/07/31 23:18:55  pwagner
+! Try to avoid printing unwanted blank lines
+!
+! Revision 2.8  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
+! Revision 2.7  2013/06/19 23:13:44  pwagner
+! Remove more unused stuff
+!
+! Revision 2.6  2013/06/19 20:44:28  pwagner
+! Now obeys -W[n] option
+!
+! Revision 2.5  2012/06/22 20:25:18  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
+! Revision 2.4  2011/12/15 01:44:33  pwagner
+! Tries to retain theShape if present
+!
+! Revision 2.3  2011/07/26 20:45:21  pwagner
+! Clearer, less redundant
+!
+! Revision 2.2  2011/07/15 23:22:16  pwagner
+! prints notice one of array sizes is 1
+!
+! Revision 2.1  2011/07/12 00:09:03  pwagner
+! First commit
+!

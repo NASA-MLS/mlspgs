@@ -1,0 +1,58 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!------------------------------- RCS Ident Info ------------------------------
+! $RCSfile$
+!-----------------------------------------------------------------------------
+
+! Probably only useful within Allocate_Deallocate.f90
+
+    integer(c_intptr_t) :: Addr
+    logical :: DoAlloc
+    integer :: MyLow(3), Status
+    character(127) :: ERMSG
+    target :: To_Allocate
+    status = 0 ! In case we don't need to allocate
+    myLow = 1
+    if ( present(low) ) myLow = low
+    doAlloc = .not. allocated(to_allocate)
+    if ( .not. doAlloc ) doAlloc = any(lbound(to_allocate) /= myLow) .or. &
+                                 & any(ubound(to_allocate) /= dim)
+    if ( doAlloc ) then
+      call deallocate_Test ( To_Allocate, ItsName, ModuleName )
+      allocate ( &
+        & To_Allocate(myLow(1):dim(1),myLow(2):dim(2),myLow(3):dim(3)), &
+        & STAT=status, ERRMSG=ermsg )
+      addr = 0
+      if ( status == 0 ) then
+        if ( size(to_allocate) > 0 ) &
+          & addr = transfer ( c_loc(to_allocate(myLow(1),myLow(2),myLow(3))), addr )
+      end if
+      call test_allocate ( status, moduleName, ItsName, myLow, dim, &
+        & bytes(to_allocate), ermsg, addr )
+      if ( mod(trackallocates,2) > 0 ) &
+        & call trackAllocate ( to_allocate, itsName, moduleName )
+    end if
+    if ( status == 0 ) then
+      if ( present(fill) ) then
+        to_allocate = fill
+      else if ( clearOnAllocate ) then
+        to_allocate = default
+      end if
+    end if
+
+! $Log$
+! Revision 1.2  2018/04/19 00:43:00  vsnyder
+! Turn on address computation for tracking
+!
+! Revision 1.1  2015/06/04 00:33:38  vsnyder
+! Initial commit
+!

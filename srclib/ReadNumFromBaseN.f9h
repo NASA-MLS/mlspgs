@@ -1,0 +1,85 @@
+! Copyright 2014, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+!  subroutine readIntFromBaseN ( STR, K, N, OPTIONS )
+    ! returns an integer from a string
+    ! using poorly-tested but hopefully non-critical code
+
+    !--------Argument--------!
+    ! character (len=*), intent(in)           ::   str
+    ! integer, intent(out)                    ::   k ! integer result
+    ! integer, intent(in)                     ::   N ! the base
+    ! character(len=*), optional, intent(in)  ::   options
+    ! Internal variables
+    integer, dimension(:), allocatable      :: C
+    logical                                 :: compressed
+    integer                                 :: i
+    integer                                 :: i1
+    integer                                 :: i2
+    integer                                 :: j
+    integer                                 :: m
+    character(len=8)                        :: myOptions
+    integer                                 :: status
+    character(len=8)                        :: substr
+    character(len=1)                        :: subsub
+    character(len=*), parameter             :: xtended = &
+      & '0123456789abcdefghijklmnopqrstuvwxyz;''[]ABCDEFGHIJKLMNOPQRSTUVWXYZ:"{}'
+    ! Executable
+    k = 0
+    if ( N < 2 .or. len_trim(str) < 1 ) return
+    myOptions = ' '
+    if ( present(options) ) myOptions = options
+    compressed = index( myOptions, 'c' ) > 0
+    ! First we must obtain m
+    if ( compressed ) then
+      m = len_trim(str) - 1
+    else
+      m = ncopies( trim(str), ' ' )
+    end if
+    allocate ( C(0:m), stat=status )
+    i2 = 1
+    do j=m, 0, -1
+      i1 = i2
+      if ( compressed ) then
+        substr = str(i1:i2)
+        i2 = i2 + 1
+      else
+        i2 = FindNext( str, ' ', i1 )
+        substr = str(i1:i2)
+        i1 = i2
+      end if
+      ! Read each substr as an integer
+      if ( index(myOptions, 'a') > 0 .or. index(myOptions, 'A') > 0 ) then
+        ! We won't bother coding this case--it would be ridiculous anyway
+        stop
+      else if ( compressed .or. index(myOptions, 'x') > 0 ) then
+        ! 'Extended' hexadecimal
+        subsub = adjustl(substr)
+        C(j) = FindFirst( (/ (xtended(i:i), i=1, len(xtended)) /) == subsub )
+        C(j) = max(0, C(j) - 1)
+      else
+        ! Plain vanilla decimal integers
+        call readIntsFromChars( substr, C(j) )
+      end if
+    end do
+    ! call dump(C, 'coefficients')
+    k = 0
+    do j=m, 0, -1
+      k = N*k + C(j)
+    end do
+    deallocate ( C, stat=status )
+!  end subroutine readIntFromBaseN
+! $Log$
+! Revision 1.1  2014/07/25 21:43:30  pwagner
+! First commit
+!

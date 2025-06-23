@@ -1,0 +1,816 @@
+! Copyright 2023, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=================================
+program createattributes ! creates file attributes
+!=================================
+
+   use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
+   use Dump_0, only: Dump
+   use HDF, only: Dfacc_Rdwr
+   use HDF5, only: H5DClose_f, H5DOpen_f, H5GClose_f, H5GOpen_f
+   use HDFEOS5, only: HE5T_NATIVE_DOUBLE, HE5T_NATIVE_REAL, &
+     & HE5T_NATIVE_INT, MLS_CharType
+   use Intrinsic, only: L_HDF, L_Swath
+   use Io_Stuff, only: Get_NLines, Read_TextFile
+   use Machine, only: Hp, Getarg
+   use MLSCommon, only: FileNameLen, MLSFile_T
+   use MLSFiles, only: HDFVersion_5, &
+     & Dump, MLS_CloseFile, MLS_OpenFile, MLS_Exists, &
+     & InitializeMLSFile
+   use MLSHDFEOS, only: HE5_EHwrglatt, MLS_EhwrGlAtt, HSIZE
+   use MLSHDF5, only: MLS_H5open, MLS_H5close
+   use MLSHDF5, only: MakeHDF5Attribute
+   use MLSMessageModule, only: MLSMessageConfig, &
+     & MLSMessage, MLSMSG_Error, MLSMSG_Warning
+   use MLSStringLists, only: GetStringElement, NumStringElements, &
+     & ReadIntsFromList, ReadNumsFromList, UnQuote
+   use MLSStrings, only: LowerCase, ReadNumsFromChars, Replace, Capitalize
+   use Output_M, only: Output
+   use Time_M, only: Time_Now, Time_Config
+   
+   implicit none
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+! Brief description of program
+! Creates or resets values of file attributes in 
+! (1) an L2GPData file
+! (2) an L2AUXData file
+! according to a text file containing lines of name=value
+
+! To use this, copy it into
+! mlspgs/tests/lib
+! then enter "make depends" followed by "make"
+
+! Then run it something like this
+! Usage:
+! (1)
+!    createattributes \ 
+!       -l2gp \
+!       -Vf attr_file \
+!       L2GP_File
+! (2)
+!    createattributes \ 
+!       -l2aux \
+!       -Vf attr_file \
+!       L2AUX_File
+
+! Here is an example of an attr_file
+! #------env file for createattributes----
+! newattr_a=newvalue_a
+! newattr_b=newvalue_b
+! newattr_c=newvalue_c
+! newattr_d=newvalue_d
+! GranuleYear=3023
+! root=/
+! DSName=chunk number
+! attr_a=chunk_a
+! attr_b=chunk_b
+! attr_c=chunk_c
+! attr_d=chunk_d
+! 
+! You can observe that the rhs, even in the case of chunk number with
+! its embedded space, is not surrounded by quote marks. In fact,
+! surrounding the rhs with quote marks will generate an hdf error, so
+! don't do that.
+
+! Notes and Limitations
+! (1) The attribute values will be character-valued scalars.
+!     If a prior attribute with the same name existed, it will
+!     be silently deleted, then replaced with the new one.
+!     If the prior attribute was, say integer-valued, the new one
+!     will be character-valued, which may confuse whatever application
+!     is intended to read it.
+! (2) One possible improvement would be to allow for attribute values
+!     that are numeric. A bit of syntactic trickery to do this
+!     would be to allow an optional keyword preceding the attribute name.
+!     E.g.,
+!      integer FirstMAF=5089784
+!      double TAI93At0zOfGranule=9.43142e+08
+! (3) More ambitious plans would allow for numeric arrays using syntax like
+!      integer OrbitNumber=[97608, 97609, 97610, 97611, 97612, 97613, 97614, 97615, 97616, 97617, 97618, 97619, 97620, 97621, 97622, -1]
+!      double OrbitPeriod=[5933.18, 5933.15, 5933.15, 5933.21, 5933.29, 5933.29, 5933.26, 5933.18, 5933.14, 5933.14, 5933.16, 5933.24, 5933.31, 5933.25, 5933.25, 0]
+
+! Tests:
+! (Both in /users/pwagner/mlspgs/tests/lib/createattrstest)
+! l2gp
+! rm Altitude.he5 ; /users/pwagner/mlspgs/bin/IFC.Linux.ifc19-OL8/l2gpcat -s Altitude -o Altitude.he5 -g MLS-Aura_L2EDMP-GEOS5124-v201_v05-01-c01_2023d054.he5 MLS-Aura_L2EDMP-GEOS5124-v201_v05-01-c01_2023d054.he5
+! /users/pwagner/mlspgs/bin/IFC.Linux.ifc19-OL8/createattributes -debug -l2gp -Vf Altitude.env Altitude.he5
+!
+! l2aux:
+! rm chunknumber.h5 ; /software/toolkit/mlstools/l2auxcat -v -s "chunk number" -o chunknumber.h5 MLS-Aura_L2AUX-DGM_v05-01-c01_2023d026.h5
+! /users/pwagner/mlspgs/bin/IFC.Linux.ifc19-OL8/createattributes -debug -l2aux -Vf chunknumber.env chunknumber.h5
+
+
+  type options_T
+    logical               :: debug       = .false.
+    logical               :: silent      = .false.
+    logical               :: verbose     = .false.
+    logical               :: dryrun      = .false.
+    character(len=255)    :: attr_file   = ' ' 
+    character(len=8  )    :: filetype    = ' '       ! 'l2gp' or 'l2aux'
+    character(len=255)    :: root        = '/' 
+    character(len=255)    :: DSName      = ' ' 
+  end type options_T
+  
+  type ( options_T ) :: options
+
+  integer, parameter ::          MAXARRAYSIZE = 500
+  integer, parameter ::          MAXFILES = 10 ! Usually just 1
+  logical, parameter ::          countEmpty = .true.
+  character(len=255) :: filename          ! input filename
+  character(len=255), dimension(MAXFILES) :: filenames
+  integer            :: n_filenames
+  integer     ::  status, error ! Counting indices & Error flags
+  real        :: t1
+  real        :: t2
+  real        :: tFile
+  type( MLSFile_T ) :: L2GPFile
+  integer :: ACCESS
+  integer :: k
+  integer :: nLines
+  logical :: gotOpenBracket
+  logical :: gotCloseBracket
+  character(len=FileNameLen)  :: attrLine
+  character(len=FileNameLen), dimension(:), pointer  :: attrLines => null()
+  ! 
+  MLSMessageConfig%useToolkit = .false.
+  MLSMessageConfig%logFileUnit = -1
+  time_config%use_wall_clock = .true.
+  CALL mls_h5open(error)
+  ACCESS = Dfacc_Rdwr
+  n_filenames = 0
+  do      ! Loop over filenames
+     call get_filename( filename, n_filenames, options )
+     if ( filename(1:1) == '-' ) cycle
+     if ( filename == ' ' ) exit
+     if ( mls_exists(trim(filename)) /= 0 ) then
+       print *, 'Sorry--file not found: ', trim(filename)
+       cycle
+     endif
+     n_filenames = n_filenames + 1
+     filenames(n_filenames) = filename
+  enddo
+  if ( n_filenames == 0 ) then
+    print *, 'Sorry no files to insert'
+  elseif ( len_trim(options%filetype) == 0 ) then
+    print *, 'Sorry, type must be either l2gp or l2aux'
+  else
+    call time_now ( t1 )
+    if ( options%silent ) then
+      options%debug   = .false.
+      options%verbose = .false.
+    endif
+
+    if ( options%verbose ) &
+      & call Dump ( filenames(1:n_filenames), 'files', width=1 )
+    if ( len_trim(options%attr_file) < 1 ) then
+      print *, 'Sorry, you must supply a file of attribute names=values'
+      call MLSMessage( MLSMSG_Error, ModuleName, &
+        & 'Sorry, you must supply a file of attribute names=values' )
+    endif
+    call get_nLines ( options%attr_file, nLines )
+    if ( nLines < 0 ) then
+      print *, 'Sorry, unable to open attribute file ' // trim(options%attr_file)
+      call MLSMessage( MLSMSG_Error, ModuleName, &
+        & 'Sorry, unable to open attribute file ' // trim(options%attr_file) )
+    elseif ( nLines < 1 ) then
+      print *, '0 lines in attribute file ' // trim(options%attr_file)
+      call MLSMessage( MLSMSG_Warning, ModuleName, &
+        & 'Unexpectedly empty attribute file ' // trim(options%attr_file) )
+    endif
+    if ( options%verbose ) &
+      & print *, "attribute file: ", trim(options%attr_file)
+    call allocate_test ( attrLines, nLines, 'attrLines', &
+      & trim(ModuleName) // 'processLine' )
+    attrLines = ' '
+    call read_textFile( options%attr_file, attrLines )
+    if ( options%verbose ) then
+      print *, 'attributes read from ' // trim(options%attr_file)
+      print *, 'nLines', nLines 
+    endif
+    if ( options%filetype == 'l2gp' ) then
+      status = InitializeMLSFile( L2GPFile, type=l_swath, access=ACCESS, &
+        & content='L2GP', name=trim(filenames(1)), hdfVersion=HDFVERSION_5 )
+    else
+      status = InitializeMLSFile( L2GPFile, type=l_hdf, access=ACCESS, &
+        & content='L2GP', name=trim(filenames(1)), hdfVersion=HDFVERSION_5 )
+    endif
+    call mls_openFile( L2GPFile, Status )
+    gotOpenBracket = .false.
+    attrLine = ' '
+    do k=1, nLines
+      attrLines(k) = adjustl(attrLines(k))
+      if ( options%verbose ) print *,  trim(attrLines(k))
+      ! skip comment lines
+      if ( index(attrLines(k), '#') == 1 ) cycle
+      ! Check for open and close brackets, i.e. '[' and ']'
+      if ( .not. gotOpenBracket ) &
+        & gotOpenBracket = ( index(trim(attrLines(k)), '[' ) > 0 )
+      gotCloseBracket = ( index(trim(attrLines(k)), ']' ) > 0 )
+      if ( gotOpenBracket ) then
+        attrLine = trim(attrLine) // attrLines(k)
+        if (.not. gotCloseBracket ) cycle
+      else
+        attrLine = attrLines(k)
+      endif
+      ! Did we use any continuation marks, i.e.'$' chars?
+      ! If so, must snuff them out.
+      if ( index(trim(attrLine), '$') > 0 ) &
+        & attrLine = Replace( attrLine, '$', ' ' )
+      print *, trim(attrLine)
+      if ( .false. ) then
+        Status = 0
+      elseif ( options%filetype == 'l2gp' ) then
+        call create_l2gpattr( L2GPFile, attrLine, arrayvalues=gotCloseBracket )
+      else
+        call create_l2auxattr( L2GPFile, attrLine, arrayvalues=gotCloseBracket )
+      endif
+      ! OK, reset everything
+      attrLine = ' '
+      gotOpenBracket = .false.
+    enddo
+    call deallocate_test ( attrLines, 'attrLines', &
+      & trim(ModuleName) // 'processLine' )
+    call mls_CloseFile( L2GPFile, Status )
+  endif
+  call mls_h5close(error)
+contains
+
+!------------------------- create_l2gpattr ---------------------
+! Create the file-level attribute and its value
+
+  subroutine create_l2gpattr( L2GPFile, Line, arrayValues )
+    ! Dummy args
+    type( MLSFile_T )               :: L2GPFile
+    character(len=FileNameLen)      :: Line
+    logical, intent(in)             :: arrayValues
+    ! Internal variables
+    character(len=fileNameLen)      :: attrType
+    character(len=1)                :: caseType
+    character(len=fileNameLen)      :: name
+    character(len=fileNameLen)      :: valu
+    character(len=1), parameter     :: eqls = '='
+    integer                         :: N ! How big is array?
+    integer                         :: status
+    character(len=*), parameter     :: attrTypes = &
+      & 'integer,single,double,character'
+    ! attribute values if numeric
+    integer                         :: ivalu
+    real                            :: rvalu
+    double precision                :: dvalu
+    integer, dimension(MAXARRAYSIZE):: ivalues
+    real, dimension(MAXARRAYSIZE)   :: rvalues
+    double precision, dimension(MAXARRAYSIZE)   :: dvalues
+    ! --------------------------------------------------------------------
+    ! --------------------------------------------------------------------
+    ! Executable
+    ! ------------------------------------------------------------------------
+    call time_now ( tFile )
+    ! First, check if we are declaring the attribute type, like this
+    !   integer NOrbits=10
+    ! or using the old style character type
+    !   HostName=pigeon
+    call getStringElement( line, attrType, 1, countEmpty, ' ' )
+    if ( index(attrTypes, trim(lowercase(attrType))) < 1 ) then
+      ! old style
+      call getStringElement( line, name, 1, countEmpty, eqls )
+      call getStringElement( line, valu, 2, countEmpty, eqls )
+      if ( options%dryrun .or. options%debug ) then
+        print *, 'name: ', trim(name)
+        print *, 'value: ', trim(valu)
+      endif
+      if ( .not. options%dryrun ) then
+        status = mls_EHwrglatt( L2GPFile%fileID%f_id, &
+          & trim(name), MLS_CHARTYPE, 1, &
+          & trim(valu) )
+        call sayTime('Creating this attribute, ' // trim(name) )
+      endif
+    else
+      ! must have declared the attribute type
+      ! Now, a trick:
+      ! Scalar values will be typed like 'integer', i.e. lower case
+      ! while array values will like 'INTEGER', i.e. upper case
+      if ( arrayValues ) then
+        caseType = Capitalize ( attrType(1:1) )
+      else
+        caseType = LowerCase ( attrType(1:1) )
+      endif
+      select case (caseType)
+      case ('i') ! 'integer '
+        call getStringElement( line(9:), name, 1, countEmpty, eqls )
+        call getStringElement( line(9:), valu, 2, countEmpty, eqls )
+        call ReadNumsFromChars ( valu, ivalu )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', ivalu
+        endif
+        if ( .not. options%dryrun ) then
+          status = he5_EHwrglatt( L2GPFile%fileID%f_id, &
+            & trim(name), HE5T_NATIVE_INT, hsize(1), &
+            & (/ ivalu /) )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('s') ! 'single '
+        call getStringElement( line(8:), name, 1, countEmpty, eqls )
+        call getStringElement( line(8:), valu, 2, countEmpty, eqls )
+        call ReadNumsFromChars ( valu, rvalu )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', rvalu
+        endif
+        if ( .not. options%dryrun ) then
+          status = he5_EHwrglatt( L2GPFile%fileID%f_id, &
+            & trim(name), HE5T_NATIVE_REAL, hsize(1), &
+            & (/ rvalu /) )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('d') ! 'double '
+        call getStringElement( line(8:), name, 1, countEmpty, eqls )
+        call getStringElement( line(8:), valu, 2, countEmpty, eqls )
+        call ReadNumsFromChars ( valu, dvalu )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', dvalu
+        endif
+        if ( .not. options%dryrun ) then
+          status = he5_EHwrglatt( L2GPFile%fileID%f_id, &
+            & trim(name), HE5T_NATIVE_DOUBLE, hsize(1), &
+            & (/ dvalu /) )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('c') ! 'character '
+        call getStringElement( line(10:), name, 1, countEmpty, eqls )
+        call getStringElement( line(10:), valu, 2, countEmpty, eqls )
+        name = adjustl(name)
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', trim(valu)
+        endif
+        if ( .not. options%dryrun ) then
+          status = mls_EHwrglatt( L2GPFile%fileID%f_id, &
+            & trim(name), MLS_CHARTYPE, 1, &
+            & valu )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('I') ! 'INTEGER (array) '
+        call getStringElement( line(9:), name, 1, countEmpty, eqls )
+        call getStringElement( line(9:), valu, 2, countEmpty, eqls )
+        ! print *, 'Trying to remove []'
+        valu = unquote( valu, quotes='[', cquotes=']' )
+        N = NumStringElements ( valu, countEmpty=countEmpty )
+        call ReadIntsFromList ( valu, ivalues(1:N) )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'values: ', ivalues(1:N)
+        endif
+!        stop
+        if ( .not. options%dryrun ) then
+          status = he5_EHwrglatt( L2GPFile%fileID%f_id, &
+            & trim(name), HE5T_NATIVE_INT, hsize(N), &
+            & ivalues(1:N) )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('S') ! 'SINGLE (array) '
+        call getStringElement( line(8:), name, 1, countEmpty, eqls )
+        call getStringElement( line(8:), valu, 2, countEmpty, eqls )
+        ! print *, 'Trying to remove []'
+        valu = unquote( valu, quotes='[', cquotes=']' )
+        N = NumStringElements ( valu, countEmpty=countEmpty )
+        call ReadNumsFromList ( valu, rvalues(1:N) )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'values: ', rvalues(1:N)
+        endif
+        if ( .not. options%dryrun ) then
+          status = he5_EHwrglatt( L2GPFile%fileID%f_id, &
+            & trim(name), HE5T_NATIVE_REAL, hsize(N), &
+            & rvalues(1:N) )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('D') ! 'DOUBLE (array) '
+        call getStringElement( line(8:), name, 1, countEmpty, eqls )
+        call getStringElement( line(8:), valu, 2, countEmpty, eqls )
+        ! print *, 'Trying to remove []'
+        valu = unquote( valu, quotes='[', cquotes=']' )
+        N = NumStringElements ( valu, countEmpty=countEmpty )
+        call ReadNumsFromList ( valu, dvalues(1:N) )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'values: ', dvalues(1:N)
+        endif
+        if ( .not. options%dryrun ) then
+          status = he5_EHwrglatt( L2GPFile%fileID%f_id, &
+            & trim(name), HE5T_NATIVE_DOUBLE, hsize(N), &
+            & dvalues(1:N) )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      end select
+    endif
+  end subroutine create_l2gpattr
+
+!------------------------- create_l2auxattr ---------------------
+! Create the file-level attribute and its value
+
+  subroutine create_l2auxattr( L2GPFile, Line, arrayValues )
+    ! Dummy args
+    type( MLSFile_T )               :: L2GPFile
+    character(len=FileNameLen)      :: Line
+    logical, intent(in)             :: arrayValues
+    ! Internal variables
+    character(len=fileNameLen)      :: attrType
+    character(len=1)                :: caseType
+    character(len=fileNameLen)      :: name
+    character(len=fileNameLen)      :: valu
+    character(len=1), parameter     :: eqls = '='
+    integer                         :: grp_id
+    integer                         :: setid
+    integer                         :: status
+    character(len=*), parameter     :: attrTypes = &
+      & 'integer,single,double,character'
+    integer                         :: N ! How big is array?
+    ! attribute values if numeric
+    integer                         :: ivalu
+    real                            :: rvalu
+    double precision                :: dvalu
+    integer, dimension(MAXARRAYSIZE):: ivalues
+    real, dimension(MAXARRAYSIZE)   :: rvalues
+    double precision, dimension(MAXARRAYSIZE)   :: dvalues
+    
+    ! --------------------------------------------------------------------
+    ! --------------------------------------------------------------------
+    ! Executable
+    ! ------------------------------------------------------------------------
+    call time_now ( tFile )
+    ! First, check if we are declaring the attribute type, like this
+    !   integer NOrbits=10
+    ! or using the old style character type
+    !   HostName=pigeon
+    call getStringElement( line, attrType, 1, countEmpty, ' ' )
+    if ( index(attrTypes, trim(lowercase(attrType))) < 1 ) then
+      ! old style
+      call getStringElement( line, name, 1, countEmpty, eqls )
+      call getStringElement( line, valu, 2, countEmpty, eqls )
+      if ( options%dryrun .or. options%debug ) then
+        print *, 'name: ', trim(name)
+        print *, 'value: ', trim(valu)
+      endif
+      ! Are we using this line to set the root or the DSName?
+      if ( trim(name) == 'root' ) then
+        options%root = valu
+        return
+      elseif ( trim(name) == 'DSName' ) then
+        options%DSName = valu
+        return
+      elseif ( .not. options%dryrun ) then
+        call h5gopen_f( L2GPFile%fileID%f_id, trim(options%root), grp_id, status )
+        if ( status /= 0 ) then
+          call MLSMessage( MLSMSG_Error, ModuleName, &
+            & 'Sorry, Cant open group: ' // trim(options%root) )
+        endif
+        ! Is our attribute a group-level attribute or specific to a dataset?
+        if ( len_trim(options%DSName) < 1 ) then
+
+          call MakeHDF5Attribute( grp_id, &
+            & trim(name), trim(valu), skip_if_already_there=.false. )
+        else
+          call h5dOpen_f ( grp_id, trim(options%DSName), setID, status )
+          call MakeHDF5Attribute( setid, &
+            & trim(name), trim(valu), skip_if_already_there=.false. )
+          call h5dclose_f ( setid, status )
+        endif
+        call h5gclose_f( grp_id, status )
+        call sayTime('Creating this attribute')
+      endif
+    else
+      ! must have declared the attribute type
+      ! Now, a trick:
+      ! Scalar values will be typed like 'integer', i.e. lower case
+      ! while array values will like 'INTEGER', i.e. upper case
+      if ( arrayValues ) then
+        caseType = Capitalize ( attrType(1:1) )
+      else
+        caseType = LowerCase ( attrType(1:1) )
+      endif
+      select case (caseType)
+      case ('i') ! 'integer '
+        call getStringElement( line(9:), name, 1, countEmpty, eqls )
+        call getStringElement( line(9:), valu, 2, countEmpty, eqls )
+        call ReadNumsFromChars ( valu, ivalu )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', ivalu
+        endif
+        if ( .not. options%dryrun ) then
+          call one_l2auxattr( L2GPFile, &
+            & trim(name), ivalu=ivalu )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('s') ! 'single '
+        call getStringElement( line(8:), name, 1, countEmpty, eqls )
+        call getStringElement( line(8:), valu, 2, countEmpty, eqls )
+        call ReadNumsFromChars ( valu, rvalu )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', rvalu
+        endif
+        if ( .not. options%dryrun ) then
+          call one_l2auxattr( L2GPFile, &
+            & trim(name), rvalu=rvalu )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('d') ! 'double '
+        call getStringElement( line(8:), name, 1, countEmpty, eqls )
+        call getStringElement( line(8:), valu, 2, countEmpty, eqls )
+        call ReadNumsFromChars ( valu, dvalu )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', dvalu
+        endif
+        if ( .not. options%dryrun ) then
+          call one_l2auxattr( L2GPFile, &
+            & trim(name), dvalu=dvalu )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('c') ! 'character '
+        call getStringElement( line(10:), name, 1, countEmpty, eqls )
+        call getStringElement( line(10:), valu, 2, countEmpty, eqls )
+        name = adjustl(name)
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'value: ', trim(valu)
+        endif
+        if ( .not. options%dryrun ) then
+          call one_l2auxattr( L2GPFile, &
+            & trim(name), valu=valu )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('I') ! 'INTEGER (array) '
+        call getStringElement( line(9:), name, 1, countEmpty, eqls )
+        call getStringElement( line(9:), valu, 2, countEmpty, eqls )
+        ! print *, 'Trying to remove []'
+        valu = unquote( valu, quotes='[', cquotes=']' )
+        N = NumStringElements ( valu, countEmpty=countEmpty )
+        call ReadIntsFromList ( valu, ivalues(1:N) )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'values: ', ivalues(1:N)
+        endif
+!        stop
+        if ( .not. options%dryrun ) then
+          call one_l2auxattr( L2GPFile, &
+            & trim(name), ivalues=ivalues(1:N) )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('S') ! 'SINGLE (array) '
+        call getStringElement( line(8:), name, 1, countEmpty, eqls )
+        call getStringElement( line(8:), valu, 2, countEmpty, eqls )
+        ! print *, 'Trying to remove []'
+        valu = unquote( valu, quotes='[', cquotes=']' )
+        N = NumStringElements ( valu, countEmpty=countEmpty )
+        call ReadNumsFromList ( valu, rvalues(1:N) )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'values: ', rvalues(1:N)
+        endif
+        if ( .not. options%dryrun ) then
+          call one_l2auxattr( L2GPFile, &
+            & trim(name), rvalues=rvalues(1:N) )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      case ('D') ! 'DOUBLE (array) '
+        call getStringElement( line(8:), name, 1, countEmpty, eqls )
+        call getStringElement( line(8:), valu, 2, countEmpty, eqls )
+        ! print *, 'Trying to remove []'
+        valu = unquote( valu, quotes='[', cquotes=']' )
+        N = NumStringElements ( valu, countEmpty=countEmpty )
+        call ReadNumsFromList ( valu, dvalues(1:N) )
+        if ( options%dryrun .or. options%debug ) then
+          print *, 'name: ', trim(name)
+          print *, 'values: ', dvalues(1:N)
+        endif
+        if ( .not. options%dryrun ) then
+          call one_l2auxattr( L2GPFile, &
+            & trim(name), dvalues=dvalues(1:N) )
+          call sayTime('Creating this attribute, ' // trim(name) )
+        endif
+      end select
+    endif
+  end subroutine create_l2auxattr
+  
+  subroutine one_l2auxattr ( L2GPFile, name, &
+    & ivalu, rvalu, dvalu, valu, ivalues, rvalues, dvalues )
+    ! We write an attribute's value, either to a data set or to a group
+    ! Dummy args
+    type( MLSFile_T )                      :: L2GPFile
+    character(len=*), intent(in)           :: name
+    ! Scalar values
+    character(len=*), intent(in), optional :: valu
+    integer, intent(in), optional          :: ivalu
+    real, intent(in), optional             :: rvalu
+    double precision, intent(in), optional :: dvalu
+    ! Array values
+    integer, intent(in), dimension(:), optional          :: ivalues
+    real, intent(in), dimension(:), optional             :: rvalues
+    double precision, intent(in), dimension(:), optional :: dvalues
+    ! Internal variables
+    integer                                :: grp_id
+    integer                                :: setid
+    integer                                :: status
+    !
+    if ( .not. options%dryrun ) then
+      call h5gopen_f( L2GPFile%fileID%f_id, trim(options%root), grp_id, status )
+      if ( status /= 0 ) then
+        call MLSMessage( MLSMSG_Error, ModuleName, &
+          & 'Sorry, Cant open group: ' // trim(options%root) )
+      endif
+      ! Is our attribute a group-level attribute or specific to a dataset?
+      if ( len_trim(options%DSName) > 0 ) then
+        ! Specific to DSName
+        call h5dOpen_f ( grp_id, trim(options%DSName), setID, status )
+      else
+        ! group-level
+        setID = grp_id
+      endif
+      if ( present(valu) ) then
+        ! character-valued
+        call MakeHDF5Attribute( setid, &
+          & trim(name), trim(valu), skip_if_already_there=.false. )
+      elseif ( present(ivalu) ) then
+        ! character-valued
+        call MakeHDF5Attribute( setid, &
+          & trim(name), ivalu, skip_if_already_there=.false. )
+      elseif ( present(rvalu) ) then
+        ! character-valued
+        call MakeHDF5Attribute( setid, &
+          & trim(name), rvalu, skip_if_already_there=.false. )
+      elseif ( present(dvalu) ) then
+        ! character-valued
+        call MakeHDF5Attribute( setid, &
+          & trim(name), dvalu, skip_if_already_there=.false. )
+      elseif ( present(ivalues) ) then
+        ! character-valued
+        call MakeHDF5Attribute( setid, &
+          & trim(name), ivalues, skip_if_already_there=.false. )
+      elseif ( present(rvalues) ) then
+        ! character-valued
+        call MakeHDF5Attribute( setid, &
+          & trim(name), rvalues, skip_if_already_there=.false. )
+      elseif ( present(dvalues) ) then
+        ! character-valued
+        call MakeHDF5Attribute( setid, &
+          & trim(name), dvalues, skip_if_already_there=.false. )
+      endif
+      ! Don't forget to close dataset interface if specific to DSName
+      if ( len_trim(options%DSName) > 0 ) &
+        & call h5dclose_f ( setid, status )
+      call h5gclose_f( grp_id, status )
+      call sayTime('Creating this attribute: ' // trim(name) )
+    endif
+    
+  end subroutine one_l2auxattr
+
+!------------------------- get_filename ---------------------
+    subroutine get_filename(filename, n_filenames, options)
+    ! Added for command-line processing
+     character(len=255), intent(out) :: filename          ! filename
+     integer, intent(in)             :: n_filenames
+     type ( options_T ), intent(inout) :: options
+     ! Local variables
+     integer ::                         error = 1
+     integer, save ::                   i = 1
+  ! Get inputfile name, process command-line args
+  ! (which always start with -)
+    do
+      call getarg ( i+hp, filename )
+      ! print *, i, ' th Arg: ', trim(filename)
+      error = 0
+      if ( filename(1:1) /= '-' ) exit
+      if ( filename(1:3) == '-h ' ) then
+        call print_help
+      elseif ( filename(1:4) == '-deb' ) then
+        options%debug = .true.
+        exit
+      elseif ( filename(1:4) == '-dry' ) then
+        options%dryrun = .true.
+        exit
+      elseif ( filename(1:7) == '-silent' ) then
+        options%silent = .true.
+        exit
+      elseif ( filename(1:3) == '-v ' ) then
+        options%verbose = .true.
+        exit
+      else if ( filename(1:3) == '-f ' ) then
+        call getarg ( i+1+hp, filename )
+        i = i + 1
+        exit
+      else if ( filename(1:5) == '-l2gp' ) then
+        options%filetype = 'l2gp'
+        exit
+      else if ( filename(1:6) == '-l2aux' ) then
+        options%filetype = 'l2aux'
+        exit
+      else if ( filename(1:3) == '-Vf' ) then
+        call getarg ( i+1+hp, options%attr_file )
+        i = i + 1
+        exit
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    if (trim(filename) == ' ' .and. n_filenames == 0) then
+
+    ! Last chance to enter filename
+      print *,  "Enter the name of the L2GP file. " // &
+       &  "The default output file name will be used."
+      read(*,'(a)') filename
+    endif
+    
+  end subroutine get_filename
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+      write (*,*) &
+      & 'Creates or resets file attributes'
+      write (*,*) &
+      & '    of an L2GP or an L2AUX file'
+      write (*,*) &
+      & 'Usage: createattributes [options] [filenames]'
+      write (*,*) &
+      & ' If no filenames supplied, you will be prompted to supply one'
+      write (*,*) ' Options:'
+      write (*,*) ' -dryrun       => dont execute, just describe'
+      write (*,*) ' -f filename   => add filename to list of l2gp filenames'
+      write (*,*) '                  (can do the same w/o the -f)'
+      write (*,*) ' -Vf attr_file => settings file; one line per attribute'
+      write (*,*) ' -l2aux        => file type is l2aux'
+      write (*,*) ' -l2gp         => file type is l2gp'
+      write (*,*) ' -debug        => switch on debug mode'
+      write (*,*) ' -v            => switch on verbose mode'
+      write (*,*) ' -silent       => switch on silent mode'
+      write (*,*) ' -h            => print brief help'
+      stop
+  end subroutine print_help
+!------------------------- SayTime ---------------------
+  subroutine SayTime ( What, startTime )
+    character(len=*), intent(in) :: What
+    real, intent(in), optional :: startTime
+    real :: myt1
+    if ( present(startTime) ) then
+      myt1 = startTime
+    else
+      myt1 = t1
+    endif
+    call time_now ( t2 )
+    if ( options%silent ) return
+    call output ( "Timing for " // what // " = " )
+    call output ( dble(t2 - myt1), advance = 'yes' )
+  end subroutine SayTime
+!------------------------- dgetarg ---------------------
+  subroutine dgetarg ( pos, darg )
+   integer, intent(in) :: pos
+   double precision, intent(out) :: darg
+   character(len=16) :: arg
+   call getarg ( pos, arg )
+   read(arg, *) darg
+  end subroutine dgetarg
+!------------------------- igetarg ---------------------
+  subroutine igetarg ( pos, iarg )
+   integer, intent(in) :: pos
+   integer, intent(out) :: iarg
+   character(len=16) :: arg
+   call getarg ( pos, arg )
+   read(arg, *) iarg
+  end subroutine igetarg
+
+!==================
+end program createattributes
+!==================
+
+! $Log$
+! Revision 1.2  2023/07/31 21:58:34  pwagner
+! .env file can now includee integer, float values
+!
+! Revision 1.1  2023/04/14 15:48:54  pwagner
+! First commit
+!

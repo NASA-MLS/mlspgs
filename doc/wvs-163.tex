@@ -1,0 +1,759 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{color}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.1in
+
+\newcommand{\docname}{wvs-163r2}
+\newcommand{\docdate}{28 July 2020}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\renewcommand{\b}{\mathbf}
+\renewcommand\d{\text{d}}
+\newcommand\T{\mathcal{T}}
+\newcommand{\M}{\mathcal{M}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill Read, Nathaniel Livesey, Paul Wagner, William Daffer\\
+Subject: \>{\tt Retrieve} and {\tt SIDS} statements\\
+From: \>Van Snyder\\
+Reference: \h{wvs-011}, \h{wvs-014}, \h{wvs-050}, \h{wvs-111}\\
+\end{tabbing}
+
+\parindent 0pt \parskip 4pt
+
+\section*{{\tt Retrieve} Statement}
+
+The {\tt Retrieve} statement configures the retriever.
+
+The fields of the {\tt Retrieve} statement are
+
+\begin{longtable}{lllc}
+Field            & Type                   & Units         & Required\\
+\hline
+\endhead
+\hline
+\multicolumn{4}{l}{$\dagger$Statement label; $\ddagger$ Enumeration type}\\
+\endfoot
+apriori          &  vector$^\dagger$      &               &   \\
+aprioriFraction  &  vector$^\dagger$      &               &   \\
+aprioriScale     &  numeric               & dimensionless &   \\
+average          &  matrix$^\dagger$      &               &   \\
+checkpoint       &  boolean               &               &   \\
+columnScale      &  scale$^\ddagger$      &               &   \\
+covariance       &  matrix$^\dagger$      &               &   \\
+covSansReg       &  boolean               &               &   \\
+diagnostics      &  vector$^\dagger$      &               &   \\
+diagonal         &  boolean               &               &   \\
+dumpQuantities   &  vector$^\dagger$.quantity &               &   \\
+extendedAverage  &  boolean               &               &   \\
+forwardModel     &  forwardModel$^\dagger$&               & * \\
+fuzz             &  numeric               & dimensionless &   \\ % Secret
+fwdModelExtra    &  vector$^\dagger$      &               & * \\
+fwdModelOut      &  vector$^\dagger$      &               &   \\
+highBound        &  vector$^\dagger$      &               &   \\
+hRegOrders       &  numeric               & dimensionless &   \\
+hRegQuants       &  quantity$^\dagger$    &               &   \\
+hRegWeights      &  numeric               & dimensionless &   \\
+hRegWeightVec    &  vector$^\dagger$      &               &   \\
+jacobian         &  matrix$^\dagger$      &               &   \\
+lambda           &  numeric               & dimensionless &   \\
+lambdaMin        &  numeric               & dimensionless &   \\
+lowBound         &  vector$^\dagger$      &               &   \\
+maxAddDiag       &  numeric               & dimensionless &   \\
+maxJ             &  numeric               & dimensionless &   \\
+measurements     &  vector$^\dagger$      &               & * \\
+measurementSD    &  vector$^\dagger$      &               &   \\
+method           &  method$^\ddagger$     &               &   \\
+muMin            &  numeric               & dimensionless &   \\
+negateSD         &  boolean               &               &   \\
+outputCovariance &  matrix$^\dagger$      &               &   \\
+outputSD         &  vector$^\dagger$      &               &   \\
+precisionFactor  &  numeric               & dimensionless &   \\
+regAfter         &  boolean               &               &   \\
+regApriori       &  boolean               &               &   \\
+serial           &  boolean               &               &   \\
+sparseQuantities &  quantity$^\dagger$    &               &   \\
+state            &  vector$^\dagger$      &               & * \\
+stateMax         &  vector$^\dagger$      &               &   \\
+stateMin         &  vector$^\dagger$      &               &   \\
+switches         &  string                &               &   \\
+toggles          &  string                &               &   \\
+toleranceA       &  numeric               & dimensionless &   \\
+toleranceF       &  numeric               & dimensionless &   \\
+toleranceR       &  numeric               & dimensionless &   \\
+vRegOrders       &  numeric               & dimensionless &   \\
+vRegQuants       &  quantity$^\dagger$    &               &   \\
+vRegWeights      &  numeric               & dimensionless &   \\
+vRegWeightVec    &  vector$^\dagger$      &               &   \\
+\end{longtable}
+
+If the type of the field is an enumeration type, the list of literals
+allowed for the type is specified in {\tt init_tables_module} by a
+sequence starting with {\tt begin} followed by {\tt t+t_} and the type
+name, and ending with {\tt n+n_dt_def}.
+
+The least-squares problem solved at each step of the Newton iteration is
+
+\begin{equation*}
+(\mathbf{K} \mathbf{C}) \, ( \mathbf{C}^{-1} \, \delta \mathbf{x} ) \simeq
+ - \mathbf{\tilde f}
+\end{equation*}
+
+where $\mathbf{C}$ is a diagonal column-scaling matrix and
+
+\begin{equation*}
+\b{K} \delta  \b{x} =
+\left[ \begin{array}{l}
+  \b{W} \b{J} \\
+  \mu \b{F} \\
+  \mathbf{W} \b{R} \\
+  \lambda \b{I}\\
+\end{array} \right] \delta \b{x}
+\simeq
+\left[
+\begin{array}{l}
+  - \b{W} \b{f} \\
+  \mu \b{F}\, ( \b{a} - \b{x}_n) \\
+  - \mathbf{W} \b{R}\, \b{x}_n \\
+  0\\
+\end{array} \right] = -\tilde{\b{f}}\,.
+\end{equation*}
+
+This least-squares problem is solved by forming normal equations,
+\emph{viz}.
+
+\begin{equation*}
+(\mathbf{K} \mathbf{C})^T (\mathbf{K} \mathbf{C}) ( \mathbf{C}^{-1} \,
+   \delta \mathbf{x} ) =
+ \mathbf{\tilde K}^T \mathbf{\tilde K} ( \mathbf{C}^{-1} \,
+    \delta \mathbf{x} ) =
+ -\mathbf{\tilde K}^T \mathbf{\tilde f} \,.
+\end{equation*}
+
+The left-hand side matrix is factored using Cholesky decomposition,
+\emph{viz}.
+
+\begin{equation*}
+\mathbf{\tilde K}^T \mathbf{\tilde K} =
+\mathbf{U}^T \mathbf{U}
+\end{equation*}
+
+where $\mathbf{U}$ is upper triangular.
+
+See \h{wvs-050} for details.  Symbols herein are used in the following
+descriptions of fields.
+
+\begin{description}
+
+\item[\tt apriori] specifies $\mathbf{a}$, an estimate of the solution
+  $\mathbf{x}$.
+
+\item[\tt aprioriFraction] must have the same template as the {\tt state}
+  vector. I think Nathaniel added this. I think it's an estimate of the
+  fraction of the solution covariance that arose from apriori and Tikhonov
+  regularization. A comment says ``[0..1]''.
+
+\item[\tt aprioriScale] specifies $\mu$, a scalar that magnifies (or
+  diminishes) the effect of apriori on the solution. The default value is
+  1.0.
+
+\item[\tt average] is the averaging kernel matrix.
+
+\item[\tt checkpoint] is apparently not used.
+
+\item[\tt columnScale] specifies how the column scaling matrix
+  $\mathbf{C}$ is to be computed.
+
+  If the value is {\tt none}, $\mathbf{C} = \mathbf{I}$.
+
+  If the value is {\tt apriori}, $\mathbf{C} = \mathbf{a}$. Although
+  $\mathbf{C}$ is formally a matrix, it is a diagonal matrix, so its value
+  can be taken from a vector. I don't think this has ever been used. It's
+  possible it should be the inverse of $\mathbf{a}$, or the inverse of the
+  square root of the diagonal of $\mathbf{F}$.
+
+  If the value is {\tt column}, each element of the diagonal of
+  $\mathbf{C}$ is the inverse of the $\ell^2$ norm of the corresponding
+  column of $\mathbf{K}$. This has the effect of minimizing the condition
+  number of the normal equations.
+
+  The default value is {\tt none}. Maybe it should be {\tt column}.
+
+\item[\tt covariance] is the apriori covariance $\mathbf{F}$.
+
+\item[\tt covSansReg] specifies that Tikhonov regularization $\mathbf{W}
+  \mathbf{R}$ is excluded from $\mathbf{K}$ when the {\tt covariance}
+  matrix is computed.
+
+\item[\tt diagnostics] is a vector of quantities that provide diagnostic
+  information about the Newton iteration. Each quantity is a single
+  number. Quantity names containing {\tt dnwt} are components of the {\tt
+  AJ} structure described in {\tt dnwt_module}. The other quantities are
+
+  \begin{description}
+
+  \item[\tt numGrad] number of gradient moves.
+
+  \item[\tt numJ] number of Jacobian evaluations; usually one more than the
+    number of Newton iterations.
+
+  \item[\tt numNewt] number of Newton moves.
+
+  \item[\tt jacobianRows] number of rows in the Jacobian, less masked-off
+    rows of the Jacobian.f
+
+  \item[\tt jacobianCols] Number of columns in the Jacobian.
+
+  \end{description}
+
+\item[\tt diagonal] specifies to iterate with only the diagonal of the
+  apriori covariance matrix $\mathbf{F}$ until convergence, then use the
+  entire $\mathbf{F}$ and iterate until it converges again (hopefully only
+  one iteration).
+
+\item[\tt dumpQuantities] specifies quantities to dump at each iteration.
+  This field can be an array. The only useful ones to specify are
+  quantities of the {\tt state} vector.
+
+\item[\tt extendedAverage] specifies to compute an extended averaging
+  kernel. I don't know the difference between this and an ordinary
+  averaging kernel. Nathaniel added this code.
+
+\item[\tt forwardModel] provides an array of labels of {\tt forwardModel}
+  statements that configure forward models to be used.
+
+\item[\tt fuzz] specifies an amount of randomness to be added to the state
+  vector, for checking purposes. A vector $\mathbf{\hat{x}}$ having the
+  same template as the state vector $\mathbf{x}$ is filled with uniform
+  random numbers from $(-0.5, 0.5)$. Then the state vector $\mathbf{x}$ is
+  replaced by $\mathbf{x} ( 1 + \text{\tt fuzz} \times \mathbf{\hat{x}})$
+  (an element-by-element product). This is done on every iteration.
+
+\item[\tt fwdModelExtra] specifies a vector of extra quantities needed by
+  the forward models.
+
+\item[\tt fwdModelOut] specifies a vector to which the forward model's
+  final radiances are copied.
+
+\item[\tt highBound] specifies maximum values for retrieved state vector
+  quantities. Quantities are not simply set to this value if they exceed
+  it. Instead, the length of the Newton or gradient move is adjusted so
+  that they are not exceeded, but the direction of the move is not
+  changed.
+
+\item[\tt hRegOrders] specifies a scalar or an array of orders $k$ for
+  horizontal ($\phi$) Tikhonov regularization. Tikhonov regularization
+  consists of adding rows to the least-squares problem of the form
+  $\mathbf{W} \mathbf{R}\, \delta \mathbf{x} = - \mathbf{W} \mathbf{R}
+  \mathbf{x}_n$, where the $j^{\text{th}}$ row of $\mathbf{R}$ has
+  $\Delta^k = (-1)^i C^k_i / 2^k$ beginning in the  $j^{\text{th}}$ column
+  and $C^k_i$ are binomial coefficients. $\Delta^k$ is the normalized
+  $k^{\text{th}}$-order central difference operator: $\sum_k \Delta^k =
+  1$.  This is described in detail in {\tt Regularization.f90}.
+
+  If one value is specified, it applies to all quantities for which
+  regularization is spedified by the {\tt hRegQuants} field. Otherwise,
+  the number of values must be equal to the number of quantities specified
+  in the {\tt hRegQuants} field, and the specified order applies to the
+  corresponding quantity.
+
+\item[\tt hRegQuants] specifies an array of state vector quantities for
+  which horizontal regularization is applied.
+
+\item[\tt hRegWeights] specifies an array of weights $\omega$ for Tikhonov
+  regularization. If one value is specified, it applies to all quantities
+  and $\mathbf{W} = \omega\mathbf{I}$. Otherwise, the number of values
+  must be equal to the number of quantities specified in the {\tt
+  hRegQuants} field, and the weight applies to the corresponding quantity
+  is $\mathbf{W}_i = \omega_i \mathbf{I}$. If it is not given, $\mathbf{W}
+  = \mathbf{I}$.
+
+\item[\tt hRegWeightVec] is a vector that specifies weights $\mathbf{W}$
+  for Tikhonov regularization. It must have the same template as the state
+  vector. This field and {\tt hRegWeights} cannot both be specified.
+
+\item[\tt jacobian] specifies the final Jacobian matrix. If this is not
+  specified, the retriever creates one. If specified, the column template
+  must be the same as the {\tt state} vector, and the row template must be
+  the same as the {\tt measurements} vector. This is provided primarily
+  for offline studies.
+
+\item[\tt lambda] specifies the initial value of $\lambda$, the
+  Levenberg-Marquardt stabilization parameter. The inverse of its value is
+  the length of the Newton move such that the Jacobian is a sufficiently
+  accurate first-order approximation to the Taylor series for the forward
+  model. If this is not specified, the {\tt dnwt_module} computes a value.
+  The {\tt dnwt_module} computes $\lambda$ for each iteration after the
+  first iteration.
+
+\item[\tt lambdaMin] specifies the minimum value for $\lambda$. This is
+  useful in phases that suffer frequent gradient moves, such as {\tt
+  InitUTH} and {\tt CorePlusR3}. See \h{wvs-111}. If this is not
+  specified, zero is used.
+
+\item[\tt lowBound] specifies minimum values for retrieved state vector
+  quantities. Quantities are not simply set to this value if they are less
+  than it. Instead, the length of the Newton or gradient move is adjusted
+  so that they are not less, but the direction of the move is not changed.
+
+\item[\tt maxAddDiag] appears not to be used.
+
+\item[\tt maxJ] specifies the maximum number of Jacobian evaluations used
+  for Newton iterations. If this is not specified, 5 is used. One more
+  might be computed to get the final covariance.
+
+\item[\tt measurements] specifies the measured radiance values.
+
+\item[\tt measurementSD] specifies the standard deviations of the measured
+  radiance values. This vector must have the same template as the {\tt
+  measurements} vector. If not specified, every measurement has the same
+  weight.
+
+\item[\tt method] specifies the retrieval method, which may be {\tt
+  highCloud}, {\tt lowCloud}, {\tt newtonian}, or {\tt simple}. If this
+  not specified, {\tt newtonian} is used. {\tt HighCloud} and {\tt
+  lowCloud} specify cloud retrieval. {\tt Simple} specifies an
+  alternative simplified Newton method provided by the {\tt dnwt_clone}
+  module.
+
+\item[\tt muMin] is used when bounding moves. This is explained in
+  comments for the {\tt BoundMove} subroutine in the {\tt
+  RetrievelModule}. If not specified, 0.1 is used.
+
+\item[\tt negateSD] specifies that solution standard deviations that are
+  greater than {\tt precisionFactor} are negated. If this is specified,
+  {\tt regAfter} must not have the value true, and the {\tt outputSD}
+  vector must be specified.
+
+\item[\tt outputCovariance] is the solution covariance $\left[ ( \mathbf{K}
+  \mathbf{C} )^T ( \mathbf{K} \mathbf{C} ) \right]^{-1}$.
+
+\item[\tt outputSD] is the square root of the diagonal of the covariance
+  matrix of the final iteration. This isn't the output standard deviation
+  because it is not divided by the square root of the degrees of freedom
+  (the difference between the number of rows and number of columns of
+  $\mathbf{K}$).
+
+\item[\tt precisionFactor] Elements of the {\tt outputSD} vector that are
+  greater than the specified value are negated if {\tt negateSD} has the
+  value true. If not specified, 0.5 is used.
+
+\item[\tt regAfter] specifies that Tikhonov regularization is to be done
+  after column scaling, i.e., after $\mathbf{K}$ is multiplied by
+  $\mathbf{C}$, if specified with the value true. The default value is
+  false. If this value is true, the value of {\tt negateSD} must not be
+  true.
+
+\item[\tt regApriori] specifies that the difference operator $\Delta^k$
+  applied to the state ought to be like the the difference operator
+  $\Delta^k$ applied to the apriori. In this case, the right hand side of
+  the regularization row in the least-squares problem is changed from
+  $-\mathbf{W} \mathbf{R} \mathbf{x}_n$ to $\mathbf{W}\mathbf{R}
+  (\mathbf{a} - \mathbf{x}_n )$.  The default value is false. If this is
+  specified with the value true, {\tt apriori} must be specified.
+
+\item[\tt serial] cancels the {\tt -Sfwmparallel} command-line option if
+  specified with the value true.
+
+\item[\tt sparseQuantities] specifies an array of measurement quantities
+  for which corresponding block rows of the Jacobian are to be explicitly
+  sparsified.
+
+\item[\tt state] specifies the state vector $\mathbf{x}$.
+
+\item[\tt stateMax] provides a vector into which the maximum values of
+  state vector quantities found in all iterations are reported. Its
+  template shall be the same as the template of the {\tt state} vector.
+
+\item[\tt stateMin] provides a vector into which the minimum values of
+  state vector quantities found in all iterations are reported. Its
+  template shall be the same as the template of the {\tt state} vector.
+
+\item[\tt switches] provides switches in addition to those specified with
+  {\tt -S} on the command line. This is useful, for example, to turn on
+  internal output from the forward model from only one retrieval step. Its
+  effect endures only for one execution of the {\tt retrieve} statement.
+
+\item[\tt toggles] allows to add toggles to those specified by command
+  line options. The only useful ones to set are {\tt f[n]} (forward model)
+  and {\tt g[n]} (everything else after parsing and type checking). This is
+  useful to turn on tracing.  Its effect endures only for one execution of
+  the {\tt retrieve} statement.
+
+\item[\tt toleranceA] specifies the value of the {\tt tolxa} component of
+  the {\tt NWT_Options} structure in {\tt dnwt_module}. If
+  $|\delta\mathbf{X}| <$ {\tt toleranceA} the Newton iteration is
+  terminated with its flag equal to {\tt NF_Tolx} or {\tt NF_Tolx_Best}.
+  The default value is 1.0d-6.
+
+\item[\tt toleranceF] specifies the value of the {\tt relsf} component of
+  the {\tt NWT_Options} structure in {\tt dnwt_module}. If
+  $|\tilde{\mathbf{f}}| - |\tilde{\mathbf{f}}|_{\text{min}} <
+  \text{\tt relsf}\times |\tilde{\mathbf{f}}|_{\text{min}}$ the Newton
+  iteration is terminated with its flag equal to {\tt NF_Tolf}.
+  $|\tilde{\mathbf{f}}|_{\text{min}}$ is the estimate of the minimum value
+  of $|\mathbf{\tilde f}|$, the quantity $r$ described in \h{wvs-011} and
+  \h{wvs-014}.  The default value is 1.0d-6.
+
+\item[\tt toleranceR] specifies the value of the {\tt tolxr} component of
+  the {\tt NWT_Options} structure in {\tt dnwt_module}. If
+  $|\delta\mathbf{X}| <$ {\tt toleranceR} $\times \sup |\mathbf{x}|$ the
+  Newton iteration is terminated with its flag equal to {\tt NF_Tolx} or
+  {\tt NF_Tolx_Best}.  The default value is 1.0d-6.
+
+\item[\tt vRegOrders] specifies a scalar or an array of orders $k$ for
+  vertical ($\zeta$) Tikhonov regularization. Tikhonov regularization
+  consists of adding rows to the least-squares problem of the form
+  $\mathbf{W} \mathbf{R}\, \delta \mathbf{x} = - \mathbf{W} \mathbf{R}
+  \mathbf{x}_n$, where the $j^{\text{th}}$ row of $\mathbf{R}$ has
+  $\Delta^k = (-1)^i C^k_i / 2^k$ beginning in the  $j^{\text{th}}$ column
+  and $C^k_i$ are binomial coefficients. $\Delta^k$ is the normalized
+  $k^{\text{th}}$-order central difference operator: $\sum_k \Delta^k =
+  1$.  This is described in detail in {\tt Regularization.f90}.
+
+  If one value is specified, it applies to all quantities for which
+  regularization is spedified by the {\tt vRegQuants} field. Otherwise,
+  the number of values must be equal to the number of quantities specified
+  in the {\tt vRegQuants} field, and the specified order applies to the
+  corresponding quantity.
+
+\item[\tt vRegQuants] specifies an array of state vector quantities for
+  which vertical regularization is applied.
+
+\item[\tt vRegWeights] specifies an array of weights $\omega$ for Tikhonov
+  regularization. If one value is specified, it applies to all quantities
+  and $\mathbf{W} = \omega\mathbf{I}$. Otherwise, the number of values
+  must be equal to the number of quantities specified in the {\tt
+  vRegQuants} field, and the weight applies to the corresponding quantity
+  is $\mathbf{W}_i = \omega_i \mathbf{I}$. If it is not given, $\mathbf{W}
+  = \mathbf{I}$.
+
+\item[\tt vRegWeightVec] is a vector that specifies weights $\mathbf{W}$
+  for Tikhonov regularization. It must have the same template as the state
+  vector. This field and {\tt vRegWeights} cannot both be specified.
+
+\end{description}
+
+\section*{{\tt SIDS} Statement}
+
+The {\tt SIDS} statement configures the use of forward models for {\bf
+S}imulated {\bf I}nstrument {\bf D}ata {\bf S}et calculations, including
+generation of {\tt l2pc} tables.
+
+The fields of the {\tt SIDS} statement are
+
+\begin{longtable}{lllc}
+Field            & Type                   & Units         & Required\\
+\hline
+\endhead
+\hline
+$\dagger$Statement label\\
+\endfoot
+forwardModel     &  forwardModel$^\dagger$ &               & * \\
+fwdModelExtra    &  vector$^\dagger$       &               &   \\
+fwdModelIn       &  vector$^\dagger$       &               & * \\
+fwdModelOut      &  vector$^\dagger$       &               & * \\
+destroyJacobian  &  boolean                &               &   \\
+jacobian         &  matrix$^\dagger$       &               &   \\
+hessian          &  hessian$^\dagger$      &               &   \\
+mirrorHessian    &  boolean                &               &   \\
+perturbation     &  vector$^\dagger$       &               &   \\
+singleMAF        &  numeric                & dimensionless &   \\
+switches         &  string                 &               &   \\
+TScat            &  boolean                &               &   \\
+\end{longtable}
+
+\begin{description}
+
+\item[\tt forwardModel] provides an array of labels of {\tt forwardModel}
+  statements that configure forward models.
+
+\item[\tt fwdModelExtra] specifies a vector of extra quantities needed by
+  the forward models.
+
+\item[\tt fwdModelIn] specifies the state vector for the forward models.
+
+\item[\tt fwdModelOut] specifies the vector wherein forward models provide
+  radiances.
+
+\item[\tt destroyJacobian] specifies whether to destroy the Jacobian
+  matrix after each forward model invocation. Do not specify this if a
+  Hessian tensor is specified. The default value is false.
+
+\item[\tt jacobian] specifies the label of a {\tt matrix} statement that
+  defines the Jacobian matrix.
+
+\item[\tt hessian] specifies the label of a {\tt hessian} statement that
+  defines the Hessian tensor.
+
+\item[\tt mirrorHessian] I don't know what this does.
+
+\item[\tt perturbation] specifies the label of a vector of state
+  perturbations. If this is specified and {\tt jacobian} is specified, the
+  forward model does not compute analytic derivatives; instead {\tt
+  SidsModule} approximates the Jacobian using differences with magnitudes
+  specified by the vector. If {\tt perturbation} is not specified and {\tt
+  jacobian} is specified, the forward models compute derivatives
+  analytically.
+
+\item[\tt singleMAF] specifies a MAF for which SIDS computations are to be
+  computed. If {\tt singleMAF} is not specified, all MAFs in the chunk are
+  processed.
+
+\item[\tt switches] provides switches in addition to those specified on
+  the command line. This is useful, for example, to turn on internal
+  output from the forward model for only one SIDS step. Its effect
+  endures only for one execution of the {\tt SIDS} statement.
+
+\item[\tt TScat] specifies that TScat tables are to be computed. The
+  default value is false.
+
+\end{description}
+
+\section*{Command-line options}
+
+The {\tt -g\lbrack n\rbrack} command-line option causes tracing everywhere
+except the full forward model. In particular, it causes tracing within the
+{\tt Retrieval} and {\tt SIDS} modules. Larger values of $n$ cause more
+detailed tracing. The default value of $n$ is zero.
+
+The following switches are preceded on the command line by {\tt -S}. They
+can be individually specified, each with {\tt -S}, or several can be
+specified in one command-line option beginning with {\tt -S}. All {\tt -S}
+switches can optionally be followed by a number $n$. If $n$ does not
+appear, it is assumed to be zero. If a switch is not set, the {\tt
+SwitchDetail} function from the {\tt MLSStringLists} module returns $-1$.
+
+\begin{description}
+
+\item[\tt atb] dumps the right-hand side $\mathbf{K}^T \mathbf{\tilde f}$
+  of the normal equations.
+
+\item[\tt col] dumps the column scale vector -- actually the diagonal of
+  $\mathbf{C}$.
+
+\item[\tt cov] dumps the solution covariance matrix.
+
+\item[\tt diag] dumps the diagonal of the normal equations Cholesky factor
+  $\mathbf{U}$.
+
+\item[\tt dres\lbrack n\rbrack] dumps residuals. Greater values of $n$
+  cause more details to be dumped.
+
+\item[\tt drmc] dumps retrieval matrices ``clean,'' i.e., each matrix is
+  preceded by $\backslash N$, where $N$ is the size (not shape) of the
+  matrix, and subscripts are not displayed. This useful to create files
+  that can be read in IDL by {\tt$\sim$vsnyder/idl/read1d.pro}.
+
+\item[\tt dvec] dumps the Newton move vector $\delta \mathbf{x}$, or the
+  gradient move vector.
+
+\item[\tt dxn\lbrack n\rbrack] dumps $|\delta \mathbf{x}|$ if $n\geq0$.
+  Dumps individual quantity norms in $\delta \mathbf{x}$ if $n > 0$.
+  Includes quantity names if $n > 1$.
+
+\item[\tt fac] dumps $\ell^\infty$ norms of blocks of the normal equations
+  Cholesky factor $\mathbf{U}$.
+
+\item[\tt FAC] dumps the full Cholesky factor $\mathbf{U}$ of the normal
+  equations -- if you dare.
+
+\item[\tt fiw\lbrack n\rbrack] dumps the SIDS instance window. Greater
+  values of $n$ cause more details to be dumped.
+
+\item[\tt fnmin\lbrack n\rbrack] dumps $|\mathbf{\tilde f}|^2$ and
+  $|\delta \mathbf{x}|^2$ if {\tt fnmin}$^2 = |\mathbf{\tilde f}|^2 -
+  |\delta \mathbf{x}|^2 < 0$ (see \h{wvs-014}). If $n>1$ it also dumps
+  $\delta \mathbf{x}$. Greater values of $n$ cause more details to be
+  dumped.
+
+\item[\tt fnorm\lbrack n\rbrack] dumps $|\mathbf{\tilde f}|^2 =
+  \mathbf{\tilde f} \cdot \mathbf{\tilde f}$ and the Tikhonov contribution
+  to $|\mathbf{\tilde f}|^2 = ( \mathbf{R} \mathbf{x} ) ^T ( \mathbf{R}
+  \mathbf{x} )$. If $n>1$, it also dumps the apriori contribution to
+  $|\mathbf{\tilde f}|^2 = ( \mathbf{a} - \mathbf{x} ) \cdot (\mathbf{F}
+  \mathbf{a})$. Also dumps $\mathbf{a} - \mathbf{x}$ and $\mathbf{F}
+  \mathbf{a}$ if $n>1$.
+
+
+\item[\tt fwmparallel] specifies that the {\tt retrieve} statement is to
+  run forward models in parallel. This can be canceled by the {\tt serial}
+  field of the {\tt retrieve} statement.
+
+\item[\tt gvec] dumps the gradient vector $\mathbf{\tilde K}^T
+  \mathbf{\tilde f}$; also dumps $\delta \mathbf{x}$, the gradient move
+  {\tt aj\%gfac} $\mathbf{\tilde K}^T \mathbf{\tilde f}$, where {\tt
+  aj\%gfac} is the ``gradient factor'' calculated by {\tt DNWT}, if a
+  gradient move is taken.
+
+\item[\tt hess]  dumps the Jacobian while constructing Hessians using
+  perturbations.
+
+\item[\tt jac] dumps $\ell^\infty$ norms of blocks of $\mathbf{K}$.
+
+\item[\tt JAC\lbrack n\rbrack] dumps full $\mathbf{K}$ -- if you dare.
+  Greater values of $n$ cause more details to be dumped.
+
+\item[\tt kTk\lbrack n\rbrack] dumps the $\mathbf{\tilde
+  K}^T\mathbf{\tilde K}$ matrix of the left-hand side of the normal
+  equations -- if you dare. Greater values of $n$ cause more details to be
+  dumped.
+
+\item[\tt mas] announces master triggering slave forward model runs if
+  {\tt Parallel\%fwmParallel} and {\tt Paral\-lel\%\-mas\-ter}.
+
+\item[\tt mst] If Cholesky factoring fails, dumps the sparsity structure
+  of $\mathbf{\tilde K}^T\mathbf{\tilde K}$, dumps $\mathbf{\tilde
+  K}^T\mathbf{\tilde K}$ with maximum detail, dumps $\mathbf{C}$, dumps
+  $\mathbf{x}$, and dumps lower and upper bounds if they are specified.
+
+\item[\tt ndb\lbrack n\rbrack] dumps the {\tt AJ} structure of {\tt DNWT}
+  at the end of a {\tt solve} step. If $n\geq1$ the  {\tt AJ} structure is
+  dumped after the Newton iteration. If $n\geq2$ the {\tt AJ} structure is
+  dumped at the end of every step, and whenever there are problems.
+
+\item[\tt neq\lbrack n\rbrack] dumps the $\ell^\infty$ norms of blocks of
+  the normal equations matrix $\mathbf{\tilde K}^T\mathbf{\tilde K}$ if
+  $n=0$. Dumps the normal equations matrix $\mathbf{\tilde
+  K}^T\mathbf{\tilde K}$ if $n>0$, clean if {\tt drmc} is set. This might
+  be different from the dump produced by {\tt kTk} if an averaging kernel
+  is requested.
+
+\item[\tt nin] turns on internal output from {\tt DNWT}.
+
+\item[\tt nwt] displays the name of the step requested by {\tt DNWT}, the
+  Newton method iteration number, and the accumulated running time for the
+  current retrieval.
+
+\item[\tt ptb\lbrack n\rbrack] dumps the perturbation quantity and saved
+  state in the SIDS module. Greater values of $n$ cause more details to be
+  dumped.
+
+\item[\tt reg] dumps the Tikhonov regularization matrix $\mathbf{R}$, or
+  $\mathbf{R}\mathbf{C}$ if the {\tt columnScale} field of the {\tt
+  Retrieve} statement is not {\tt none}.
+
+\item[\tt rtv] dumps the retrieval configuration: quantities being
+  retrieved and measurements being used.
+
+\item[\tt sca] dumps scalars related to the Newton iteration. Different
+  collections of scalars are dumped at different times. The scalars are
+
+  \begin{itemize}
+
+  \item $\mu$ (the {\tt aprioriScale} field of the {\tt Retrieve}
+    statement) if specified
+
+  \item the {\tt fuzz} field of the {\tt Retrieve} statement (if
+    specified)
+
+  \item the {\tt ajn},
+            {\tt axmax},
+            {\tt big},
+            {\tt cait},
+            {\tt diag},
+            {\tt dxn} ($|\delta\mathbf{x}|$), 
+            {\tt fnmin} ($|\mathbf{\tilde f}|_{\text{min}}$),
+            {\tt fnorm} ($|\mathbf{\tilde f}|$),
+            {\tt gfac}, and
+            {\tt gradn} components of the {\tt AJ} structure from
+              {\tt DNWT} (q.v.)
+
+  \item the Levenberg-Marquardt parameter $\lambda$
+
+  \item the cosine of the angle between consecutive Newton move vectors
+
+  \item the cosine of the angle between gradient and Newton move vectors
+
+  \item $\chi^2$/{\tt DOF}, $\chi^2_{\text{min}}$/{\tt DOF}, and {\tt
+    DOF}, where {\tt DOF} is the number of degrees of freedom, i.e., the
+    difference between the number of rows of $\mathbf{\tilde K}$ and the
+    number of columns of $\mathbf{\tilde K}$
+
+  \item the length of a gradient move if a gradient move is taken
+
+  \item $|\delta\mathbf{x}|^2$ if Aitken acceleration is applied
+
+  \end{itemize}
+  
+\item[\tt spa] dumps the sparsity structure of the Jacobian.
+
+\item[\tt strb] dumps the state vector $\mathbf{x}$ if the retriever gets
+  into trouble.
+
+\item[\tt svec] dumps the final state vector .
+
+\item[\tt vir] dumps the ``virgin'' normal equations, $\mathbf{K}^T
+  \mathbf{K}$, before column scaling or Levenberg-Marquardt stabilization.
+
+\item[\tt xvec] dumps the state vector  $\mathbf{x}$ before every
+  iteration.
+
+\end{description}
+
+\vspace{-1pt} % Somehow, this causes lastpage to be defined
+\label{lastpage}
+\end{document}
+
+% $Log$
+% Revision 1.1  2020/07/20 21:14:21  vsnyder
+% Initial commit
+%

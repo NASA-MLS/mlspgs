@@ -1,0 +1,28 @@
+!divert(-1)
+; $Id$
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{!phase})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the InitPTan
+; products (temperature)
+
+begin Fill
+  ;; ------------------------------------ Temperature-InitPTan
+  !define(flaggingBands,{1,32,34})
+  !define(flaggingRadiometers,{R1A})!dnl
+  !makeQualityForOneProduct(product=Temperature_hr,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !makeStatusForOneProduct(product=Temperature_hr,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -999K)
+  !define(phaseTemperature,{StdProd})
+end Fill
+
+; $Log$
+; Revision 1.2  2010/04/12 17:45:35  pwagner
+; Calculates status properly
+;
+; Revision 1.1  2008/03/22 00:12:35  pwagner
+; First commit
+;

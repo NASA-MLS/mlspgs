@@ -1,0 +1,54 @@
+! Copyright 2007, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+! -------------------------------------------------  FillLookUpTable  -----
+
+  ! This family of routines fills a table with evaluations of a function
+  ! at regularly-spaced points
+  ! Subsequently, instead of evaluating the function you can address the
+  ! array at the index of its closest element
+  
+  ! This only makes sense if you're going to evaluate the function many more
+  ! times than it takes to fill the table and if you're willing 
+  ! to accept whatever error may result from using the ClosestValue
+  
+  ! Of course that error could be large if you will evaluate the function
+  ! outside the range [x1, x2]
+
+  ! subroutine FillLookUpTable_r4 ( fun, table, x1, x2, N, xtable )
+  !  integer, parameter :: RK = R4
+  !   ! Formal arguments
+  real(rk), external                          :: fun
+  real(rk), dimension(:), intent(out)         :: table
+  real(rk), intent(in)                        :: x1
+  real(rk), intent(in)                        :: x2
+  integer, intent(in), optional               :: N ! How many pts in table
+  real(rk), dimension(:), optional, intent(out) :: xtable
+  ! Internal variables
+  real(rk) :: eps
+  integer :: i
+  integer :: nSize
+  real(rk) :: x
+  ! Executable
+  nSize = size(table)
+  if ( present(N) ) nSize = N
+  if ( nSize < 1 ) return
+  table = 0. ! Just in case
+  do i=1, nSize
+    eps = (nSize - i) / ( nSize - 1._rk )
+    x = eps*x1 + (1-eps)*x2
+    table(i) = fun(x)
+    if ( present(xtable) ) xtable(i) = x
+  enddo
+  ! end subroutine FillLookUpTable_r4
+! $Log$

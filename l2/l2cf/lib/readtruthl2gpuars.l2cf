@@ -1,0 +1,20 @@
+; This section of the l2cf is for reading the uars truth l2gp data
+
+begin ReadApriori
+
+  !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
+    file='!inpathtruthl2gp/MLS-UARS_L2GP-$1_s2--t_!day.he5'!nl})
+
+  !ifdef(mostL2GPSpecies,{}, {!dnl
+  !define(mostL2GPSpecies,{BrO,CH3Cl,CH3CN,CO,ClO,GPH,HCN,HCl,HNO3,HO2,HOCl,N2O,O3,OH,RHI,SO2,Temperature})
+  })
+  !forall(readTruthL2GP,!mostL2GPSpecies)
+
+  !ifdef(flagUseCloudH2O,{!dnl
+  l2gpTruthH2OInput: l2gp, $
+    file='!inpathtruthl2gp/MLS-UARS_L2GP-H2O-cld_s2--t_!day.he5'!nl},{!dnl
+  l2gpTruthH2OInput: l2gp, $
+    file='!inpathtruthl2gp/MLS-UARS_L2GP-H2O_s2--t_!day.he5'!nl})
+
+  !define(l2gpInputSpecies,{!mostL2GPSpecies,H2O})
+end ReadApriori

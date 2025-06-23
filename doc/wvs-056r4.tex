@@ -1,0 +1,251 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-056r4}
+\newcommand{\docdate}{23 August 2007}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Refractive correction\\
+From: \>Van Snyder\\
+%References: \>wvs-051
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\section{As of 2007 July 11}\label{first}
+
+The {\tt comp\_refcor} subroutine evaluates the integral in Equation 10.12
+of the 10 August 2004 MLS Forward Model ATBD, page 45, \emph{viz.}
+
+\begin{equation}\label{one}
+I = \Delta s^{\text{refr}}_{i\rightarrow i-1} =
+\int_{H_{i-1}}^{H_i} \frac{\mathcal{N}(H) H}
+                          {\sqrt{\mathcal{N}(H)^2 H^2 - \mathcal{N}_t^2 H_t^2}}
+                     \,\text{d} H
+\end{equation}
+
+using Gauss-Legendre quadrature.
+
+We have $\mathcal{N}(H)$ at $H_i$ for $1 \leq i \leq n$, and will assume a
+functional form for $\mathcal{N}(H)$, $H_{i-1} \leq H \leq H_i$, in Equation
+(\ref{three}).
+
+The integrand has an integrable singularity at $H=H_t$, which causes problems
+for quadrature.  To eliminate it, substitute $x = \sqrt{\mathcal{N}(H)^2 H^2 -
+\mathcal{N}_t^2 H_t^2}$ in Equation (\ref{one}) giving
+\begin{equation}\label{two}
+I = \int_{x_{i-1}}^{x_i} f(x)\,\text{d}x \text{ where }
+    f(x) = \frac1{\frac{\text{d}}{\text{d}h} h \mathcal{N}(h)}
+         = \frac1{\mathcal{N}(h)+h\frac{\text{d}}{\text{d}h}\mathcal{N}(h)}
+\end{equation}
+and $h$ is the solution of $h \mathcal{N}(h) = \sqrt{H_t^2 \mathcal{N}_t^2 + x^2}$ and
+$x_i = \sqrt{|H_i^2 \mathcal{N}_i^2 - H_t^2 \mathcal{N}_t^2|}$
+
+Let $n_i = \mathcal{N}(H_i)$ and assume a functional form
+\begin{equation}\begin{split}\label{three}
+\mathcal{N}(h) = \,&1+n(h) \text{ where}\\
+n(h) =\,& n_{i-1} e^{q \epsilon_n} \\
+q =\,& \frac{h-H_{i-1}}{\Delta H_i} \text{, }
+\epsilon_n = \ln \frac{n_i}{n_{i-1}} \text{, and }
+\Delta H_i = H_i - H_{i-1}
+\end{split}\end{equation}
+
+Let $g_j$ = Gauss-Legendre abscissa between $x_{i-1}$ and $x_i$ and
+$R = \sqrt{H_t^2 \mathcal{N}_t^2 + g_j^2}$, and $h$ be the solution of
+\begin{equation}\label{four}
+h \mathcal{N}(h) = h \left(1+n_{i-1} e^{q \epsilon_n}\right) = R\,.
+\end{equation}
+
+Substituting Equation (\ref{three}) into Equation (\ref{two}) and using
+$\frac{\text{d}\mathcal{N}}{\text{d}h} = 
+ \frac{\text{d}n(h)}{\text{d}h} = \rho_n n(h)$ where $\rho_n =
+ \frac{\epsilon_n}{\Delta H_i}$ we have
+\begin{equation}\label{five}
+f(x) = \frac1{\mathcal{N}(h)+h\frac{\text{d}}{\text{d}h}\mathcal{N}(h)}
+     = \frac1{1 + n(h)(1 + h \rho_n)} \text{ and }
+I = \int_{x_{i-1}}^{x_i} \frac1{1 + n(h)(1 + h \rho_n)}\, \text{d}x\,.
+\end{equation}
+Remember that $h$ is a function of $x$.
+
+When $n_{i-1} \approx n_i,\, \epsilon_n \approx 0$, and therefore $N \approx
+\mathcal{N}_{i-1}$ throughout the interval, the integral can be evaluated
+explicitly
+$\left.I \approx \frac1{\mathcal{N}} \sqrt{\mathcal{N}^2 H^2 -
+\mathcal{N}_t^2H_t^2} \right|_{H=H_{i-1}}^{H_i}$.
+
+Using Gauss-Legendre quadrature to evaluating the integral gives $I =
+\int_{x_{i-1}}^{x_i}\frac1{1+n(h)(1+h\rho_n)}\,\text{d}x
+\approx (x_i-x_{i-1}) \sum_j f(g_j)\, \omega_j$, where $\omega_j$ is a
+Gauss-Legendre weight.
+
+If $\frac{\text{d}}{\text{d}h} h \mathcal{N}$ changes sign between $H_{i-1}$
+and $H_i$ the solution of Equation (\ref{four}) is ambiguous, so points
+interior to the interval shouldn't be used.
+
+Using the trapezoidal rule we have $I \approx \frac\delta2 (f_i + f_{i-1})$,
+where $\delta = x_i - x_{i-1}$ and $f_i$ is $f$ evaluated on the end of the
+interval.  At the ends of the interval, $h = H_i$, and $n_i = n_i$, so $f_i =
+\frac1{\mathcal{N}_i + H_i \rho_n n_i} =
+\frac1{1+n_i(1+\rho_n H_i)}$.  If better accuracy than
+the trapezoidal rule is needed, the Euler-Maclaurin summation formula for
+moderate $m$, say 1 or 2, \emph{viz.} $I \approx \frac\delta2 (f_i + f_{i-1}) -
+\sum_{k=1}^m \frac{B_{2k} \delta^{2k}}{(2k)!} \left( f^{(2k-1)}_i -
+f^{(2k-1)}_{i-1}\right)$ where $B_{2k}$ are Bernoulli numbers (see 25.4.7 on
+page 886 of Abramowitz and Stegun), would be simpler than Gauss-Legendre, avoid
+the need for interior points, and therefore avoid the need to solve Equation
+(\ref{four}).
+
+However the integral is evaluated, the refractive correction $C_i =
+\frac{I}{\Delta s_{i\rightarrow i-1}}$ where
+\begin{equation}
+\Delta s_{i\rightarrow i-1} =
+\left| \sqrt{H_i^2-H_t^2} - \sqrt{H_{i-1}^2-H_t^2} \right|
+\end{equation}
+is the line-of-sight path length from $H_{i-1}$ to $H_i$.
+
+\section{Using Euler-Maclaurin summation formula}
+
+To use the Euler-Maclaurin summation formula with $m=1$, we need
+$\frac{\text{d}f}{\text{d}x} = \frac{\text{d}f}{\text{d}h}
+\frac{\text{d}h}{\text{d}x}$
+
+From Equation (\ref{five}) we have
+\begin{equation}\begin{split}
+\frac{\text{d}f}{\text{d}x} = \,&
+  -f^2 \left( \frac{\text{d}}{\text{d}h}
+              ( 1 + n(h)(1 + h \rho_n)) \right)
+  \frac{\text{d}h}{\text{d}x}
+= -f^2 \left( \frac{\text{d}n(h)}{\text{d}h}
+              ( 1 + h \rho_n ) + \rho_n n(h)
+  \right)
+  \frac{\text{d}h}{\text{d}x}\\
+= \,& -f^2 ( \rho_n n(h) ( 2 + h \rho_n ) ) \frac{\text{d}h}{\text{d}x}
+= -f^2 x \frac{\rho_n n(h) ( 2 + h \rho_n )}
+              {h (1 + n(h)^2 + n(h) ( 2 + h \rho_n ))}
+\end{split}\end{equation}
+
+Recalling that at the boundary $h=H_i$ and $E=n_i$ we have
+\begin{equation}
+f_i^\prime =
+\left. \frac{\text{d}f}{\text{d}x}\right|_{x=x_i} =
+ -f(x_i)^2 x_i \frac{\rho_n n_i (2 + H_i \rho_n)}
+                      {H_i(1+n_i^2+n_i(2+H_i \rho_n))} =
+ -f(x_i)^2 x_i \frac{\rho_n n_i (2 + H_i \rho_n)}
+                      {H_i(1+n_i(n_i+2+H_i \rho_n))}
+\end{equation}
+
+The error term for the Euler-Maclaurin formula is
+$\frac{\theta m B_{2 m + 2} h^{2 m + 3}}{(2 m + 2)!}
+\stackrel{\max}{\scriptscriptstyle x_0 \leq x \leq x_1}
+|f^{(2 m + 2)}(x)| \,\,\, (-1 \leq \theta \leq 1)$.
+The error term for the Gauss formula is
+$\frac{h^{2 n + 1}(n!)^4}{(2 n + 1) [(2n)!]^3} f^{(2n)}(\xi) \,\,\,
+(x_0 < \xi < x_1)$ (See Abramowitz and Stegun 25.4.30).  Therefore the
+three-point Gauss formula ($n=3$) is more accurate than the first-derivative
+Euler-Maclaurin formula ($m=1$).  Nevertheless, the $m=1$ Euler-Maclaurin
+formula might be sufficiently accurate.
+
+Numerical experiments show that the first-order Euler-Maclaurin formula does not
+work well near the tangent point.  It's probably not worth pursuing this.
+
+\section{Accounting for temperature gradients}
+
+If $\mathcal{N}(h)$ is sufficiently larger than $\mathcal{N}_t$, substituting
+Equation (\ref{three}) into Equation (\ref{one}) can lead to a refractive
+correction that is less than 1.  This is geometrically impossible.  It is
+therefore necessary to account for temperature gradients in the model for
+$\mathcal{N}(h)$.
+
+Start from Equation 6.3 in the 19 August 2004 Forward Model ATBD, ignore
+water, write out the linear interpolations for $T$ and $\zeta$ as a
+function of $h$ explicitly using $q$ from Equation (\ref{three}), and use
+$\Delta T_i = T_i - T_{i-1}$, giving
+\begin{equation}\label{nine}
+n(h) = \frac{0.0000776}{T_{i-1}+q\Delta T_i}
+    \frac{10^{-\zeta_{i-1}}}{10^{\,q(\zeta_i-\zeta_{i-1})}}.
+\end{equation}
+Substitute $h=H_{i-1} \Rightarrow q=0$, in Equation (\ref{nine}) giving
+\begin{equation}
+n_{i-1} = \frac{0.0000776}{T_{i-1}} 10^{-\zeta_{i-1}},
+\end{equation}
+from which
+\begin{equation}\label{eleven}
+\frac{n(h)}{n_{i-1}}=
+  \frac{T_{i-1}}
+       {T_{i-1}+q\,\Delta T_i}\,10^{\,q(\zeta_{i-1}-\zeta_i)}
+= \frac{T_{i-1}}
+       {T_{i-1}+q\,\Delta T_i}\,e^{\,q(\zeta_{i-1}-\zeta_i) \ln 10}.
+\end{equation}
+Substituting $h=H_i \Rightarrow q=1$, in Equation (\ref{eleven}), taking logarithms, and
+re-arranging, we have
+\begin{equation}
+(\zeta_i-\zeta_{i-1}) \ln 10 =
+\ln\left(\frac{n_i}{n_{i-1}}\frac{T_i}{T_{i-1}}\right) = \epsilon =
+\epsilon_n+\epsilon_T \text{, where }
+\epsilon_T = \ln \frac{T_i}{T_{i-1}}.
+\end{equation}
+Substituting this result into Equation (\ref{eleven}), and taking the derivative
+with respect to $h$, we have
+\begin{equation}\begin{split}\label{thirteen}
+n(h) =\,& \frac{T_{i-1}}{T_{i-1}+q\,\Delta T_i}\,n_{i-1}\, 
+     e^{q\epsilon}\,,\\
+\,&\\
+\frac{\text{d}\mathcal{N}(h)}{\text{d}h} =\,&
+\frac{\text{d}n(h)}{\text{d}h} =
+\frac{\text{d}q}{\text{d}h} \frac{\text{d}n(h)}{\text{d}q} =
+\frac{n(h)}{\Delta H_i}
+\left(\epsilon - \frac{\Delta T_i}{T_{i-1}+q\Delta T_i} \right) \text{, and }\\
+f(x) =\,& \frac1{\mathcal{N}(h)+h\frac{\text{d}}{\text{d}h}\mathcal{N}(h)}
+     = \frac1{1+n(h)
+        \left( 1+\frac{h}{\Delta H_i}
+         \left( \epsilon - \frac{\Delta T_i}{T_{i-1} + q \Delta T_i}
+         \right) \right)} \\
+     =\,& \frac1{1+n(h)\left( 
+            1 + h \left ( \frac{\epsilon}{\Delta H_i} -
+                           \frac{\Delta T_i}{\Delta H_i T_{i-1} + 
+                                             (h-H_{i-1}) \Delta T_i}
+         \right) \right)}
+\,.
+\end{split}\end{equation}
+Assuming we have $\mathcal{N}_i$, $T_i$ and $H_i$, we do not need
+$\zeta_i$ to evaluate $n(h)$ or $\frac{\text{d}\mathcal{N}(h)}{\text{d}h}$.
+
+This reduces to Equation (\ref{five}) when
+$T_i = T_{i-1} \Rightarrow \Delta T_i = 0$, $\epsilon_T = 0$ and $\epsilon =
+\epsilon_n$.
+
+$\Delta H_i$ is never zero.
+
+
+\label{lastpage}
+\end{document}
+% $Id$

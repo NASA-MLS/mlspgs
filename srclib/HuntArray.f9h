@@ -1,0 +1,307 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+!  subroutine HuntArray_r* ( list, values, indices, start, allowTopValue, allowBelowValue, &
+!    & nearest, logSpace, fail )
+    ! Local variables
+    real(rk) :: N, D                    ! Numerator, denominator for secant
+    real(rk) :: thisValue
+    real(rk) :: logThisValue
+    integer :: listLen, valuesLen       ! Array sizes
+    integer :: valueIndex               ! Loop counters
+    integer :: index                    ! Temporary result
+    integer :: alternativeIndex         ! Used in 'nearest' case
+    integer :: originalIndex            ! Used in 'nearest' case
+
+    logical :: useAllowTopValue, useAllowBelowValue, useNearest, useLogSpace
+    logical :: wentUp, wentDown         ! Flags
+    integer :: useStart
+    integer :: upperLimit       ! Highest value that can be returned
+    integer :: stride           ! Value to step by
+    logical :: expanding        ! Whether we're expanding or reducing our search
+    logical :: lowerBelow       ! Flag
+    logical :: upperAbove       ! Another flag
+
+    integer :: listDirection    ! +1 if list ascends, -1 descends
+    integer :: searchDirection  ! (in index space) 
+    integer :: oldSearchDirection ! Previous value of above
+    integer :: oldIndex                 ! Previous value of index
+    integer :: severity          ! Warning or Error?
+
+
+    ! Executable code
+    if ( present(fail) ) fail = .false. ! Assume it will work
+    listLen = size(list)
+    valuesLen = size(values)
+    useAllowTopValue = Default( allowTopValue, .false. )
+    useAllowBelowValue = Default( allowBelowValue, .false. )
+    useNearest = Default( nearest, .false. )
+    useLogSpace = Default( logspace, .false. )
+
+    if ( useNearest .and. useAllowBelowValue ) then
+      severity = HowWeHandle_log( fail, MLSMSG_Error, MLSMSG_Warning )
+      call dump(values, 'values')
+      call dump(list, 'list')
+      call MLSMessage ( severity, &
+        & ModuleName, "Can't set both nearest and allowBelowValue in Hunt" )
+      return
+    elseif ( size(indices) < valuesLen ) then
+      severity = HowWeHandle_log( fail, MLSMSG_Error, MLSMSG_Warning )
+      call dump(values, 'values')
+      call dump(list, 'list')
+      call MLSMessage ( severity, ModuleName, &
+        & "Result array is too small" )
+      return
+    endif
+
+    ! Try to work out the direction, also skip if there's only one value
+
+    if ( listLen == 0 ) then
+      indices = 0
+      return
+    else if ( listLen == 1 ) then
+      indices = 1
+      if ( useAllowBelowValue ) then
+        where ( values < list(1) )
+          indices = 0
+        end where
+      end if
+      return
+    end if
+
+    ! Get the starting point
+
+    n = values(1)-list(1)     ! For secant method
+    d = list(listLen)-list(1) ! ditto, and for list direction
+    listDirection = nint(sign(1.0_rk,d))
+    if ( present(start) ) then
+      useStart = start
+    else
+      if ( sign(1.0_rk,n) * listDirection < 0.0 ) then ! before start
+        useStart = 1
+      else if ( abs(n) >= abs(d) ) then ! Avoid overflow in secant method
+        useStart = listLen
+      else ! Use secant method to get a starting point.
+        useStart = nint( (n / d) * listLen ) + 1
+      end if
+    end if
+
+    ! Some last bits of setup before we get going.
+
+    if ( useAllowTopValue ) then
+      upperLimit = listLen
+    else
+      upperLimit = listLen-1
+    end if
+
+    ! Now we're ready to hit the road, loop over all the values to hunt for
+
+    index = max(1,min(useStart,upperLimit))
+    do valueIndex = 1, valuesLen
+      thisValue = values(valueIndex)
+      expanding = .true.
+      searchDirection = 0
+      stride = 1
+      HuntLoop: do
+        oldIndex = index
+        lowerBelow= (thisValue-list(index))*listDirection >= 0.0
+        if ( index<listLen ) then 
+          upperAbove = (list(index+1)-thisValue)*listDirection > 0.0
+        else ! We're off the end of the list
+          upperAbove = .true.   
+        end if
+
+        ! Now we know what the state of play is, what does it mean?
+
+        ! First see if we've found the place
+        if ( lowerBelow .and. upperAbove ) exit HuntLoop
+
+        ! The other cases are a little more complex
+        oldSearchDirection = searchDirection
+
+        if ( lowerBelow .and. (.not. upperAbove) ) then
+          ! If we're at the end, get out
+          if ( index == upperLimit ) exit HuntLoop
+          ! We're too low, keep looking upwards
+          index = index+stride
+          searchDirection = 1
+        end if
+
+        if ( (.not. lowerBelow) .and. upperAbove ) then
+          ! If we're at the begning, get out
+          if ( index == 1 ) exit HuntLoop
+
+          ! We're too high but not at begining, look back downwards
+          index = index-stride
+          searchDirection = -1
+        end if
+
+        if ( (.not. lowerBelow) .and. (.not. upperAbove) ) then
+          ! The list is really screwey
+          call dump(values, 'values')
+          call selfDiff(values, 'values increment')
+          call dump(list, 'list')
+          call selfDiff(list, 'list increment')
+
+          if ( any(ieee_is_NaN(values)) .or. any(ieee_is_NaN(list)) ) then
+            call MLSMessage ( merge(MLSMSG_Warning, MLSMSG_Error, present(fail)), &
+              & moduleName, "Can't interpolate with NaNs" )
+            if ( present(fail) ) fail = .true.
+            return
+          else
+            call MLSMessage ( merge(MLSMSG_Warning, MLSMSG_Error, present(fail)), &
+              & ModuleName, 'List out of order in Hunt (case 1)' )
+            if ( present(fail) ) fail = .true.
+            return
+          end if
+        end if
+        
+        ! Now the very first change of direction is the end of the
+        ! `expanding' phase
+
+        if ( (searchDirection /= oldSearchDirection) .and. &
+          & (oldSearchDirection /= 0) .and. (expanding) ) &
+          & expanding = .false.
+
+        if ( expanding ) then
+          stride = min ( stride*2, listLen/2 )
+        else
+          stride = max ( stride/2, 1)
+        end if
+
+        ! Make sure we don't fall off an end
+        index = min(max(index,1),upperLimit)
+
+        ! Now check the list hasn't reversed direction
+        wentUp =   ( list(index) - list(oldIndex) ) * listDirection > 0.0
+        wentDown = ( list(index) - list(oldIndex) ) * listDirection < 0.0
+        if ( ( searchDirection == 1  .and. wentDown ) .or. &
+          &  ( searchDirection == -1 .and. wentUp ) ) then
+          call dump(values, 'values')
+          call selfDiff(values, 'values increment')
+          call dump(list, 'list')
+          call selfDiff(list, 'list increment')
+          ! print*, 'valueIndex ', valueIndex
+          ! print*, 'thisValue ', thisValue
+          ! print*, 'lowerBelow ', lowerBelow
+          ! print*, 'upperAbove ', upperAbove
+          ! print*, 'searchDirection ', searchDirection
+          ! print*, 'listDirection ', listDirection
+          ! print*, 'oldindex ', oldindex
+          ! print*, 'list(oldindex) ', list(oldindex)
+          ! print*, 'index ', index
+          ! print*, 'list(index) ', list(index)
+          call MLSMessage ( merge(MLSMSG_Warning, MLSMSG_Error, present(fail)), &
+            & ModuleName, 'List out of order in Hunt (case 1)' )
+          if ( present(fail) ) fail = .true.
+          return
+        end if
+      end do HuntLoop
+
+      ! If user asked for nearest then check to see if one above is closer
+      originalIndex = index
+      if ( useNearest ) then
+        alternativeIndex = index
+        ! Look for the next higher value
+        nearestLoop: do
+          if ( alternativeIndex >= upperLimit ) exit nearestLoop
+          alternativeIndex = alternativeIndex + 1
+          if ( list(alternativeIndex) > list(index) ) exit nearestLoop
+        end do nearestLoop
+        ! If this is closer, use it
+        if ( useLogSpace ) then
+          ! Check for errors in log space case
+          if ( any ( (/ list(index), list(alternativeIndex), thisValue /) &
+            &                    <= 0.0 ) ) then
+            call dump(values, 'values')
+            call dump(list, 'list')
+            if ( present(fail) ) then
+              call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                & 'Non positive value in logSpace nearest hunt' )
+              fail = .true.
+              return
+            end if
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Non positive value in logSpace nearest hunt' )
+          endif
+          logThisValue = log ( thisValue )
+          if ( abs ( log ( list(alternativeIndex) ) - logThisValue ) < &
+            &  abs ( log ( list(index) ) - logThisValue ) ) then
+            index = alternativeIndex
+          end if
+        else
+          if ( abs ( list(alternativeIndex) - thisValue ) < &
+            &  abs ( list(index) - thisValue ) ) then
+            index = alternativeIndex
+          end if
+        end if
+      end if
+
+      ! Final check for off the bottom of the list
+
+      if ( useAllowBelowValue ) then
+        if ( (thisValue-list(index))*listDirection<0.0D0) index = 0
+      end if
+
+      indices(valueIndex) = index
+
+      ! In the 'nearest' case it might make sense to check from the
+      ! originalIndex
+      index = originalIndex
+    end do
+! end subroutine HuntArray_r*
+
+! $Log$
+! Revision 1.14  2014/04/29 17:28:08  pwagner
+! More diagnostics if things go wrong
+!
+! Revision 1.13  2011/08/20 00:47:59  vsnyder
+! Check for NaN if it looks like lists are screwy
+!
+! Revision 1.12  2006/08/03 18:48:46  pwagner
+! Fixed thing Lahey hated but NAG tolerated
+!
+! Revision 1.11  2006/08/03 01:56:54  vsnyder
+! Return a status flag if it's present
+!
+! Revision 1.10  2006/01/04 20:49:19  vsnyder
+! Handle ListLen==1 for secant-method startup
+!
+! Revision 1.9  2006/01/04 02:10:39  vsnyder
+! Use secant method to get start if start not specified
+!
+! Revision 1.8  2005/11/04 18:46:34  pwagner
+! Extra diagnostic printing when List out of order in Hunt
+!
+! Revision 1.7  2005/06/22 20:03:55  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.6  2005/01/19 01:08:22  pwagner
+! Dumps list, values if list out of order
+!
+! Revision 1.5  2004/09/10 23:52:13  livesey
+! Added the logSpace option for nearest (turns out I didn't need it
+! anyway but never mind!)
+!
+! Revision 1.4  2004/07/31 19:22:53  livesey
+! Some checking against infiniate looping.
+!
+! Revision 1.3  2003/07/07 20:29:22  livesey
+! Now handles zero length arrays
+!
+! Revision 1.2  2002/10/04 00:46:12  vsnyder
+! Move declarations of local variables here
+!
+! Revision 1.1  2002/09/13 18:01:33  pwagner
+! First commit
+!

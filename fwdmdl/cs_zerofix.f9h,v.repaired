@@ -1,0 +1,40 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+! function CS_ZeroFix_* ( W ) result ( V )
+    real(rk)    :: R, I
+    real(rk), parameter :: Dinky = epsilon(r) ** 2
+
+    r = real(w)
+    i = aimag(w)
+    if ( abs(r) < dinky ) r = 0.0_rk
+    if ( abs(i) < dinky ) i = 0.0_rk
+    v = cmplx(r,i,kind=rk)
+! end function CS_ZeroFix_*
+
+! $Log$
+! Revision 2.5  2010/02/04 23:09:28  vsnyder
+! Use kind= in CMPLX
+!
+! Revision 2.4  2005/06/22 18:14:01  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.3  2003/02/04 18:50:19  vsnyder
+! Remove declaration for unused variable
+!
+! Revision 2.2  2003/02/04 18:47:37  vsnyder
+! Get rid of nonstandard equivalence
+!
+! Revision 2.1  2003/02/04 01:41:06  vsnyder
+! Initial commit
+!

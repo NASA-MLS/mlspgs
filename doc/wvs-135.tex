@@ -1,0 +1,407 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-135r3}
+\newcommand{\docdate}{2 June 2016}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill\\
+Subject: \>Outline of 3-dimensional Retrieval\\
+From: \>Van Snyder\\
+Reference: \> \h{wvs-030}, \h{wvs-131} \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\section{Retriever}
+
+The retriever is almost completely unaware of the representation of the
+solution or the methods by which the radiative transfer equation and its
+variation are integrated.  A different method to calculate the positions
+in the least-squares problem matrix of Tikhonov regularization
+coefficients is necessary.
+
+\section{Forward model}
+
+\subsection{First thoughts -- as of 28 Apr 2016}
+
+Regardless of whether the forward model is solving for the atmospheric
+state on a one-, two-, or three-dimensional grid, the mathematical problem
+still consists of integrating the radiative-transfer equation along a
+one-dimensional path through the atmosphere.
+
+To solve for the atmospheric state using a Gauss-Newton iteration, one
+needs partial derivatives of the radiance computed at the instrument
+position with respect to the atmospheric state at the points where
+solutions are desired.  To integrate the radiative-transfer equation, and
+its variational equations to compute partial derivatives, the atmospheric
+state is needed on the path along which the radiative-transfer equation is
+integrated.  This state is gotten by interpolating from the state at the
+points where solutions are desired to the integration path.
+
+The interpolation problem is different in detail depending upon the
+dimensionality, and the details, of the representation of the atmospheric
+state.  I.e., whether the atmospheric state is represented on a one-,
+two-, or three-dimensional grid, and if more than one dimension, whether
+the height direction is stacked, coherent, or both.  As an abstraction,
+it's the same problem.  The only difference that an observer from outside
+the interpolation abstraction might notice is that the number of
+interpolating coefficients is different.
+
+A forward model could, in principle, be constructed that will work with an
+atmospheric state represented on any grid, of any dimensionality.  The
+only differences would be in the representation of the grid, the
+computation of the relationship between the grid and integration path, and
+the method to interpolate from the grid to the path.
+
+Let us assume that the process that creates the grid produces a serial
+number for each point in the grid, which can be used to compute a column
+subscript for the Jacobian.  Let us further assume that this same serial
+number is used to index the set of interpolation coefficients, and any
+other quantities related to the grid, such as the horizontal subscript for
+heights -- assuming the primary vertical co\"ordinate is $\zeta$, and is
+stacked and coherent.  With these parts in hand, the remainder of the
+forward model should be insensitive to the grid.
+
+The present full forward model is intimately aware of the grids used to
+represent the atmospheric state.  The principles and details are not
+hidden inside abstractions.  The present forward model represents
+the atmospheric state differently from the state-vector representation
+used throughout the remainder of the {\tt mlsl2} program, and represents
+the Jacobian differently from the matrix representation used by the
+retriever.
+
+A revised forward model should treat the grids and the relationship of the
+grids to the path as abstractions.  It should further use the state-vector
+representation directly instead of copying it to an internal
+representation, and it should produce the Jacobian in the form of the
+matrix representation  used by the retriever.
+
+The forward model uses a quantity called {\tt PhiTan}, which is the orbit
+angle of the tangent point.  This needs to be replaced by longitude and
+geodetic latitude.  This is used to find the instance window when filling
+the internal representations of state-vector quantities, and in
+preparation for antenna convolution.
+
+The sequence of operations of the revised forward model can be the same as
+for the present forward model:
+
+\begin{enumerate}
+
+\item Compute the sizes of everything; determine processing options.
+
+\item Acquire any extra state, beyond the atmospheric state, e.g., the
+      magnetic field.
+
+\item Compute the relationship between temperature, pressure, and height,
+      using the hydrostatic equilibrium assumption, and compute
+      derivatives with respect to temperature if necessary.  A QTM-based
+      hydrostatic module is necessary, but it can use the one-dimensional
+      module at each vertex of the QTM.
+
+\item Compute the paths upon which to integrate the radiative-transfer
+      equation.
+
+\item For each sideband
+
+  \begin{enumerate}
+
+    \item Determine the frequencies at which to evaluate radiances.
+
+    \item\label{metrics} For each path, determine the relationship between
+          the path and the grid upon which the atmospheric state is
+          represented.  This step might produce some interpolating
+          coefficients that will make interpolation from the state to the
+          path more efficient.  For example, when using a
+          three-dimensional grid, it might produce two-dimensional
+          (horizontal-only) interpolating coefficients for points on the
+          boundaries of grid elements, which can be combined with heights
+          to produce three-dimensional interpolation coefficients more
+          efficiently than producing three-dimensional interpolation
+          coefficients from first principles during path integration.  The
+          representation of whatever information is produced should be
+          hidden in an abstraction that is used later for interpolation,
+          but not examined or otherwise manipulated directly by the
+          forward model proper.  In the present forward model, this is the
+          responsibility of the {\tt metrics} module.  In the prototype
+          three-dimensional forward model, this would be the
+          responsibility of the {\tt Metrics_3D} module.  In an ideal
+          world, this distinction should be managed by the process that
+          creates the grid, and should otherwise be hidden from the
+          forward model.
+
+    \item On each path
+
+    \begin{enumerate}
+
+      \item Compute the relationship between the integration path and the
+            grid upon which the atmospheric state is represented.  This
+            should conspire with step \ref{metrics} to use an
+            interpolation abstraction provided by the grid construction
+            method and the path calculation method used in step
+            \ref{metrics}, but the conspiracy should be hidden, so that
+            the forward model is unaware of and unaffected by the details
+            of representation of the state.
+
+      \item For each frequency, integrate the radiative-transfer equation,
+            and its derivatives, along that path.  In the present forward
+            model, an adaptive method is used.  The major integration
+            steps proceed from one intersection of the path with a surface
+            of constant pressure to the next.  In the prototype
+            three-dimensional forward model, the major steps are bounded
+            by intersections of the path with faces of cells of the
+            three-dimensional grid.  This detail, and the fact that it is
+            different in two and three dimensions, should be hidden from
+            the forward model.  An error estimate is formed.  If the error
+            is not sufficiently small, the atmospheric state is evaluated
+            at intermediate points, currently at abscissae of a
+            three-point Gauss-Legendre quadrature rule.  Once the
+            positions of necessary additional points are determined, in
+            terms of the independent variable of integration (no matter
+            whether it is $\zeta$ of $s$), the representation of the path
+            and grid should be used by an interpolation abstraction to
+            produce values of atmospheric state at these additional
+            points.  The forward model should not be aware of the method
+            by which this is accomplished.
+
+      \item If necessary, compute the channel-average radiance and
+            derivatives.  In the present forward model, this is called
+            \emph{frequency averaging}.  Depending upon the characteristics
+            of the instrument, the channel characteristics might be such
+            that the model is evaluated at only one frequency in each
+            channel.  In the present forward model, in order to combine
+            PFA and non-PFA results, it is necessary to compute
+            frequency-averaged results at every major point along the path
+            (not including interposed Gauss-Legendre abscissae). 
+            Depending upon the characteristics of the instrument, in
+            particular if frequency averaging is not used, this
+            consideration might not play a r\^ole.
+
+      \end{enumerate}
+
+    \item Convolve the radiances and derivatives along the several paths
+          with the antenna pattern.
+
+  \end{enumerate}
+
+\end{enumerate}
+
+The mechanisms of the conspiracies that hide details of the grid, and the
+relationship of the grid to the integration path, should exploit
+type-bound procedures, type extension, and polymorphism.  At present, both
+the NAG (version 6) and Intel (version 16.0.2) compilers support all the
+necessary features.  Intel version 14.0.0 does not, but methods to work
+around its deficiencies have so far been found.
+
+\subsection{A possible simplification}
+
+The full forward model uses some quantities that are presently inherently
+coupled to a two-dimensional model: orbit geodetic angle $\phi$, orbit
+inclination angle $\beta$, and the minor axis $c$ of the orbit-plane
+projected ellipse.  These are presently scalars, at least for each MAF,
+but if they were arrays, with a separate value for each MIF (and then
+interpolated to each pointing), the remainder of the full forward model
+would be largely oblivious to the change.  These quantities can be
+computed from the pointing information provided by Level 1.  For each MIF,
+Level 1 will provide two vectors in ECR, one to a point on the line of
+sight, and another along the line of sight.  The line of sight is then
+represented by $\mathbf{C} + s\, \mathbf{U}$, where $\mathbf{C}$ is the
+first vector, $\mathbf{U}$ is the second one, and $s$ is path length
+measured from $\mathbf{C}$.
+
+Whether the line of sight intersects the Earth can be calculated using a
+method described in \h{wvs-131}.  If it does not intersect, the tangent
+position can be calculated using a method described in \h{wvs-030}. 
+Denote the position in ECR of the tangent or intersection by the vector
+$\mathbf{T}$.  The normal vector in ECR to the plane that is defined by
+the line of sight and the center of the earth, which is the orbit plane
+and considered to be a constant for each MAF in EOS-MLS, is $\mathbf{N} =
+\mathbf{C} \times \mathbf{U}$ and the unit normal is $\mathbf{\hat{N}} =
+\mathbf{N} / |\mathbf{N}|$.  Let $r = |(\mathbf{\hat{N}}_x,
+\mathbf{\hat{N}}_y,0)|$ be the projection of $\mathbf{\hat{N}}$ into the
+equatorial plane.  The inclination of the ``orbit'' plane, currently
+called the orbit inclination, is $\beta = 90^\circ -
+\sin^{-1}(\mathbf{\hat{N}}_z) = 90^\circ -
+\tan^{-1}(\mathbf{\hat{N}}_z/r)$.  A vector in ECR toward where the
+projected plane intersects the equator is given by $\mathbf{E} = (0,0,1)
+\times \mathbf{\hat{N}} = (-\mathbf{\hat{N}}_y, \mathbf{\hat{N}}_x,0)$,
+and $\mathbf{\hat{E}} = (-\mathbf{\hat{N}}_y, \mathbf{\hat{N}}_x,0)/r$ is
+an unit vector in that direction.  This would be the ascending node of an
+orbit.  The value the full forward model calls the orbit geodetic angle
+$\phi$ is the angle that a vector normal to the Earth's surface toward
+$\mathbf{T}$ makes with the major axis of the plane-projected ellipse, or
+the complement of the angle it makes with the minor axis.  Let $\mathbf{P}
+= \mathbf{N} \times \mathbf{E}$ be the vector along the minor axis of the
+plane-projected ellipse and $\mathbf{\hat{P}} = \mathbf{P}/|\mathbf{P}|$
+be the corresponding unit vector.  Then $\mathbf{T}_x = \mathbf{\hat{E}}
+\cdot \mathbf{T}$ and $\mathbf{T}_z = \mathbf{E} \cdot \mathbf{\hat{P}}$
+are $x$ and $z$ co\"ordinates of $\mathbf{T}$ with respect to the
+plane-projected ellipse.  The angle $\lambda$, which would be the geodetic
+latitude if the Earth's minor axis length were $c$, can be computed
+efficiently from $\mathbf{T}_x$ and $\mathbf{T}_z$ using Fukushima's
+algorithm\footnote{Fukushima's algorithm converges in one iteration to
+within a few micro arc seconds at geodetic altitudes below 30,000 km.}. 
+Then $\phi=\lambda$ if $\lambda \mathbf{U}_z \geq 0$, or $\phi =
+\text{signum}(\lambda) ( 180^\circ - |\lambda|)$ otherwise.  From this we
+have $-180^\circ \leq \phi \leq 180^\circ$.  The full forward model
+prefers to use $\phi \leftarrow 360^\circ + \phi$ if $\phi < 0$.  The
+semi-minor axis $c$ of the plane-projected ellipse can be calculated from
+$\beta$ and either $\phi$ or $\lambda$.
+
+After computing $\mathbf{T}$, $\phi$, $\beta$, and $c$ for every MIF,
+these values can be interpolated to the tangent for each pointing for each
+$\zeta$, as is currently done only for $\phi$, spacecraft position, and
+line-of-sight velocity.  Throughout the full forward model, these
+quantities become vectors instead of scalars.  They are already taken from
+elements of vector quantitites, so the change will be in how the subscript
+is calculated, i.e., use the $\zeta$-index for each pointing instead of 1
+if the first dimension is not 1 (the second subscript is the MAF number).
+
+\section{Modules needing attention}
+
+The intent is that a newer forward model, whether for two or three
+dimensions, would use the vector and matrix types, and their underlying
+geolocation abstractions, rather than having internal representations for
+atmospheric state and Jacobians.  If we take care with abstractions, the
+geolocations of the newer vector-related types, and the newer forward
+model, ought to work for one-, two-, or three-dimensional problems. 
+Therefore, an entirely new forward model module will be needed.  Much of
+its design can be copied from the existing forward model module, and many
+of its component parts, especially those in separate modules, can be used,
+either as they are, or with modest changes, or at least their designs can
+be used.
+
+It is desirable to change the {\tt QuantityTemplates} module to use the
+new {\tt Geolocation_m} and {\tt Geolocation_0} modules, as structures and
+methods within those modules are used by the {\tt Metrics_3D_m} module. 
+The alternative is to copy geolocation information from one representation
+to another, a practice we are trying to replace with a redesigned forward
+model.
+
+This will induce ubiquitous changes elsewhere, to the extent other modules
+use the geolocation components of vector quantities directly.  This use
+should have been handled by abstractions in the first place, and should be
+replaced by reference to abstractions.  This might well be the most
+time-consuming step.
+
+Changes might be necessary in {\tt HGrid} and {\tt VGrid} modules in the
+{\tt l2} directory, and {\tt HGridsDatabase} and {\tt VGridsDatabase}
+modules in the {\tt lib} directory.  Some changes have already been
+introduced in the {\tt HGrid} and {\tt HGridsDatabase} modules to handle
+QTM horizontal grids.
+
+The {\tt VectorValue_t} type in the {\tt Vectors} module already includes
+components for values with up to four dimensions.  There should be only
+minor changes, if any, in the {\tt Vectors} module, although how it is
+used by other modules might require change.  For example, with a QTM
+horizontal grid, the geolocation of a three-dimensional atmospheric state
+is represented by a one-dimensional set of horizontal geolocations, and a
+two-dimensional set of heights, which seems backward.  The horizontal
+geolocations of the QTM vertices are identified by a single serial number,
+which is recorded in the data structure used to find a facet of the QTM
+from a horizontal geolocation, not by two subscripts, because the
+horizontal grid is not rectangular.  The {\tt Metrics_3D_m} module assumes
+the grid is stacked but not necessarily coherent.  It determines
+automatically whether it is coherent, by examining the extent of the
+second dimension of the heights array.  The serial number of a QTM vertex
+is used to index the second extent of the heights array if the grid is not
+coherent.  The serial number and a height index, within the range of the
+first extent of the heights array, are used to compute a subscript for a
+value of a vector quantity, and a column subscript for a block of the
+Jacobian.  In a two-dimensional problem, the horizontal serial number
+would be what is currently viewed as a ``phi'' index.
+
+Some low-level modules that represent geolocation using arrays, and
+operate on them using methods from the {\tt Geometry} module, should
+gradually be revised to use structures and methods from the {\tt
+Geolocation_0} module.  This can proceed slowly and independently for the
+most part, with little interaction with other modules.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.3  2016/06/01 00:56:45  vsnyder
+% Describe how to compute orbit geodetic angle phi, orbit inclination beta,
+% semi-minor axis of orbit-plane projected ellipse, and tangent or
+% intersection, for each MIF and then each pointing, from Level 1 pointing
+% data alone.
+%
+% Revision 1.2  2016/04/28 23:05:58  vsnyder
+% Add remark about Tikhonov, PhiTan
+%
+% Revision 1.1  2016/04/08 23:56:59  vsnyder
+% Initial commit
+%

@@ -1,0 +1,80 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Hessian_Vec_Vec_Multiply_D ( H, V1, V2, SCALAR, P, Update )
+!   type(HessianElement_T), intent(in) :: H
+!   real(rk), intent(in) :: V1(:), V2(:)
+!   real(rk), intent(in) :: Scalar
+!   real(rk), intent(inout) :: P(:)
+!   logical, intent(in), optional :: Update
+
+    integer :: K, J, N
+    logical :: MyUpdate
+
+    myUpdate = .false.
+    if ( present(update) ) myUpdate = update
+    if ( .not. myUpdate ) p = 0
+
+    if ( associated(h%tuples) ) then ! First try the sparse representation
+      if ( DEEBUG ) then
+        call outputNamedValue( 'size(p)', size(p) )
+        call outputNamedValue( 'size(v1)', size(v1) )
+        call outputNamedValue( 'size(v2)', size(v2) )
+        call outputNamedValue( 'size(h%tuples)', size(h%tuples) )
+        call outputNamedValue( 'maxval(h%tuples%k)', maxval(h%tuples%k) )
+        call outputNamedValue( 'maxval(h%tuples%i)', maxval(h%tuples%i) )
+        call outputNamedValue( 'maxval(h%tuples%j)', maxval(h%tuples%j) )
+        call outputNamedValue( 'minval(h%tuples%k)', minval(h%tuples%k) )
+        call outputNamedValue( 'minval(h%tuples%i)', minval(h%tuples%i) )
+        call outputNamedValue( 'minval(h%tuples%j)', minval(h%tuples%j) )
+      endif
+      do n = 1, size(h%tuples)
+        k = h%tuples(n)%i
+        p(k) = p(k) + scalar * h%tuples(n)%h * v1(h%tuples(n)%j) * v2(h%tuples(n)%k)
+      end do
+    else if ( associated(h%values) ) then ! Then try the dense represenation
+      if ( size(h%values,1) /= size(p) .or. &
+        &  size(h%values,2) /= size(v1) .or. &
+        &  size(h%values,3) /= size(v2) ) &
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & "Dimensions of Hessian and vectors incompatible in multiply" )
+      do k = 1, size(h%values,1)
+        do j = 1, size(h%values,3)
+          ! Summation on i is done by dot_product
+          p(k) = p(k) + scalar * dot_product(h%values(k,:,j), v1(:)) * v2(j)
+        end do
+      end do
+    end if
+
+! $Id$
+! $Log$
+! Revision 2.7  2011/05/04 19:26:49  vsnyder
+! Correct usage if i,j,k fields of sparse representation
+!
+! Revision 2.6  2011/03/02 02:01:06  vsnyder
+! Declare local variables here, make subscript usage consistent with HessianModule_1
+!
+! Revision 2.5  2010/06/29 19:56:40  vsnyder
+! Add SCALAR argument instead of buried 0.5 factor
+!
+! Revision 2.4  2010/06/28 17:02:58  pwagner
+! added debugging output
+!
+! Revision 2.3  2010/06/22 22:44:53  vsnyder
+! Remove extraneous CVS Id line.  Add comments for the subroutine header
+! and for the summation on i.  Correct bugs in the dense case.
+!
+! Revision 2.2  2010/02/25 18:16:46  pwagner
+! Conforms with changed Hessian structure
+!
+! Revision 2.1  2010/02/12 21:08:45  vsnyder
+! Initial commit
+!

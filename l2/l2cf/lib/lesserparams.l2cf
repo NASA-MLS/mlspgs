@@ -1,0 +1,23 @@
+!divert(-1)
+; $Id$
+; This l2cf fragment defines those remaining parameters that have
+; nowhere obvious else to go.
+;
+; Shouldn't we consider putting them in setupcalfiles.l2cf
+; among the other default macros?
+!defunlessdef(elevR1A,{0.000 degrees})
+!defunlessdef(elevR1B,{0.000 degrees})
+!defunlessdef(elevR2,{0.000 degrees})
+!defunlessdef(elevR3,{0.000 degrees})
+!defunlessdef(elevR4,{0.000 degrees})
+!defunlessdef(elevR5H,{0.000 degrees})
+!defunlessdef(elevR5V,{0.000 degrees})
+
+!defunlessdef(o2vmr,{0.2095 vmr})
+!defunlessdef(n2vmr,{0.805 vmr})
+
+!defunlessdef(spaceRadiance,{2.735 K})
+!defunlessdef(earthReflectivity,{0.05})
+!divert(-1)
+; $Log$
+!divert!dnl

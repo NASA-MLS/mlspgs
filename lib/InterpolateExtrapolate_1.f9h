@@ -1,0 +1,59 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+! subroutine InterpolateExtrapolate ( OldX, OldY, NewX, NewY, Second )
+
+!   ! Interpolate ( OldX(:), OldY(:) ) to ( NewX(:), NewY(:) ).
+!   ! Extrapolate outside the range of OldX using the average slope, not
+!   ! the slope nearest the end where NewX is outside the range of OldX.
+
+!   use MLSNumerics, only: Coefficients, InterpolateArraySetup, &
+!     & InterpolateArrayTeardown, InterpolateValues
+
+!   integer, parameter :: RK = kind(0.0e0)
+!   real(rk), intent(in) :: OldX(:), OldY(:,:), NewX(:)
+!   real(rk), intent(out) :: NewY(:,:)
+!   logical, intent(in) :: Second
+!   type(coefficients(r?)) :: Coeffs
+
+    real(rk) :: AvgDiff
+    integer :: Bot, Top
+
+    bot = minloc(oldX,1)
+    top = maxloc(oldX,1)
+
+    ! Calculate the average slope of oldY/oldX using the extremes of oldX.
+    ! Alternatives are a least-squares fit to a straight line, or averaging
+    ! the individual difference quotients.
+    avgDiff = ( oldY(top) - oldY(bot) ) / ( oldX(top) - oldX(bot) )
+
+    ! Do the interpolations with clamped extrapolation.
+    call interpolateArraySetup ( oldX, newX, &
+      & Method='L', coeffs=coeffs, extrapolate='C' )
+    call interpolateValues ( coeffs, oldX, oldY, &
+      & newX, newY, Method='L', extrapolate='C' )
+    call interpolateArrayTeardown ( coeffs )
+
+    ! Do the extrapolations
+    where ( newX < oldX(bot) ) &
+      & newY = oldY(bot) + avgDiff * ( newX - oldX(bot) )
+    where ( newX > oldX(top) ) &
+      & newY = oldY(top) + avgDiff * ( newX - oldX(top) )
+
+! $Log$
+! Revision 2.2  2017/10/31 23:46:29  vsnyder
+! Make Coefficients and UnifDiscreteFn parameterized types
+!
+! Revision 2.1  2015/07/29 00:23:19  vsnyder
+! Initial commit
+!

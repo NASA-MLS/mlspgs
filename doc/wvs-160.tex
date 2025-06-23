@@ -1,0 +1,1043 @@
+% To make the graphics
+% tgif -print -eps wvs-160-1.obj; epstopdf wvs-160-1.eps
+% tgif -print -eps wvs-160-2.obj; epstopdf wvs-160-2.eps
+% tgif -print -eps wvs-160-facets.obj; epstopdf wvs-160-facets.eps
+% tgif -print -eps wvs-160-surf.obj; epstopdf wvs-160-surf.eps
+% tgif -print -eps wvs-160-cone.obj; epstopdf wvs-160-cone.eps
+
+\makeatletter\let\ifGm@compatii\relax\makeatother
+\documentclass[landscape]{beamer}
+\usepackage[nofancy,notoday]{rcsinfo}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{moreverb}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{floatflt}
+%\usepackage[strings]{underscore}
+\usepackage{xr-hyper}
+\externaldocument[128-]{\logdir/wvs-128}
+\externaldocument[131-]{\logdir/wvs-131}
+\externaldocument[146-]{\logdir/wvs-146}
+
+\usepackage{hyperref}
+% \hypersetup{%
+%   hypertexnames=false,%
+%   colorlinks=true,%
+%   linktocpage=true,%
+% }
+% Specify the driver for the color package
+%\ExecuteOptions{pdftex}
+
+%
+\renewcommand{\b}{\mathbf}
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{^{T}}
+\newcommand{\cs}[1]{$_{\text{#1}}$}
+\newcommand{\inv}{^{\mathrm -1}}
+\newcommand{\cp}[1]{$^{\text{#1}}$}
+\newcommand{\degsym}{\ensuremath{^\circ}}
+\newcommand{\newframe}[2][]{\begin{frame}\frametitle{\hfill #2 \hfil}}
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.pdf}{#1}}
+\newcommand\h[1]{\hr{#1}}
+
+\parskip 2pt
+%
+% -----------------------------------------------------------------------------
+%
+\title{3-D QTM Metrics}
+\subtitle{wvs-160r1}
+\author{Van Snyder}
+\date{12 June 2020}
+\titlegraphic{\includegraphics[width=1.0in]{eos_mls_logo_onpink}}
+
+\begin{document}
+\sloppy
+%
+% -----------------------------------------------------------------------------
+%
+\begin{frame}
+ \titlepage
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{The problem to be solved}
+
+Given
+
+\begin{itemize}
+
+\item A three-dimensional coherent and stacked (in pressure) QTM, i.e.,
+  vertices are on vertical profiles, and vertices at each level are on the
+  same constant-pressure surface, in every profile,
+
+\item The geodetic surface co\"ordinates $(\lambda,\phi)$ of each vertex,
+
+\item The geodetic height at every level on every profile, computed from a
+  temperature profile assuming hydrostatic equilibrium, and
+
+\item A line of sight,
+
+\end{itemize}
+
+Compute
+
+\begin{itemize}
+
+\item The three-dimensional geodetic co\"ordinates $(\lambda,\phi,h)$ of
+  all points of intersection of the line of sight with boundary surfaces
+  of the QTM, and
+
+\item The interpolation coefficients from vertices of the QTM to those
+  points.
+
+\end{itemize}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Line of sight}
+
+The line of sight consists of two parts:
+
+\begin{itemize}
+
+\item From the instrument to the tangent or reflection point, and
+
+\item From the tangent or reflection point to the other side of the
+atmosphere.
+
+\end{itemize}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Line of sight}
+
+A line is represented by a vector to a point on the line, and a multiple
+of an unit vector that is parallel to the line:
+%
+\begin{equation}
+\mathcal{L} = \mathbf{C} + s\, \mathbf{U}
+\end{equation}
+%
+For the part of the line from the instrument to the tangent or reflection
+point, $\mathbf{C}$ is interpolated from {\tt ScECR} (MIF quantity),
+$\mathbf{U}$ is interpolated from the third column of {\tt ECRtoFOV} (MIF
+quantity), and $s$ is path length in meters from the instrument.
+
+For the part of the line from the tangent or reflection point to the other
+side of the atmosphere,
+%
+\begin{equation}\begin{array}{ll}
+\mathcal{L} = \mathbf{T} + s\, \mathbf{U} \text{ (no reflection) } &
+\mathcal{L} = \mathbf{T} + s\, \mathbf{R} \text{ (reflection) } \\
+\end{array}
+\end{equation}
+%
+where $\mathbf{T}$ is the tangent or reflection point, the unit vector
+$\mathbf{R}$ in the direction of reflection is calculated from
+$\mathbf{U}$ as described in \h{wvs-133}, and $s$ is path length in
+meters from the tangent or reflection point.
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Line of sight reflected vector}
+
+Assume that $\mathbf{N}$ is an unit vector that is normal to the Earth
+surface at the point where the line of sight reflects.  Let $\mathbf{R}$
+be the unit vector in the direction of the reflection.  The projections of
+$\mathbf{U}$ and $\mathbf{R}$ into the tangent plane are the same, and
+their projections into the normal are reversed.  Therefore, as derived in
+\h{wvs-133},
+
+\begin{equation}
+\mathbf{R} = \mathbf{U} - 2 (\mathbf{U}\cdot\mathbf{N})\,\mathbf{U}
+\end{equation}
+
+\begin{centering}
+\includegraphics[scale=0.6,clip=true]{wvs-160-2}\\
+\end{centering}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Line of sight}
+
+The line of sight is calculated by {\tt Get\_Lines\_of\_Sight} in the
+module {\tt Interpolate\_MIF\_to\_Tan\_Press\_m} using
+
+\begin{itemize}
+
+\item The instrument position, taken from {\tt ScECR}, a minor-frame
+quantity, and
+
+\item The field-of-view vector, taken from the third column of the {\tt
+ECRtoFOV} matrix, a minor-frame quantity,
+
+\end{itemize}
+
+by interpolating from MIF tangent pressures to a tangent pressure taken
+from the temperature {\tt vGrid}.
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Line of sight}
+
+\begin{centering}
+\hspace*{-0.5in}
+\includegraphics[width=4.5in,keepaspectratio,clip=true]{wvs-160-1}\\
+$R^\oplus_{\text{eq}}$ is from the center of the equivalent circular Earth.\\
+{\tt SCECR} is from the center of the true Earth.\\
+\end{centering}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Difference from EMLS}
+
+\begin{itemize}
+
+\item In 2-D, the reflected line of sight reflects from the pressure
+reference surface.
+
+\item In QTM, the reflected line of sight reflects from the Earth surface.
+
+\end{itemize}
+
+\begin{itemize}
+
+\item In 2-D, the tangent or reflection point is provided by Level 1.
+
+\item In QTM, the tangent or reflection point is calculated in Level 2.
+
+\end{itemize}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Tangent or reflection point}
+
+The tangent or reflection point is the point where the line of sight
+either is nearest to the surface of the Earth, or intersects the surface
+of the Earth.
+
+Write the line of sight as $\mathbf{p}(s) = \mathbf{C} + s\,\mathbf{U}$
+and substitute into the equation for an ellipsoid
+
+\begin{equation}
+\left( \mathbf{M}\, \mathbf{p}(s) \right)^T \cdot
+ \left( \mathbf{M}\, \mathbf{p}(s) \right) = r^2 \text{ where }
+\mathbf{M} = \text{diag} \left[ 1, 1, \frac1{\sqrt{1-e^2}} \right] \,.
+\end{equation}
+
+If $r = a$, this is the equation for the surface of the Earth. Otherwise,
+it is the equation for an ellipsoid confocal with the Earth ellipsoid (see
+\h{wvs-030}).
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Tangent or reflection point}
+
+After substituting $\mathbf{p}(s)$ into the equation for the ellipsoid,
+write the result as a polynomial in $s$, \emph{viz}.
+%
+\begin{equation}\label{s-poly}
+(\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, s^2 +
+2 (\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M}\, \mathbf{U})\, s +
+(\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M} \mathbf{C} ) = r^2 \,.
+\end{equation}
+
+This equation has one solution for $s$ if and only if its discriminant is
+zero, i.e.,
+%
+\begin{equation}\label{discriminant}
+\left( 2 (\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M}\, \mathbf{U}) \right)^2
+- 4 (\mathbf{M}\, \mathbf{U})^T \cdot (\mathbf{M}\, \mathbf{U})\, 
+\left[ (\mathbf{M} \mathbf{C} )^T \cdot (\mathbf{M} \mathbf{C} ) - r^2 \right]
+ = 0 \,.
+\end{equation}
+
+Assuming the discriminant is zero, the solution of Equation (\ref{s-poly})
+is
+%
+\begin{equation}\label{tv2}
+s =
+-\frac{\left(\mathbf{M}\mathbf{C}\right)^T \cdot
+       \left(\mathbf{M}\mathbf{U}\right)}
+      {\left(\mathbf{M}\mathbf{U}\right)^T \cdot
+       \left(\mathbf{M}\mathbf{U}\right)} \,.
+\end{equation}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Tangent or reflection point}
+
+The value of $r$ for which the discriminant, Equation
+(\ref{discriminant}), is zero is
+%
+\begin{equation}\label{discriminant-solution-oblate}
+r^2 = \frac{ \left( \mathbf{M}^{-1} \mathbf{N} \right)^T \cdot
+             \left( \mathbf{M}^{-1} \mathbf{N} \right) }
+           { (1-e^2) \left( \mathbf{M}\mathbf{U} \right )^T \cdot
+                 \left( \mathbf{M}\mathbf{U} \right ) }
+    = \frac{ | \mathbf{M}^{-1} \mathbf{N} |^2}
+           { (1-e^2) | \mathbf{M}\mathbf{U} |^2 }
+    = \left( \frac{a}{c} \, \frac{ | \mathbf{M}^{-1} \mathbf{N} | }
+                        { | \mathbf{M} \mathbf{U} | } \right)^2 \,,
+\end{equation}
+
+where $\mathbf{N} = \mathbf{C} \times \mathbf{U}$ and we used the identity
+%
+\begin{equation}\begin{split}\label{cross-norm}
+| \mathbf{a} \times \mathbf{b} |^2
+ = \,& |\mathbf{a}|^2 \, |\mathbf{b}|^2 \sin^2\theta
+ = |\mathbf{a}|^2 \, |\mathbf{b}|^2 (1 - \cos^2\theta ) \\
+ = \,& |\mathbf{a}|^2 \, |\mathbf{b}|^2 - (\mathbf{a}\cdot\mathbf{b})^2 \,.
+\end{split}\end{equation}
+
+If $r \geq a$, the point on $\mathbf{p}(s)$ where $s$ is the solution of
+Equation (\ref{s-poly}) is the tangent point; otherwise, the line of sight
+intersects the Earth surface at the points that are solutions for $s$ in
+Equation (\ref{s-poly}) with $r=a$.
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Heights and hydrostatic equilibrium}
+
+The heights at specified pressures, on profiles at vertices adjacent to
+the line of sight, i.e., vertices of facets under the line of sight, are
+calculated from temperature profiles using hydrostatic
+equilibrium.\\[10pt]
+
+The heights are needed not only corresponding to the specified {\tt
+vGrid}, but also on the intermediate pressure grid corresponding to the
+points needed for Gauss-Legende quadrature.\\[10pt]
+
+Quadratures are calculated with $\zeta = -\log_{10} P$, not path length,
+as the variable of integration.\\[10pt]
+
+Heights are not needed on profiles that are not adjacent to the line of
+sight.
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Lines of sight}
+
+The lines of sight for all the tangent pressures are determined.\\[5pt]
+
+The set of facets under each line of sight, and the vertices of those
+facets, are recorded in the variable {\tt F\_And\_V} in the full forward
+model.
+
+\begin{centering}
+\includegraphics[scale=0.5,keepaspectratio]{wvs-160-facets}\\
+\end{centering}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Lines of sight}
+
+\begin{itemize}
+
+\item The union of the sets of facets under the lines of sight is
+  determined.
+
+\item If the number of vertices in the union is not greater than twice the
+  maximum number of vertices adjacent to any one line of sight, the union
+  is used instead of the individual lines of sight, and heights are
+  computed using hydrostatic equilibrium only once, at profiles on the
+  vertices in the union, before the radiative-transfer calculation is made
+  along any line of sight.
+
+\item Otherwise, heights are computed using hydrostatic equilibrium
+  separately, at profiles on vertices adjacent to each line of sight,
+  before the radiative-transfer calculation is made along each line of
+  sight.  (There is an opportunity, not yet exploited, to keep track of
+  the vertices at which heights have been calculated, and use those
+  results instead of computing them anew. Profiling will reveal whether
+  this is important.)
+
+\end{itemize}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{QTM surfaces}
+
+Every prism of the QTM is bounded by five surfaces with which the line of
+sight might intersect:
+
+\begin{itemize}
+
+\item Two roughly-horizontal surfaces of constant pressure,
+
+\item One vertical surface, a cone of constant latitude, and
+
+\item Two vertical surfaces, planes defined by a vertical line that is at
+  the polar QTM vertex and a QTM vertex that is not the polar vertex.
+
+\end{itemize}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{QTM surfaces -- surface of constant pressure}
+
+
+\begin{minipage}{0.40\textwidth}
+\begin{centering}
+\includegraphics[scale=.65,keepaspectratio]{wvs-160-surf}\\
+\end{centering}
+\end{minipage}
+%
+\begin{minipage}{0.58\textwidth}
+The height of a surface of constant pressure within one QTM facet is
+modeled as the surface of a sphere that includes the three vertices
+$(\mathbf{P}_1,\mathbf{P}_2,\mathbf{P}_3)$ at one pressure level (not
+necessarily at the same heights) above a facet of the QTM.  Its radius is
+the radius of mean curvature of the surface of the Earth at the geodetic
+$(\lambda,\phi)$ surface co\"ordinates of the circumcenter $\mathbf{C}$ of
+the triangle, plus the average of the heights at
+$(\mathbf{P}_1,\mathbf{P}_2,\mathbf{P}_3)$.
+
+Alternatively, the height at $\mathbf{C}$ could be computed using
+barycentric interpolation.
+\end{minipage}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Digression: Barycentric interpolation in 3-D}
+
+Section \ref{128-Barycentric} in \h{wvs-128} describes how to compute
+barycentric interpolation coefficients within a 2-D triangle.
+
+Let $\eta_i$ be the ratio of the area of the triangle $(
+\mathbf{P}_j,\mathbf{P}_k,\mathbf{X} )$ to the area of the entire
+triangle, with $i \neq j \neq k$.  Then the interpolated value at
+$\mathbf{X}$ is $f(\mathbf{X}) = \sum_i \eta_i
+\, f ( \mathbf{P}_i )$.
+
+The area of a triangle can be expressed using two edge lengths and the
+angle between them.  Let $\mathbf{e}_{ij} = \mathbf{P}_j - \mathbf{P}_i$
+be the vector along the edge of the triangle from $\mathbf{P}_i$ to
+$\mathbf{P}_j$, and let $\mathbf{e}_{xi} = \mathbf{X} - \mathbf{P}_i$. 
+Then twice the area is
+
+\begin{equation}\begin{split}
+A = \,& |\mathbf{e}_{ij}| \, |\mathbf{e}_{ik}| \sin\theta =
+| \mathbf{e}_{ij} \times \mathbf{e}_{ik} | \text{ and} \\
+\eta_i = \,& \frac{ | \mathbf{e}_{xj} \times \mathbf{e}_{xk} | }A \,. \\
+\end{split}\end{equation}
+
+(Notice that the factor of 2 cancels.)
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{QTM surfaces -- surface of constant pressure}
+
+The sphere at one level is constructed in three steps:
+
+\begin{enumerate}
+
+\item Compute the circumcenter of the triangle
+  $(\mathbf{P}_1,\mathbf{P}_2,\mathbf{P}_3)$ in the plane of the surface
+  of the facet, and compute the normal vector to that plane.
+
+\item Compute the mean radius of curvature $R_\text{eq}^\oplus$ of the
+  surface of the Earth at the geodetic $(\lambda,\phi)$ surface
+  co\"ordinates of the circumcenter of the facet.  This is the inverse of
+  the average of meridional curvature and curvature in the prime vertical
+  (\h{wvs-146}).
+
+\item Compute the center of the sphere passing through
+  $(\mathbf{P}_1,\mathbf{P}_2,\mathbf{P}_3)$ with radius of curvature
+  $R_\text{eq}^\oplus$ + the average of the heights of $\mathbf{P}_1$,
+  $\mathbf{P}_2$, and $\mathbf{P}_3$.
+
+\end{enumerate}
+
+(see \h{wvs-132}).
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{QTM surfaces -- circumcenter}
+
+The circumcenter $\mathbf{v}$ of a triangle is at the intersection of the
+perpendicular bisectors of the sides.
+
+Given the ECR co\"ordinates $(\mathbf{P}_1,\mathbf{P}_2,\mathbf{P}_3)$ of
+the three vertices of a surface of constant pressure in a facet of a QTM,
+the conditions that the bisectors are perpendicular are
+
+\begin{equation}\label{bisectors}
+\left(\mathbf{v} - \frac12(\mathbf{P}_i + \mathbf{P}_j) \right) \cdot
+ ( \mathbf{P}_i - \mathbf{P}_j ) = 0
+\end{equation}
+
+for $i,j\in\{1,2,3\}$ and $i \neq j$.  These three conditions are not
+independent, so a further condition is required: The vector from a vertex,
+say $\mathbf{P}_3$, to $\mathbf{v}$, is in the plane of
+$(\mathbf{P}_1,\mathbf{P}_2,\mathbf{P}_3)$, \emph{viz.}
+
+\begin{equation}\label{in-plane}
+( \mathbf{v} - \mathbf{P}_3 ) \cdot (( \mathbf{P}_1 - \mathbf{P_3} ) \times
+ ( \mathbf{P}_2 - \mathbf{P}_3 )) = 0
+\end{equation}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{QTM surfaces -- circumcenter}
+
+Given the ECR co\"ordinates $(\mathbf{P}_1,\mathbf{P}_2,\mathbf{P}_3)$ of
+the three vertices of a surface of constant pressure in a facet of a QTM,
+compute vectors for two edges, and the normal to the plane, \emph{viz}.
+
+\begin{equation}\begin{split}
+\mathbf{A} = \,& \mathbf{P}_1 - \mathbf{P}_3 \\
+\mathbf{B} = \,& \mathbf{P}_2 - \mathbf{P}_3 \\
+\mathbf{N} = \,& \mathbf{A} \times \mathbf{B}
+            \text{ (normal to plane)} \\
+\end{split}\end{equation}
+
+In matrix form, Equations (\ref{bisectors}) and (\ref{in-plane}) are
+
+\begin{equation}
+%\arraystretch{1.25}
+\mathbf{M} \, \mathbf{v} =
+\left[ \begin{array}{lll} n_1 & n_2 & n_3 \\[3pt]
+                          a_1 & a_2 & a_3 \\[3pt]
+                          b_1 & b_2 & b_3 \\
+\end{array} \right] \left[ \begin{array}{l} v_1 \\[3pt] v_2 \\[3pt] v_3 \\
+\end{array} \right] = \left[ \begin{array}{l}
+ 0 \\[3pt] \frac12 \mathbf{A} \cdot \mathbf{A} \\[3pt]
+           \frac12 \mathbf{B} \cdot \mathbf{B}
+\end{array} \right]
+\end{equation}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{QTM surfaces -- circumcenter}
+
+Notice that $\text{det}\, (\mathbf{M}) = \mathbf{N} \cdot \mathbf{N} =
+|\mathbf{N}|^2$, and the numerator of each row of $\mathbf{M}^{-T}$ is the
+cross product of the other two rows of $\mathbf{M}$. In particular, the
+numerator of column 1 of $\mathbf{M}^{-1} = \mathbf{N}$.
+
+The solution for $\mathbf{v}$ (vector from $\mathbf{P}_3$ to
+circumcenter $\mathbf{C}$) is
+
+\begin{equation}\begin{split}
+\mathbf{v} = \,& \frac{\mathbf{D} \times \mathbf{N}}
+                      { 2 |\mathbf{N}|^2 } \text{ where}\\
+\mathbf{D} = \,& ( \mathbf{A} \cdot \mathbf{A} ) \mathbf{B} -
+                 ( \mathbf{B} \cdot \mathbf{B} ) \mathbf{A} \\
+\end{split}\end{equation}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{QTM surfaces -- constant pressure surface}
+
+The center $\mathbf{p}(t)$ of the sphere lies upon the line from the
+circumcenter $\mathbf{C} = \mathbf{p}(0) = \mathbf{P}_3 + \mathbf{v}$ that
+is normal to the plane defined by
+$(\mathbf{P}_1,\mathbf{P}_2,\mathbf{P}_3)$, at a distance $t$, to be
+computed, from that plane:
+%
+\begin{equation}
+\mathbf{p}(t) = \mathbf{p}(0) + t\, \mathbf{N} = \mathbf{P}_3 + \mathbf{v}
+ + t\, \mathbf{N} \,.
+\end{equation}
+
+The distance from any vertex, say $\mathbf{P}_3$, to the center of the
+sphere is $r$.  Therefore
+%
+\begin{equation}
+| \mathbf{p}(t) - \mathbf{P}_3 |^2 = | \mathbf{v} + t\, \mathbf{N} |^2 = |
+\mathbf{v} |^2 + 2\,t\, \mathbf{v} \cdot \mathbf{N} + t^2\,
+| \mathbf{N} |^2 = r^2 \,.
+\end{equation}
+
+Because $\mathbf{v}$ is perpendicular to $\mathbf{N}$ (by definition),
+$\mathbf{v} \cdot \mathbf{N} = 0$, and
+%
+\begin{equation}
+t = \pm \sqrt{\frac{r^2 - |\mathbf{v}|^2}{|\mathbf{N}|^2}}
+\end{equation}
+
+with the sign chosen to minimize $|\mathbf{p}(t)|$, i.e., to make
+$\mathbf{p}(t)$ nearest to the center of the Earth.
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{QTM surfaces -- constant pressure surface}
+
+The radius of curvature at the Earth surface is the inverse of the mean
+curvature, which is the average of the principal curvatures, (Section
+\ref{146-Mean} in \h{wvs-146}):
+%
+\begin{equation}\begin{split}
+R_\text{eq}^\oplus = \,&
+ \frac1H\, \text{, where } H = \frac12(\kappa_1 + \kappa_2) \,,
+ \\
+\kappa_2 = \,& R_N = \frac{a}{\sqrt{1-e^2 \sin^2 \phi}} \,, \\
+\kappa_1 = \,& R_M = \frac{1-e^2}{a^2} R_N^3 =
+ \frac{a(1-e^2)}{(1 - e^2 \sin^2 \phi )^\frac32} \\
+\end{split}\end{equation}
+%
+(Equations (\ref{146-RN}) and (\ref{146-RM}) in \h{wvs-146}),
+$R_M$ is the meridional curvature, $R_N$ is the curvature in the
+prime vertical section, $e = \sqrt{1-\frac{c^2}{a^2}}$ is eccentricity,
+$a$ is the equatorial radius of the Earth, $c$ is the polar radius, and
+$\phi$ is geodetic latitude.
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Difference from EMLS}
+
+In EMLS, the line of sight might intersect
+
+\begin{itemize}
+
+\item A roughly-horizontal surface of constant pressure (actually a
+curve), and
+
+\item A vertical line of constant geodetic orbit angle $\phi$.
+
+\end{itemize}
+
+EMLS {\tt Height\_Metrics} in {\tt metrics\_m} calculates the height and
+orbit geodetic angle only at intersections of the line of sight with the
+constant-pressure curve (\h{wvs-048}).  The height between the points of
+constant pressure on adjacent profiles is approximated by a straight line,
+not a segment of a circle. Intersections with the profiles are not
+determined.\\[10pt]
+
+Although {\tt Metrics\_3D\_QTM} in {\tt Metrics\_3D\_m} can calculate
+intersections with all three surfaces, for consistency with EMLS, it is
+referenced from {\tt FullForwardModel} in such a way as to calculate only
+intersections with the constant-pressure surface.
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Intersection with spherical surface of constant pressure}
+
+The equation for a sphere with its center at the origin, in vector
+notation, is $\mathbf{p} \cdot \mathbf{p} = r^2$.  Representing a line in
+the usual way
+
+\begin{equation}\label{line-for-sphere}
+\mathbf{p}(s) = \mathcal{L}(s) = \mathbf{C} + s \, \mathbf{U}
+\end{equation}
+
+and substituting into the equation for a sphere gives an equation for $s$,
+\emph{viz}.
+
+\begin{equation}\label{s-sphere}
+\mathbf{U} \cdot \mathbf{U} \, s^2 + 2\, \mathbf{C} \cdot \mathbf{U}\, s +
+\mathbf{C} \cdot \mathbf{C} = r^2
+\end{equation}
+
+(Equation (\ref{131-sphere}) in \h{wvs-131}).
+
+If there are no real solutions for $s$, the line does not intersect the
+sphere. If there is one solution, the line is tangent to the sphere. 
+Otherwise, it intersects the sphere twice.
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Intersection with spherical surface of constant pressure}
+
+For every facet in {\tt F\_And\_V\%Facets}
+
+\begin{enumerate}
+
+\item Compute the spherical surfaces of constant pressure.
+
+\item Solve for $s$ in Equation (\ref{s-sphere}) and evaluate
+      $\mathbf{p}(s)$ using Equation (\ref{line-for-sphere}).
+
+\item Compute the centroid {\tt cc =} $\frac13 ( \mathbf{P}_1 +
+      \mathbf{P}_2 + \mathbf{P}_3 )$ of the triangle bounded by $(
+      \mathbf{P}_1 + \mathbf{P}_2 + \mathbf{P}_3 )$.
+
+\item Compute the geodetic surface co\"ordinates $(\lambda,\phi)$ of {\tt
+      cc}.
+
+\item Determine the facet in which the point $(\lambda,\phi)$ appears
+      using {\tt QTM\_Tree\%Find\_Facet(cc)}.
+
+\item Discard the intersection if it's not within the facet being
+      considered.
+
+\end{enumerate}
+
+We use the centroid to find the facet instead of the circumcenter
+previously calculated because in ZOT coordinates the facet at the surface
+is a right triangle, and therefore the circumcenter is on the midpoint of
+the hypotenuse. The facet would be ambiguous.
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Interpolation in spherical surface of constant pressure}
+
+Interpolation coefficients within the surface of constant pressure are
+computed using barycentric interpolation within the spherical triangle
+bounded by $( \mathbf{P}_1,\mathbf{P}_2,\mathbf{P}_3 )$.
+
+If the coefficients are computed using barycentric interpolation within
+the planar triangle $( \mathbf{P}_1,\mathbf{P}_2,\mathbf{P}_3 )$, or
+within the triangle projected to the plane tangent at the intersection,
+distortions result, and either unitarity or linear precision is lost.
+
+To interpolate to $\mathbf{X}$ using planar barycentric interpolation, the
+coefficient associated with $\mathbf{P}_i$ is the ratio of the area of the
+triangle $( \mathbf{P}_j,\mathbf{P}_k,\mathbf{X} )$ to the area of the
+entire triangle, with $i \neq j \neq k$.
+
+Barycentric interpolation on the surface of a sphere requires computing
+the areas of spherical triangles. This is a very expensive calculation
+(see \h{wvs-161}).
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Complication using spherical surface of constant pressure}
+
+{\parskip 8pt
+Assuming facets in which the distance from the polar vertex to the edge at
+constant latitude is about $1.5^\circ$, the maximum distance from the
+planar triangle $(\mathbf{P}_1,\mathbf{P}_2,\mathbf{P}_3)$ to the spherical
+triangle is about 0.56 km.
+
+Computing the intersection of the line of sight with a plane (slide
+\pageref{plane-slide}) is simpler than computing the sphere of constant
+pressure and computing the intersection of the line sight with that
+sphere.
+
+The line of sight might intersect the sphere of constant pressure at two
+points within the facet. This would introduce some complication in the
+full forward model because the extents of arrays representing quantities
+on the line of sight depend upon the number of pressure surfaces.
+
+Therefore it might be preferable to compute the intersection of the line
+of sight with the planar triangle
+$(\mathbf{P}_1,\mathbf{P}_2,\mathbf{P}_3)$.
+}
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Intersection with cone of constant latitude}
+
+In ECR, the surface of a cone with its vertex on the Earth axis at a
+distance $v$ northward $(+z)$ from the center, and its axis parallel to
+the Earth axis, is given by
+
+\begin{equation}\label{cone}
+(\mathbf{X}-\mathbf{V})^T \mathbf{M} (\mathbf{X}-\mathbf{V}) = 0 \,,
+\end{equation}
+
+where $\mathbf{V} = [ 0,0,v ]^T$, $\mathbf{M} = \mathbf{D} \mathbf{D}^T
+-\sin^2 \psi\, \mathbf{I}$, $\mathbf{D} = [ 0,0,1 ]^T$, $\psi$ is the
+latitude (geocentric or geodetic) where the cone intersects the Earth
+surface ($90^\circ - \psi$ is the cone angle), and $\mathbf{I}$ is the
+identity matrix. (See \h{wvs-129}.)
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Intersection with cone of constant latitude}
+
+Define a line in the usual way by
+%
+\begin{equation}\label{line-for-cone}
+\mathbf{X} = \mathbf{C} + s\, \mathbf{U}
+\end{equation}
+
+where $\mathbf{C}$ is a vector to a point on the line and $\mathbf{U}$ is a
+vector along the line, and substitute into Equation (\ref{cone}) giving
+%
+\begin{equation}\begin{split}\label{line-cone}
+&
+( \mathbf{C} + s\, \mathbf{U} - \mathbf{V} )^T \mathbf{M} \,
+( \mathbf{C} + s\, \mathbf{U} - \mathbf{V} ) = 0\,\, \text{ or} \\
+&
+\mathbf{U}^T \mathbf{M} \mathbf{U} \,s^2 +
+2 \mathbf{U}^T \mathbf{M}\, ( \mathbf{C} - \mathbf{V} ) \,s +
+(\mathbf{C} - \mathbf{V})^T \mathbf{M}\, (\mathbf{C} - \mathbf{V}) = 0
+\,.
+\end{split}\end{equation}
+
+The points on the line where it intersects the cone are given by values
+of Equation (\ref{line-for-cone}), with values of $s$ that are roots of
+Equation (\ref{line-cone}).
+
+If $\psi$ is geocentric latitude $\gamma$ then $v=0$.  If $\psi$ is
+geodetic latitude $\phi$ then (Equation (\ref{146-zeta}) in \h{wvs-146})
+%
+\begin{equation}
+v = -\frac{a\, e^2 \sin\phi}{\sqrt{1-e^2 \sin^2 \phi}}\,.
+\end{equation}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Intersection with cone of constant latitude}
+
+For each $s$ that is a root of Equation (\ref{line-cone})
+
+\newcounter{enumTemp}
+\begin{enumerate}
+
+\item If $s$ is not within the range of the line of sight, discard the
+      intersection.
+
+\item Determine the facet in which $\mathbf{X}$ from Equation
+      (\ref{line-for-cone}) appears.
+
+\item If the facet is not a leaf facet (facet at a leaf of the QTM
+      quadtree), discard the intersection (it's not within the polygon).
+
+\setcounter{enumTemp}{\theenumi}
+
+\end{enumerate}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Intersection with cone of constant latitude}
+
+\begin{minipage}{0.56\textwidth}
+\begin{centering}
+\includegraphics[scale=0.7]{wvs-160-cone}\\[5pt]
+$\mathbf{X} = \mathbf{C} + s\, \mathbf{U}$\\
+\end{centering}
+\end{minipage}
+%
+\begin{minipage}{0.42\textwidth}
+\begin{enumerate}
+\small
+\setcounter{enumi}{\theenumTemp}
+
+\item\label{heights-cone} Interpolate to the maximum and minimum heights,
+      at the longitude of $\mathbf{X}$, for minimum and maximum levels in
+      the facet.
+
+\item If the height of the intersection is not between the interpolated
+      heights, discard the intersection.
+
+\item Repeat step \ref{heights-cone} for every pair of levels to determine
+      the levels between which $\mathbf{X}$ appears.
+
+\end{enumerate}
+\end{minipage}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Intersection with vertical plane}\label{plane-slide}
+
+The equation of a plane can be expressed in vector notation as the set of
+points $\mathbf{p}$ such that (see \h{wvs-130})
+
+\begin{equation}\label{plane}
+(\mathbf{p} - \mathbf{p}_0) \cdot \mathbf{n} = 0\,,
+\end{equation}
+
+where $\mathbf{p}_0$ is a point on the plane, and $\mathbf{n}$ is a normal
+vector to it.  A line can be expressed as the set of points
+
+\begin{equation}\label{line-for-plane}
+\mathbf{X} = \mathbf{C} + s\, \mathbf{U}\,.
+\end{equation}
+
+Substituting $\mathbf{p} = \mathbf{X}$ into Equation (\ref{plane}) gives
+
+\begin{equation}\begin{split}\label{line-plane}
+&
+(\mathbf{C} + s\, \mathbf{U} - \mathbf{p}_0) \cdot \mathbf{n} = 0
+\,\,\text{ or}\\
+&
+s\, \mathbf{U} \cdot \mathbf{n} + ( \mathbf{C} - \mathbf{p}_0) \cdot
+\mathbf{n} = 0 \\
+\end{split}\end{equation}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Intersection with vertical plane}
+
+If $\mathbf{U} \cdot \mathbf{n} = 0$ the line and plane are parallel. 
+Further, if $\mathbf{C} = \mathbf{p}_0$, choose a different
+$\mathbf{p}_0$; then, if $(\mathbf{p}_0 - \mathbf{C} ) \cdot \mathbf{n} =
+0$, the line is in the plane, and any point will do. Otherwise there is no
+intersection.
+
+If $\mathbf{U} \cdot \mathbf{n} \neq 0$ the line intersects the plane at
+$\mathbf{C} + s\, \mathbf{U}$, where solving for $s$ in Equation
+(\ref{line-plane}) gives
+
+\begin{equation}\label{line-intersects-plane}
+s = \frac{(\mathbf{p}_0 - \mathbf{C} ) \cdot \mathbf{n}}
+         {\mathbf{U} \cdot \mathbf{n}} \,.
+\end{equation}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Intersection with vertical plane}
+
+For every facet, and every range between two adjacent constant pressure
+surfaces, and both vertical planes that include the profile at the polar
+vertex
+
+\begin{enumerate}
+
+\item Compute the ECR co\"ordinates of the four corners of the plane face
+      of the height range of the facet.
+
+\item Compute the intersection using Equation
+      (\ref{line-intersects-plane}).
+
+\item If the latitude of the intersection is outside the latitude range of
+      the face, discard the intersection.
+\setcounter{enumTemp}{\theenumi}
+
+\end{enumerate}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Intersection with vertical plane}
+
+\begin{minipage}{0.56\textwidth}
+\begin{centering}
+\includegraphics[scale=0.6]{wvs-160-plane}\\[5pt]
+$\mathbf{X} = \mathbf{C} + s\, \mathbf{U}$\\
+\end{centering}
+\end{minipage}
+%
+\begin{minipage}{0.42\textwidth}
+\small
+\begin{enumerate}
+\setcounter{enumi}{\theenumTemp}
+
+\item\label{heights-plane} Interpolate in the heights of the top and
+      bottom boundaries of the plane to the latitude of the intersection.
+
+\item If the height of intersection is not within the range of
+      interpolated heights, discard the intersection.
+
+\item Repeat step \ref{heights-plane} for every pair of levels to determine
+      the levels between which $\mathbf{X}$ appears.
+
+\end{enumerate}
+\end{minipage}
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Intersection with extrapolated surface of constant height}
+
+After intersections with horizontal, conical, and vertical plane faces of
+QTM facets are computed, the intersections are sorted on $s$.  Parts of
+the line of sight that are outside the QTM might intersect surfaces of
+constant height outside the QTM.
+
+If the intersection with the face at the edge of the QTM is a vertical
+plane face or a conical face, compute two horizontal interpolation
+coefficients to the point of intersection.  Otherwise, it is a surface of
+constant pressure; compute three interpolation coefficients.
+
+For each pressure surface index in the {\tt vGrid}, interpolate height
+horizontally on the edges of facets (if there are two interpolation
+coefficients), or within the facet if there are three interpolation
+coefficients.
+
+Compute the point where the line of sight intersects a surface at the
+interpolated height above the surface of the Earth, using the method
+described in \h{wvs-134}.
+
+\end{frame}
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Finally (Whew!)}
+
+\begin{centering}
+Sort the intersections on $s$.\\
+\end{centering}
+
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\end{document}
+
+% $Log$
+% Revision 1.3  2020/06/10 21:00:58  pwagner
+% Builds OK now
+%
+% Revision 1.2  2020/06/10 00:35:37  vsnyder
+% Correct a typo -- already
+%
+% Revision 1.1  2020/06/10 00:18:18  vsnyder
+% Initial commit
+%

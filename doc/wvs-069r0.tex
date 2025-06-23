@@ -1,0 +1,209 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-069}
+\newcommand{\docdate}{17 January 2008}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Inverting the radiative transfer equation\\
+From: \>Van Snyder\\
+%Reference:
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\renewcommand{\d}{\text{d}}
+
+\section{Introduction}
+
+The Microwave Limb Sounder instrument on the EOS Aura Spacecraft measures
+microwave thermal emission from the limb of the atmosphere in five spectral
+bands.  The measured emission is modeled by
+the radiative transfer equation
+\begin{equation}\label{one}
+I(\nu) = \int_0^S \frac{\partial B}{\partial s}
+ \exp\left( -\int_0^s \alpha(\sigma) \d\sigma \right) \d s
+ \approx \sum_{i=1}^N \Delta B_i \mathcal{T}_i,
+\end{equation}
+%
+where the instrument is located at $0$, $S$ is outside the atmosphere at the
+end of the limb ray opposite the instrument (essentially $+\infty$), and in the
+discrete approximation, summation runs along the line of sight. $I(\nu)$ is
+microwave intensity at frequency $\nu$,
+%
+\begin{equation}\begin{split}\label{two}
+&\Delta B_1 = (B_1 + B_2) / 2 \\
+&\Delta B_i = (B_{i+1} - B_{i-1})/2 \\
+&\Delta B_N = I_\infty(\nu) - (B_{N-1} + B_N)/2\,,
+\end{split}\end{equation}
+%
+\begin{equation}
+B_i = \frac{h\nu}{k\left(\exp\left( \frac{h\nu}{k T(s_i)} \right) -1 \right)}\,,
+\end{equation}
+%
+$T$ is temperature, $I_\infty(\nu)$ is space radiance, the transmittance
+$\mathcal{T}_i$ is given by
+%
+\begin{equation}\label{four}
+\mathcal{T}_i = \exp\left( - \sum_{j=2}^i \Delta\delta_{j \rightarrow j-1} \, \right)\,,
+\end{equation}
+%
+the incremental optical depth $\Delta\delta_{j \rightarrow j-1}$ is given by
+%
+\begin{equation}
+\Delta\delta_{j \rightarrow j-1} =
+ \int_{s_j}^{s_{j-1}} \alpha(s) \d s \text{, where}
+\end{equation}
+%
+\begin{equation}\label{six}
+\alpha(s) =
+ \sum_{k=1}^{NS} \mu_k(s) \sum_{l=1}^{L_k} \beta_{kl}(P(s),T(s),\nu)\,,
+\end{equation}
+%
+k is the chemical species index, $\mu_k$ is the $k^{\text{th}}$ chemical
+species volume mixing ratio, $\nu$ is frequency, $\beta_{kl}$ is the
+spectroscopic absorption cross-section function for the $k^{\text{th}}$
+chemical species and its $l^{\text{th}}$ spectroscopic line, and $s$ is
+position along the line of sight.
+
+$\beta$ is a complicated function of temperature, pressure and frequency,
+multiplied by the Fadeeva function $w$ (the generalization of erf to complex
+argument) with its argument being a complicated function of temperature,
+pressure and frequency for each spectral line within the frequency band to
+which the instrument is sensitive.  In addition to this complication, pressure
+and temperature are related by hydrostatic equilibrium, and path length depends
+upon the index of refraction, which in turn depends upon temperature and
+pressure.
+
+Given $I(\nu)$ along several lines of sight intersecting different sets of
+parcels of atmosphere $\{s_i\}$, we wish to solve for $T(s_i)$ and
+$\mu_k(s_i)$. This is presently done using the discrete form of Equation
+(\ref{one}) and a Newton method.
+
+%\section{Alternative 1}
+\section{Alternative}
+
+Although both $T$ and $\mu_k$ appear nonlinearly in Equation (\ref{one}),
+$\mathcal{T}_i$ appears linearly.  This suggests an algorithm that alternately
+solves for linear and nonlinear parameters, as in e.g.\ the NIPALS algorithm of
+Wold and Lyttkens:
+
+\begin{enumerate}
+
+\item Solve Equation (\ref{one}) for $\mathcal{T}_i$ for several lines of sight
+  through each parcel of atmosphere and several frequencies.  This is a linear
+  problem.
+
+\item Within each parcel, using the logarithm of $\mathcal{T}_i$, and assuming
+  linear interpolation from a standard grid to the points of intersections of
+  the several lines of sight that pass through the parcel, solve Equations
+  (\ref{four}-\ref{six}) for $\mu_k$ on the standard grid.  This is a linear
+  problem.\label{mu}
+
+\item Inserting the values of $\mu_k$, and again assuming linear interpolation
+  from a standard grid to the points of intersections of the several lines of
+  sight that pass through the parcel, solve Equation (\ref{one}) for $T$ on the
+  standard grid.  This is a nonlinear problem.
+
+\item Iterate until convergence.
+
+\end{enumerate}
+
+One significant disadvantage is that this is not a least-squares solution for
+$\mu_k$, even if a least-squares solution is used in step \ref{mu}.  Since this
+is not formulated as a Variable Projection method, there is some question
+whether the iteration will converge, and if it does, whether it will converge
+any faster or any better than a full nonlinear treatment.
+
+\label{lastpage}
+\end{document}
+
+\section{Alternative 2}
+
+Write Equation (\ref{one}) in the form
+%
+\begin{equation}
+I_m(\nu) \approx \sum_{i=m}^N \Delta B_i \mathcal{T}_i =
+\Delta B_m \mathcal{T}_m + I_{m+1}(\nu)
+\end{equation}
+%
+where $I_1(\nu)$ is the measurement.  Putting $I_{m+1}(\nu)$ onto the left, and
+taking logarithms, we have
+%
+\begin{equation}
+\log( I_m(\nu) - I_{m+1}(\nu) ) = \log \Delta B_m + \log \mathcal{T}_m =
+\log \Delta B_m - \int_{s_m}^{s_{m+1}} \alpha(s) \d s.
+\end{equation}
+%
+Upon interpolating $\mu_k$ from a standard grid to the line of sight path, and
+approximating the integral with a quadrature, the $\mu_k$ now appear
+linearly~--- but $I_m(\nu)$ and $I_{m+1}(\nu)$ do not.  Can we solve this
+problem by starting from the measurement $I_1(\nu)$, solving for $\mu_k$, $T$
+and $I_2(\nu)$ in the first parcel, then proceeding by induction?
+
+\label{lastpage}
+\end{document}
+
+In differential form, we have
+\begin{equation}\label{seven}
+\frac{\d I(\nu,s)}{\d s} = I\, \alpha(s) + B,\, I(\nu,0) = I_0(\nu)\,.
+\end{equation}
+%
+The derivative of $B$ in Equation (\ref{one}) and the strange form of $\Delta
+B_1$ and $\Delta B_N$ in Equation (\ref{two}) arise from integrating the
+solution of Equation (\ref{seven}) by parts.
+
+Although both $T$ and $\mu_k$ appear nonlinearly in Equation (\ref{one}), in
+Equation (\ref{seven}), however, $\mu_k$ appears linearly.  As when using
+Equation (\ref{one}), a Newton method would be used to invert the radiative
+transfer.  This requires partial derivatives, which can be gotten by
+integrating variational equations, \emph{viz}.
+%
+\begin{equation}\begin{split}
+\frac{\d}{\d s} \frac{\partial I}{\partial \mu_k} =\,&
+ I \frac{\partial \alpha}{\partial \mu_k} +
+ \alpha \frac{\partial I}{\partial \mu_k} =
+ I \sum_{l=1}^{L_k} \beta_{kl} + \alpha \frac{\partial I}{\partial \mu_k} =
+ \left( I + \mu_k \frac{\partial I}{\partial \mu_k} \right)
+ \sum_{l=1}^{L_k} \beta_{kl} \\
+\frac{\d}{\d s} \frac{\partial I}{\partial T} =\,&
+ I \frac{\partial \alpha}{\partial T} + \alpha \frac{\partial I}{\partial T} +
+ \frac{\partial B}{\partial T} =
+ \sum_{k=1}^{\text{NS}} \mu_k \sum_{l=1}^{L_k}
+ \left( I \frac{\partial \beta_{kl}}{\partial T} +
+       \beta_{kl} \frac{\partial I}{\partial T} \right) +
+ \frac{\partial B}{\partial T} \,. \\
+\end{split}\end{equation}
+
+\label{lastpage}
+\end{document}
+% $Id$

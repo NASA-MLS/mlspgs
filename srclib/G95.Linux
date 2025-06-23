@@ -1,0 +1,19 @@
+#$MLSF95.$MLSPLAT -- a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id$"
+# "$Id$"
+ifndef USEMYFC
+FC = g95
+endif
+
+# Currently, unknown if DUSTY needs to be different yet
+DUSTY = $(FOPTS)
+
+# How to prefix search paths for include and .mod files
+PATH_OPTS=-d -prefix=-I
+
+# $Log$
+# Revision 1.1  2007/05/29 17:38:47  pwagner
+# First commit
+#

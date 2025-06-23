@@ -1,0 +1,15 @@
+type :: VectorTemplate_T
+
+    ! Administrative stuff
+    integer :: Name = 0        ! Not used
+    integer :: Where = 0       ! Not used
+
+    ! General information about the vector
+
+    integer :: NoQuantities    ! Number of quantities in the vector
+    integer :: TotalInstances  ! Number of horizontal instances in the vector
+    integer :: TotalElements   ! Total of numbers of elements in the vector
+
+    ! Indices of the quantity templates in the quantity template database
+    integer, dimension(:), pointer :: qtyTemplates => NULL()
+end type VectorTemplate_T

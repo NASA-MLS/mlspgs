@@ -1,0 +1,179 @@
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+CONFDIR=../../..
+include ../Makefile.dep
+
+# "$Id$"
+
+# ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) MLSCONFG   -- a file of macros specific for the compiler.platform combo
+#                   e.g., NAG.Sun
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   ../Makefile.dep -- dependencies among the primary Fortran modules
+
+# Special areas:
+# PVM
+# If it is desired to link the executable with PVM support,
+# the variables PVM_PATH, PVM_ARCH should be defined
+# e.g. in .configure
+
+# LAPACK
+# If it is desired to link the executable with external LAPACK support,
+# the variable LAPACK should be defined
+# e.g. in the make statement: make LAPACK=/my_path/to_lapack_library
+# If this is done, i.e., LAPACK is defined, then 
+
+# BLAS
+# If it is desired to link the executable with external BLAS support,
+# the variable BLAS should be defined
+# e.g. in the make statement: make BLAS=/my_path/to_BLAS_library
+# If this is done, i.e., BLAS is defined, then blas_objs will
+# be blank
+# Otherwise, i.e. if BLAS is left undefined, then blas_objs will
+# depend on LIB_BLAS:
+# if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
+
+# ========================================================================
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+# ========================================================================
+UTILDIR=../../../util
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(UTILDIR)/reecho.sh
+STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
+
+PROG_NAME=test
+
+ALLOBJS = $(OBJS)
+
+include $(srclib)/targets.h
+
+libl3m_sources = ../../../$(own_dir)/
+
+libl3m_f90 := $(shell ${REECHO} $(libl3m_sources)/*.f90)
+
+libl3m_objs := $(shell ${REECHO} $(owndir)/*.o)
+
+l3_driver = MLSL3M.o
+
+# "yes" is safer--
+# in case modules have been deleted or excluded since the last build
+# Nope--will need to think harder about what to do about excluded modules
+delete_lib_first = no
+
+utctotai_linker_line=-L${INSTALLDIR} -lutctotai
+utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
+
+# ========================================================================
+libl3m.a: $(libl3m_objs)
+ifeq ($(delete_lib_first),yes)
+		rm -f $@
+endif
+	ar ru $@ $?
+	ar d $@ $(owndir)/$(l3_driver)
+
+#test: $(ALLOBJS) $(PVM_OBJS) $(itmdir)/libmlsl3.a  $(libdir)/libmls.a
+$(PROG_NAME): $(ALLOBJS) libl3m.a $(itmdir)/libmlsl3.a $(libdir)/libmls.a \
+     $(CONFDIR)/$(MLSCFILE)
+		@echo "$(pvm_message)"
+		@echo "$(blas_message)"
+		@echo "$(lapack_message)"
+		@echo "$(hdf5_message)"
+		@cat fftw_link_message
+		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
+        -L./ -ll3m \
+        -L$(itmdir)/ -lmlsl3 \
+        -L${libdir} -lmls \
+        $(utctotai_linker_line) \
+		-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
+		-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg -lsz \
+		-L${GCTP} -lGctp \
+        $(pvm_linker_line) \
+        $(blas_linker_line) \
+        $(lapack_linker_line) \
+        $(fftw_linker_line) \
+        $(hdf5_linker_line) \
+        $(l_specials) $(LAFTER) \
+		  
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod $(PROG_NAME)
+
+tar:
+	rm -f l3test.tgz
+	tar hcvzf l3test.tgz * --exclude \*.o --exclude \*.mod --exclude $(PROG_NAME)
+
+# ========================================================================
+# $Log$
+# Revision 1.15  2005/03/04 19:13:31  pwagner
+# Utilizes targets.h from srclib
+#
+# Revision 1.14  2004/03/17 19:06:45  pwagner
+# Extra static object to fix building static Lahey executables when Red Hat>8
+#
+# Revision 1.13  2003/03/03 22:59:32  pwagner
+# Removed troublesome customblds includes
+#
+# Revision 1.12  2003/02/28 18:54:13  pwagner
+# Forgot to define INSTALLDIR in last commit
+#
+# Revision 1.11  2003/02/28 18:46:37  pwagner
+# Links utctotai library
+#
+# Revision 1.10  2002/11/25 21:21:02  pwagner
+# gcc_version to allow building with Lahey on gcc post 2.96
+#
+# Revision 1.9  2002/09/06 00:09:07  pwagner
+# BLAS can now bring in more than a single
+#
+# Revision 1.8  2002/08/27 23:03:12  pwagner
+# Treats LF95 better
+#
+# Revision 1.7  2002/04/18 20:55:28  pwagner
+# .configure now a prerequisite for executable
+#
+# Revision 1.6  2001/11/21 00:25:34  pwagner
+# Added hdfeos5_linker_line
+#
+# Revision 1.5  2001/11/07 01:14:30  pwagner
+# lapack message refers to this case, not mlsl2
+#
+# Revision 1.4  2001/11/07 00:31:44  pwagner
+# Added lapack linker line and msg
+#
+# Revision 1.3  2001/10/11 18:15:29  pwagner
+# Allows PROG_NAME variable to specify name of executable built
+#
+# Revision 1.2  2001/08/13 18:09:08  pwagner
+# replaced shell echo -> shell {REECHO}
+#
+# Revision 1.1  2001/07/24 20:51:58  pwagner
+# First commit
+#

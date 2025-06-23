@@ -1,0 +1,60 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+    real(rk), dimension(:), intent(in)           :: a
+    real(rk), dimension(:), intent(in)           :: b
+    real(rk), dimension(:), intent(out)          :: atab
+    real(rk), dimension(:), intent(out)          :: btab
+    logical, intent(out)                         :: warn
+    real(rk), optional, intent(in)               :: fillValue
+    real(rk), dimension(:), optional, intent(in) :: precision
+    ! Internal variables
+    integer                                      :: i
+    real(rk)                                     :: myFillValue
+    integer                                      :: n
+    ! Executable
+    myFillValue = 0.0_rk
+    if ( present(FillValue) ) myFillValue = FillValue
+    warn = .false.
+    n=size(a)
+    if ( n /= size(b) ) then
+      call announce_error('a and b different sizes', n, size(b))
+    else if ( n /= size(atab) ) then
+      call announce_error('a and atab different sizes', n, size(b))
+    else if ( n /= size(btab) ) then
+      call announce_error('a and btab different sizes', n, size(b))
+    else if ( DEEBUG ) then
+      call output('Filtering 1-d '//p, advance='yes')
+    end if
+    atab = a
+    btab = b
+    do i=1, N
+      if ( .not. ieee_is_finite(a(i)) .or. .not. ieee_is_finite(b(i)) ) then
+        atab(i) = myFillValue
+        btab(i) = myFillValue
+        warn = warn .or. ieee_is_finite(a(i)) .or. ieee_is_finite(b(i))
+      end if
+    end do
+    if ( present(precision) ) then
+      do i=1, N
+        if ( (precision(i) < 0.0_rk) ) then
+          atab(i) = myFillValue
+          btab(i) = myFillValue
+        end if
+      end do
+    end if
+
+! $Log$
+! Revision 1.1  2005/12/23 03:09:33  vsnyder
+! Initial commit
+!

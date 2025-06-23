@@ -1,0 +1,4 @@
+begin Construct
+  Reevaluate, Boolean=OKIter, formula="barrayn barray(1) barray(3) barray(2)", /evaluate, /literal
+end Construct
+

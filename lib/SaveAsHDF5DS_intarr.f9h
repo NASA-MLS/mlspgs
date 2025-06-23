@@ -1,0 +1,57 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!   subroutine SaveAsHDF5DS_intarr* ( locID, name, value, &
+!     & finalShape, fillValue, adding_to )
+!     ! This routine does the initial work of creating a dataset
+!     integer, intent(in) :: LOCID          ! Where to place it (group/file)
+!     character (len=*), intent(in) :: NAME ! Name for this dataset
+!     integer, intent(in) :: VALUE(:,...)  ! The array itself
+!     integer, optional, intent(in) :: FILLVALUE
+!     integer, dimension(size(shape(value))), optional, intent(in) :: FINALSHAPE
+!     logical, optional, intent(in)     :: adding_to
+
+! $Id$
+
+    ! Local variables
+    integer :: Me = -1                  ! String index for trace cacheing
+    integer :: Rank                     ! Rank of VALUE
+    integer (HID_T) :: setID            ! ID for dataset
+    integer(hsize_t), dimension(size(shape(value))) :: SHP, MAXDIMS ! Shape
+    integer :: spaceID                  ! ID for dataspace
+    integer :: status                   ! Flag from HDF5
+
+    ! Executable code
+    rank = size(shp)
+
+    call trace_begin ( me, 'SaveAsHDF5DS_intarr'//digits(rank), cond=.false. )
+    shp = shape(value)
+    maxdims = shp
+    if ( present(finalShape) ) maxdims = finalShape
+    ! Create the dataspace
+    call createSpaceSet ( locID, name, maxdims, H5T_NATIVE_INTEGER, &
+      & spaceID, setID, status, adding_to, iFill=fillValue )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataset for '//digits(rank)//'D integer array ' // trim(name) )
+    ! Write the data
+    call h5dWrite_f ( setID, H5T_NATIVE_INTEGER, value, &
+      & int ( (/ shp, ones(rank:6) /), hsize_t ), status )
+    call finishSaveDS ( name, status, setID, spaceID )
+    call trace_end ( cond=.false. )
+!   end subroutine SaveAsHDF5DS_intarr*
+
+! $Log$
+! Revision 2.2  2013/08/31 01:24:53  vsnyder
+! Replace MLSMessageCalls with trace_begin and trace_end
+!
+! Revision 2.1  2008/05/09 23:27:18  vsnyder
+! Initial commit
+!

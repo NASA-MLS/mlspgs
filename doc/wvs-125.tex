@@ -1,0 +1,129 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-125r1}
+\newcommand{\docdate}{24 August 2015}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\Delta B}
+\newcommand{\oDB}{\overline{\DB}}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\hMT}{\MT^s}
+\newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Paul, Bill, Mike, Van\\
+Subject: \>PhiWindow is now a tuple or a number\\
+From: \>Van Snyder\\
+%Reference: \>
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The {\tt PhiWindow} field of the {\tt Fill} statement or the {\tt
+ForwardModel} statement is now allowed to be a number or a pair of numbers
+separated by a colon.
+
+A unit must be specified, and must be either {\tt degrees}, {\tt radians},
+or {\tt profiles}.  If a tuple is specified, either both must have the
+same units, or one may be dimensionless.
+
+None of the values may be negative.  Zero or 0:0 (with units) indicates a
+1-D problem.
+
+If a tuple is specified, and its units are {\tt profiles}, the first
+element specifies the number of profiles before the tangent point, and the
+second specifies the number after.
+
+If a tuple is specified, and its units are angles, the first element
+specifies the angle before the tangent point, and the second specifies the
+angle after.
+
+If a single number $n$ is specified, and its units are {\tt profiles},
+$\lfloor(n-1)/2\rfloor$ profiles are put after the tangent point, and the
+rest before.  For odd $n$, the effect is to put the same number before and
+after.  For even $n$ the effect is to put one more before than after.
+
+If a single number $\phi$ is specified, and its units are angles, $\phi/2$
+degrees are put before the tangent point, and $\phi/2$ are put after.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.2  2015/08/25 17:48:50  vsnyder
+% Add CVS log line
+%

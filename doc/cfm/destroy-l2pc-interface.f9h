@@ -1,0 +1,5 @@
+! Deallocates memory allocated by all calls to ReadHDF5L2PC prior
+! to the call to this subroutine. ReadHDF5L2PC can be called more
+! than once.
+subroutine DestroyL2PCDatabase
+end subroutine

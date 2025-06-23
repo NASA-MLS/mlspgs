@@ -1,0 +1,316 @@
+! Copyright 2022, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=================================
+program ncl2gpdump ! Diff L2GPData from two NetCDF4 files
+!=================================
+
+   use Dump_1, only: Dump
+   use Dump_Options, only: SDFormatDefault, DumpDumpOptions
+   use HDF, only: Dfacc_Read    
+   use HDF5, only: H5F_ACC_RDONLY_F, &
+     & H5fclose_F, H5fopen_F, H5gopen_F, H5gclose_F, H5fis_HDF5_F
+   use HighOutput, only: OutputNamedValue
+   use Intrinsic, only: L_NetCDF4
+   use L2GPData, only: L2GPData_T, L2GPnamelen, Maxswathnamesbufsize, Rgp, &
+     & Dump, ReadL2GPData, DestroyL2GPcontents
+   use Machine, only: Hp, Getarg
+   use MLSCommon, only: MLSFile_T
+   use MLSFiles, only: HDFversion_5, InitializeMLSFile, &
+     & MLS_CloseFile, MLS_OpenFile, Split_Path_Name
+   use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, MLS_H5open, MLS_H5close
+   use MLSHDFeos, only: MLS_Isglatt, He5_Ehrdglatt
+   use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Error, MLSMSG_Warning, &
+     & MLSMessage
+   use MLSNetCDF4, only: mls_InqSwath, MLS_SwWrattr
+   use MLSStringLists, only: GetStringElement, NumStringElements
+   use MLSStrings, only: Lowercase, Reverse
+   use NCL2GP, only: DumpNCL2GP
+   use NetCDF, only: NF90_Char, NF90_Open, NF90_Def_Dim, NF90_Def_Grp, &
+     & NF90_Def_Var, NF90_Put_Var, NF90_StrError, NF90_Write
+   use Optional_M, only: Default
+   use Output_M, only: Blanks, Newline, Output, &
+     & ResumeOutput, SuspendOutput, SwitchOutput
+   use Printit_M, only: Set_Config
+   implicit none
+
+!---------------------------- RCS Ident Info ------------------------------
+  character (len=*), parameter :: ModuleName= &
+       "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+!---------------------------------------------------------------------------
+
+! Brief description of program
+! This program diffs L2GPData files from netcdf4
+!
+! A test of the NCL2GPData module
+! To build it, 
+
+! From the root, mlspgs, level, just type
+!   make ncl2gpdump
+
+! Testing has taken place in
+! /users/pwagner/mlspgs/tests/lib/nctest
+! 
+
+  type Options_T
+    character(len=80) ::   dumpOptions     = 'v,s'
+    integer     ::         Details         = 2
+    logical     ::         force           = .false.
+    logical     ::         AuBrick         = .false.
+    logical     ::         rms             = .false.
+    logical     ::         stats           = .false.
+    logical     ::         table           = .false.
+    logical     ::         silent          = .false.
+    logical     ::         timing          = .false.
+    logical     ::         verbose         = .false.
+    logical     ::         debug           = .false.
+    logical     ::         showMissing     = .false.
+    logical     ::         ignoreBadChunks = .false.
+    logical     ::         dumpData        = .true.
+    logical     ::         dumpAttributes  = .false.
+    integer     ::         numDiffs        = 0
+  end type Options_T
+
+  type ( Options_T )              :: options
+  character(len=255)              :: filename          ! filename
+  character(len=255)              :: NC4filenames(100)
+  integer                         :: i
+  integer                         :: n_filenames
+  integer                         :: error ! Counting indices & Error flags
+  logical                         :: is_hdf5
+  logical                         :: is_present
+  integer, save                   :: numGood = 0
+  integer, save                   :: numGoodPrec = 0
+  integer, save                   :: numNotUseable = 0
+  integer, save                   :: numOddStatus = 0
+  integer, save                   :: numPostProcStatus = 0
+  real, dimension(3), save        :: numTest = 0.
+  integer, parameter              :: PostProcBitIndex = 4
+  integer, parameter              :: MAXNUMBITSUSED = 10 !9
+  ! The bit number starts at 0: bitNumber[1] = 0
+  integer, dimension(MAXNUMBITSUSED), parameter :: bitNumber = &
+    & (/ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 /)
+  integer, dimension(MAXNUMBITSUSED, 2), save :: bitCounts = 0
+  character(len=*), parameter     :: bitNames = &
+    & '  dontuse,   bewary,     info,postprocd,' // &
+    & '    hicld,    locld,   nogmao,abandoned,   toofew,    crash'
+  !   01234567890123456789012345678901234567890123456789012345678901234567890123456789
+  real(rgp), dimension(:), pointer :: values => null()
+  ! Executable
+  call set_config ( useToolkit = .false., logFileUnit = -1 )
+  call switchOutput( 'stdout' )
+  MLSMessageConfig%CrashOnAnyError = .true.
+  call mls_h5open(error)
+  n_filenames = 0
+  do      ! Loop over filenames
+     call get_filename( filename, options )
+     if ( filename == ' ' ) exit
+     if ( filename(1:1) == '-' ) cycle
+     n_filenames = n_filenames + 1
+     call h5fis_hdf5_f(trim(filename), is_hdf5, error)
+     if ( .not. is_hdf5 ) then
+       print *, 'Sorry--not recognized as hdf5 file: ', trim(filename)
+     endif
+     if ( options%verbose ) then
+       print *, 'Rewriting swaths in     ', trim(filename)
+     endif
+     NC4FileNames(n_filenames) = filename
+  enddo
+  if ( options%ignoreBadChunks ) options%dumpOptions = trim(options%dumpOptions) // 'i'
+  if ( options%silent ) options%dumpOptions = trim(options%dumpOptions) // 'm'
+  if ( options%rms ) options%dumpOptions = trim(options%dumpOptions) // 'r'
+  if ( options%stats ) options%dumpOptions = trim(options%dumpOptions) // 's'
+  if ( options%table ) options%dumpOptions = trim(options%dumpOptions) // 'b'
+  if ( options%AuBrick ) options%dumpOptions = trim(options%dumpOptions) // '@'
+  if ( options%verbose ) options%dumpOptions = trim(options%dumpOptions) // 'v'
+  do i=1, n_filenames
+    call dump_one_file ( NC4FileNames(i), options )
+  enddo
+  call mls_h5close(error)
+contains
+!------------------------- get_filename ---------------------
+    subroutine get_filename( filename, options )
+    ! Added for command-line processing
+     character(len=255), intent(out)   :: filename
+     type ( Options_T ), intent(inout) :: options
+     ! Local variables
+     integer ::                         error = 1
+     integer, save ::                   i = 1
+     character(LEN=160)              :: Chars
+  ! Get inputfile name, process command-line args
+  ! (which always start with -)
+    do
+      call getarg ( i+hp, filename )
+      ! print *, i, ' th Arg: ', trim(filename)
+      error = 0
+      if ( filename(1:1) /= '-' ) exit
+      if ( filename(1:3) == '-h ' ) then
+        call print_help
+      elseif ( filename(1:6) == '-force' ) then
+        options%force = .true.
+        exit
+      elseif ( filename(1:8) == '-silent ' ) then
+        options%silent = .true.
+        exit
+      elseif ( filename(1:3) == '-v ' ) then
+        options%verbose = .true.
+        exit
+      else if ( filename(1:3) == '-f ' ) then
+        call getarg ( i+1+hp, filename )
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-D ' ) then
+        call getarg ( i+1+hp, Chars )
+        read(Chars, *) options%Details
+        i = i + 1
+        exit
+      else if ( filename(1:3) == '-d ' ) then
+        call getarg ( i+1+hp, options%dumpOptions )
+        if ( index( options%dumpOptions, '?' ) > 0 ) then
+          call DumpDumpOptions( "?" )
+          stop
+        endif
+        i = i + 1
+        exit
+      else if ( filename(1:4) == '-deb' ) then
+        options%debug = .true.
+        exit
+      else if ( filename(1:4) == '-ign' ) then
+        options%ignorebadchunks = .true.
+        exit
+      else if ( lowercase(filename(1:3)) == '-au' ) then
+        options%AuBrick = .true.
+        exit
+      else if ( filename(1:5) == '-rms ' ) then
+        options%rms = .true.
+        exit
+      else if ( filename(1:3) == '-s ' ) then
+        options%stats = .true.
+        exit
+      else if ( filename(1:2) == '-t' ) then
+        options%table = .true.
+        exit
+      else if ( filename(1:6) == '-miss ' ) then
+        options%showMissing = .true.
+        exit
+      else if ( filename(1:6) == '-ndata' ) then
+        options%DumpData = .false.
+        exit
+      else if ( filename(1:6) == '-attr ' ) then
+        options%DumpAttributes = .true.
+        exit
+      else
+        call print_help
+      end if
+      i = i + 1
+    end do
+    if ( error /= 0 ) then
+      call print_help
+    endif
+    i = i + 1
+    
+  end subroutine get_filename
+!------------------------- print_help ---------------------
+  subroutine print_help
+  ! Print brief but helpful message
+      write (*,*) &
+      & 'Usage: ncl2gpdump [options] hdfeos_file netcdf_file'
+      write (*,*) &
+      & ' If no filenames supplied, you will be prompted to supply one'
+      write (*,*) ' Options:'
+      write (*,*) ' -f filename => use filename'
+      write (*,*) ' -D details  => level of detail'
+      write (*,*) ' -d options  => options string passed to diff routines'
+      write (*,*) ' -h          => print brief help'
+      write (*,*) ' -ls         => dump only swath names'
+      write (*,*) ' -deb        => debug'
+      write (*,*) ' -v          => verbose'
+      write (*,*) ' (details level)'
+      write (*,*) ' -0          => diff only scalars, 1-d array'
+      write (*,*) ' -1          => diff only scalars'
+      write (*,*) ' -2          => diff only swath names (same as -ls)'
+
+      stop
+  end subroutine print_help
+  
+   subroutine readNC4Swath ( filename, swath, l2gp )
+   use L2GPData, only: L2GPData_T
+   use NCL2GP, only: ReadNCL2GPData
+     ! Dummy args
+     character(len=*), intent(in)         :: filename ! filename
+     character(len=*), intent(in)         :: swath ! swathname
+     type (L2GPData_T)                    :: l2gp
+     ! Local variables
+       ! Allocate and fill l2gp
+       ! print *, 'Reading swath from file: ', trim(swath)
+       call ReadNCL2GPData ( trim(filename), trim(swath), l2gp )
+   end subroutine readNC4Swath
+
+   subroutine dump_one_file ( NC4FileName1, options )
+     use L2GPData, only: L2GPData_T, Diff
+     use PCFHdr, only:  GlobalAttributes_T, HE5_ReadGlobalAttr, &
+    & DumpGlobalAttributes, GlobalAttributes
+    ! Dummy args
+    character(len=*), intent(in)         :: NC4FileName1 ! file 1
+    type ( Options_T )                   :: options
+    ! Local variables
+    logical, parameter                   :: countEmpty = .true.
+    integer :: File1
+    integer                              :: i
+    integer                              :: listsize
+    type (L2GPData_T)                    :: l2gp1
+    type (L2GPData_T)                    :: l2gp2
+    character (len=MAXSWATHNAMESBUFSIZE) :: matches
+    type(MLSFile_T)                      :: MLSFile1
+    integer                              :: noSwaths
+    integer                              :: status
+    character (len=L2GPNameLen)          :: swath
+    character (len=MAXSWATHNAMESBUFSIZE) :: SwathList
+    character(len=40)                    :: ProcessLevel       
+    ! Get swath list
+    noSwaths = mls_InqSwath ( NC4FileName1, SwathList, listSize )
+    if ( options%verbose ) then
+      call output('swaths in ' // trim(NC4FileName1), advance='yes')
+      call dump(trim(swathList))
+      ! return
+    endif
+    ! Executable code
+    status = InitializeMLSFile ( MLSFile1, type=L_NetCDF4, access=DFACC_READ, &
+     & name=NC4FileName1, HDFVersion=HDFVERSION_5 )
+    call Dump ( MLSFile1 )
+    noSwaths = NumStringElements(trim(swathList), countEmpty)
+    if ( noSwaths < 1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'No swaths to dump--unable to count swaths in ' // trim(swathList) )
+    endif
+    print *, 'Num swaths: ', noSwaths
+    call dump ( swathList )
+    ! Loop over swaths in file 1
+    do i = 1, noSwaths
+      call GetStringElement (trim(swathList), swath, i, countEmpty )
+      ! HDFEOS INFORMATION isn't a swath
+      if ( trim(swath) == 'HDFEOS INFORMATION' ) cycle
+      ! Allocate and fill l2gp
+      print *, 'Reading swath from file: ', trim(NC4FileName1)
+      print *, 'swath: ', trim(swath)
+      call DumpNCL2GP( MLSFile1, swath, DumpData=options%DumpData, &
+        & DumpAttributes=options%DumpAttributes )
+    enddo
+   end subroutine dump_one_file
+
+!==================
+end program ncl2gpdump
+!==================
+
+! $Log$

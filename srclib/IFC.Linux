@@ -1,0 +1,44 @@
+#$MLSF95.$MLSPLAT -- a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id$"
+ifndef USEMYFC
+FC = ifort
+endif
+
+# Currently, unknown if DUSTY needs to be different yet
+DUSTY = $(FOPTS)
+
+# How to prefix search paths for include and .mod files
+PATH_OPTS=-d -prefix=-I
+
+# Some macros needed to link successfully
+hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5_hl -lhdf5
+l_specials := $(l_specials) -lz
+hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
+ifeq ($(MLSF95),IFCold)
+   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
+   gcc_libloc=$(shell ${REECHO} -d /usr/lib/gcc*/i386-redhat-linux/${gcc_version})
+   static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
+   STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-Bstatic")
+ifdef STATIC_LINK
+   l_specials=-lz -L${gcc_libloc} -lgcc \
+     ${static_object}
+else
+   l_specials=-lz -L${gcc_libloc} -lgcc
+endif
+endif
+
+# $Log$
+# Revision 1.4  2010/09/21 22:17:54  pwagner
+# Now builds with tk5.2.17
+#
+# Revision 1.3  2010/02/03 01:07:38  pwagner
+# Moved link macros here from targets.h to simplify latter
+#
+# Revision 1.2  2009/08/24 20:27:02  pwagner
+# FC defined in .configure supersedes default
+#
+# Revision 1.1  2007/05/29 17:38:47  pwagner
+# First commit
+#

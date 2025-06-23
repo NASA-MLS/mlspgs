@@ -1,0 +1,4 @@
+! This routine destroys the information associated with an hGrid
+subroutine DestroyHGridContents ( hGrid )
+   type (HGrid_T), intent(inout) :: hGrid
+end subroutine

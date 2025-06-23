@@ -1,0 +1,175 @@
+# "$Id$"
+SHELL = /bin/sh
+
+# Path to source files:
+S = ..
+
+CONFDIR=../..
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = ../../srclib
+
+# This is the directory name from which we will get init_tables_module
+# (either l1, l2, or l3)
+# init_m_dir = l2
+
+libl2_sources = $(CONFDIR)/l2
+fwdmdl_sources = $(CONFDIR)/fwdmdl
+
+#itmdir=../../../$(init_m_dir)/$(MLSCONFG)
+
+#dir2 = $(itmdir)/
+dir2 = $(libl2_sources)/$(MLSCONFG)/
+
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
+# Use the fwdmdl directory, fwdmdldir, for more .mod files
+# dir3 is the path prepended to its .o files in dependency lists
+fwdmdldir = $(fwdmdl_sources)/$(MLSCONFG)
+
+dir3 = $(fwdmdldir)/
+
+# Use the cloud directory, clouddir, for more .mod files
+# dir4 is the path prepended to its .o files in dependency lists
+clouddir = $(CONFDIR)/cloudfwdm/$(MLSCONFG)
+
+dir4 = $(clouddir)/
+
+libcfm = $(CONFDIR)/cfm/$(MLSCONFG)
+
+dir5 = $(libcfm)/
+
+MODPATHS = $(dir1) $(dir2) $(dir3) $(dir4) $(dir5) $(blaslib)
+
+srclib = $(CONFDIR)/srclib
+
+UTILDIR=$(CONFDIR)/util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.o ./
+vpath %.f90 ../ $(srclib)
+vpath %.f9h ../ $(srclib) $(libl2_sources) $(fwdmdl_sources)
+vpath %.f ../
+vpath %.c ../
+
+include $(srclib)/$(MLSF95).$(MLSPLAT)
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS := $(EXTRA_PATHS) \
+  $(shell ${REECHO} ${PATH_OPTS} \
+  $(UNPREFXDPTHS) $(MODPATHS) $(PGSINC) \
+  $(srclib) $(libl2_sources) $(libcfm) $(fwdmdl_sources) $S)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
+
+server: server.o
+client: client.o
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+include ../Makefile.dep
+
+# ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) common     -- a file of macros specific for this directory, e.g. paths
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+# Other files referred to by means of "include" statements:
+#   srclib/$(MLSF95).$(MLSPLAT) -- macros specific for the 
+#         compiler.platform combo; e.g., NAG.Sun
+#   Makefile.dep -- dependencies among the primary Fortran modules
+#   srclib/Makefile.dep -- dependencies among the shared Fortran modules
+#   srclib/targets.h -- linker lines whenever building an executable
+# ========================================================================
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+include ../../customblds/$(MLSF95).$(MLSPLAT)
+
+STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
+
+MARKING_ARG=-f$(MARK_ALL_AS_UPTODATE) -s$(SKIP_PREREQ_DIRS)
+ALLOBJS = $(OBJS) server.o client.o
+
+PROG_NAME=server client
+
+include $(srclib)/targets.h
+
+# ========================================================================
+server client: $(AllOBJS) $(libcfm)/libcfm_all.a $(OBJS)
+		$(FC) $(LDOPTS) -o $@ $@.o $(OBJS)  \
+                      -L$(libcfm) -lcfm_all \
+                      -L$(HDFLIB) $(l_specials) \
+                      $(LAFTER) \
+
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod $(PROG_NAME)
+
+mark_all_as_uptodate:
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -T server -T client \
+       -M $(MAKE) $(MARKING_ARG) \
+       $(libdir) ; \
+		fi
+
+tar:
+	rm -f idlcfm.tgz
+	tar hcvzf idlcfm.tgz * --exclude \*.o --exclude \*.mod --exclude server --exclude client
+
+# ========================================================================
+# $Log$
+# Revision 1.1  2011/05/16 22:25:43  pwagner
+# First commit
+#

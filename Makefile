@@ -1,0 +1,2180 @@
+#	Makefile
+#
+#  Lost? Type 'make help' from the directory where you see this file
+#
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# ---------------------- The name of this file (is the right-hand-side below)
+MakeFName = Makefile
+# If the right-hand-side is not Makefile
+# then to make mls with this file you must instead  of bare "make" use
+#     make -f $(MakeFName)
+
+# The name of this file must be used in each of $(SUBDIRS)
+# i.e., if you are calling make with a different Makefile name,
+#        say: make -f $(MakeFName)
+# then (re)name the Makefiles in /l2 /lib etc. also to be $(MakeFName)
+
+# "$Id$"
+#
+# ---------------------- Conventions
+# With a few exceptions, NAMES in ALLCAPS are settings which you
+# can override on the commandline like this
+#   make NAME=yourvalue ..
+# names in lowercase will usually be targets which you
+# can instruct make to build like this
+#   make name
+
+# ------------------- Automatic internalcleanup
+# We use COPY_NUMBER to keep track of the number of times
+# the functional targets update or depends are "built", i.e. performed.
+# E.g., every tenth time an internalcleanup is automatically performed.
+# .... Actually, we do that every time now.
+
+SCRIPTS = scripts
+# This is how big COPY_NUMBER may grow before being reset
+# ---> and triggering internalcleanup <---
+# (formerly 10)
+MAX_COPIES = 1
+ONE = 1
+
+# This keeps track of the number of times "make update" has been done
+USE_internal_copynum = no
+
+ifeq ($(USE_internal_copynum),yes)
+	COPY_NUMBER = 1
+else
+	COPY_NUMBER := $(shell echo srclib/Make.dep.* | wc -w)
+endif
+
+NEXT_COPY := $(shell expr $(COPY_NUMBER) + 1)
+
+# ---------------------- Paths to special directories
+# This is where this Makefile is located
+# Also beginning path for all relative paths defined below; e.g. CONFDIR
+# This assumes therefore that you have summoned this via
+#    cd $(MLSHOME)
+#    make
+# otherwise the following definition will fail
+# You might try something like
+#    make -f mlspgs/Makefile MLSHOME=$HOME/mlspgs
+# but this has not been tested.
+# Anyway, why would you want to
+# make things more difficult?
+MLSHOME := $(shell pwd)
+
+# where to store .configure; 
+CONFDIR=.
+
+# also where to install mls programs by default
+ifdef MLSINSTALLDIR
+   INSTALLDIR=$(MLSINSTALLDIR)
+else
+   INSTALLDIR=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+
+# --------------- scriptshelp
+# util is the subdirectory
+# where the following utility scripts 
+# (necessary to build the mls software) are stored
+#   Script                        Function
+#  ------------            -----------------------------------
+#   add_idents.sh          (1) Adds $id, $rcs lines to source files
+#                          (2) Prints toc/api for source files
+#   batch_hcnvrt.sh        Convert a group of hdfeos2 files to hdfeos5
+#                            using heconvert
+#   build_f90_in_misc.sh   Build a c or Fortran program optionally USEing
+#                             mlspgs modules
+#   f90GhostFiles.pl       Used by ghostbuster.sh   
+#   f90makedep.pl          Used by makemakedep.sh
+#   ghostbuster.sh         Deletes orphaned .o, .mod files from deceased sources
+#   l2cfmaker.sh           "Compiler" for building l2cf
+#   makemakedep.sh         Calculates dependencies   
+#   mark_as_uptodate.sh    Marks files uptodate to forestall recompilations
+#   missing_ident.sh       (1) Prints files missing $id, $rcs lines
+#                          (2) Those not appearing in executable's ident id/rcs
+#   mkpath.sh              Creates a directory, and any yet uncreated parents
+#   mlsconfigure           Configures Makefiles for building mlspgs software
+#   mlsprog.sh, mlsnrt.sh, mlsnrtp.sh, mlsl2pntk.sh, mlsl2p.sh, mlsnrtl2only.sh,           
+#   mlsl1prog.sh,  slavetmpltntk.sh, slavetmplt.sh
+#                          wrapper scripts for binary executables
+#   newAifBdiff.sh         Precompiler to forestall recompilations
+#   reecho.sh              Filter list of args to remove bogus ones
+#   split_path.sh          Splits path/name into "path name"
+#   unique_name.sh         Make a unique name
+#   updatemf.sh            Updates Makefile in object file directory
+#   uptodate.make          Ensure that custom machine files are up-to-date
+#   which_fftw.sh          Construct correct fftw link lines
+#
+#  More info on some of these scripts is available via
+#  Command                      for help on 
+#  ------------            -----------------------------------
+#  make help--convert           batch_hcnvrt.sh and heconvert
+#  make help--depends           makemakedep.sh
+#  make help--ghostbuster       ghostbuster.sh
+#  make help--mlsconfigure      mlsconfigure
+#  make help--reecho            reecho.sh
+#  (or in general for help on "script.sh" try the command "util/script.sh -h")
+# --------------- End scriptshelp
+
+MIE=Mie
+MLSBIN=util
+
+# where the platforms directory is w.r.t. each of SUBDIRS:
+# "." means for l2 it is l2/platforms
+# also where each uniquely-named sub-sub will be created:
+# "." means for l2 it is l2/NAG.Linux
+# This is mostly true
+# The exceptions are he5lib sids/l1boa
+# but they have been rendered obsolete
+PLATFORMS = .
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+# This is just the default if you type a bare "make"
+alltargets: all
+
+SRCLIB=srclib
+-include $(SRCLIB)/Makefile.h
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does not exist yet
+-include $(CONFDIR)/$(MLSCFILE)
+
+# All the implicit pattern-matching involving suffixes
+# will be done in the uniquely-named sub-directories, not here--so
+.SUFFIXES:
+
+SHELL = /bin/sh
+
+# --------------- Makefile help
+# Usage: make target SETTING=value
+# Special 1st time usage (assuming no .configure file)
+#    make update
+
+# --------------- Target definitions
+#            (code sub-directories of mlspgs excluding util, sandbox)
+# $LEVELS        -- automatic; built when target is not specified
+#                   (for current value see below)
+# .configure     -- automatic (if not yet found; prerequisite for everything else)
+#                    (its name by default; actual value stored in MLSCFILE)
+# $OTHER_SUBDIRS -- not automatic
+# all            -- all the sub-directories: $LEVELS + $OTHER_SUBDIRS + lib
+# subdirs        -- same as all
+# lib            -- libmls.a; a prerequisite for the others
+# blas           -- libmlspack.a; prerequisite for the others and for lib
+# l1, l2, ..     -- pges named mlsl1, mlsl2, ..
+
+#                           (functional)
+# clean          -- deletes all targets built inside sub-subs and INSTALLDIR
+# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                   (invoked automatically if .configure not found)
+# configure_fopts  
+#                -- (re)set default FOPTS and LDOPTS
+# configure_full -- does same as running all of above three
+# configure_help -- same as help--mlsconfigure
+# configure_pvm  -- (re)set PVM and FFTW paths
+# configure_subdirs
+#                -- also (re)creates uniquely-named sub-sub-directories
+#                   within mlspgs sub-directories with customized Makefiles
+#                   where *.o, *.mod, lib*.a, mlsl*, etc. built
+# depends        -- runs makemakedep.sh to calculate dependencies
+# disthelp       -- prints README.MakeFC--a long file
+# doc            -- builds .dvi and .pdf for .tex files in doc
+# doc--api       -- prints every available api for Fortran modiles
+# doc--toc       -- prints every available toc for Fortran modiles
+# firsthelp      -- prints BEFORE.mls--lists prerequisites for mls software
+# ghostbuster    -- removes orphaned .o, .mod files from uniquely-named ssds
+#                   also deletes haunted library files
+# help           -- prints some orientation on available help
+# help--brief    -- prints some brief info on how to build the mls software
+# help--convert  -- prints some info on converting from hdfeos2 to hdfeos5
+# help--depends  -- prints some info on the makemakedep.sh script
+# help--fopts    -- prints how to set compiler and linker options
+# help--ghostbuster
+#                -- prints some info on the ghostbuster.sh script
+# help--Makefile -- prints some info on this Makefile
+# help--mlsconfigure
+#                -- prints some info on the mlsconfigure script
+# help--platform -- prints how to configure make for your platform
+# help--pvm      -- prints how to set paths for some optional libraries
+# help--reecho   -- prints some info on the reecho.sh script
+# help--scripts  -- prints some info on the scripts used by this Makefile
+# help--toolkit  -- prints how to set paths for the mandatory libraries
+# install        -- mv programs mlsl* from sub-subs to INSTALLDIR
+#                    also create shell scripts in INSTALLDIR for each program
+# install-all    -- build and install mlsl*, tools, libraries
+# install-cfm    -- build callable forward model library, move it to INSTALLDIR
+# install-idlcfm -- build cfm server, client, move it to INSTALLDIR
+# install-fullcfm -- same as above for full, standalone version
+# install-ln     -- mv program mlsln from sub-subs to INSTALLDIR
+#                    also create shell script in INSTALLDIR for the program
+#                    where ln is one of {l1 l2 l3 l3d l3m nrt}
+# install-mlstools -- build executables, tools, move to MLSTOOLSDIR
+# install-nrt    -- build near-real time executables, script, move to INSTALLDIR
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# partialclean   -- deletes only *.o, *.mod from sub-subs
+# tools          -- build and install programs in the list below
+# update         -- replaces customized Makefiles with latest versions
+#                    also recalculates dependenencies, removes orphaned .o, .mod
+#
+# The following targets refer to programs whose sources are in the 
+# util directory. You may or may not be interested in building and running them.
+# To build and install each enter "make prog-name" where prog-name is any of:
+# --- tools ---
+# chunktimes     
+# checkpvmup     
+# compare     
+# CondenseLeakLog
+# createattributes
+# dateconverter  
+# end_stmts      
+# extinctionmaker      
+# f90tex         
+# fixAttribute
+# fixDOI  
+# h5cat          
+# Goldbrick_More
+# h5subset       
+# heconvert      
+# hl             
+# init_gen       
+# insertl2gpvalues
+# insertl2gpDOIs
+# killmaster     
+# l1bcat     
+# l1bdiff        
+# l1bdump
+# l1h5subset     
+# l2auxcat       
+# l2auxchi       
+# l2auxdump      
+# l2gp2nc4     
+# l2gpdiffnc4     
+# l2gpcat        
+# l2gpdiff       
+# l2gpdump       
+# l2pcdiff
+# l2pcdump       
+# l2q            
+# lr
+# machineok      
+# misalignment      
+# Mie_Tables
+# Mie_Tables_nohdf
+# MLS_h5ls       
+# ncl2gpcat
+# ncl2gpdiff
+# ncl2gpdump
+# nc42l2gp     
+# remake_gh
+# resetl2gpstatus
+# resetl2gpvalues
+# Spartacus
+# UnwrapList
+# utctotai       
+# vansGoldFilter  
+# WordSplit      
+# wrapLines
+# WrapList
+#
+# As a shortcut, to build them all, just enter "make tools"
+#
+# You can write and build your own tools, too. In most cases it is easy enough
+# to cd tests/misc or lib or l2 or wherever, hide
+# whatever sources you find already there, copy in your own source file or files,
+# then
+#   make update
+#   make
+#
+# The script util/build_f90_in_misc.sh was written to automate this process
+# Two special-purpose targets
+#   withouttoolkit
+#   withoutmlsmessage
+# can be used to build a lightweight tool based on a subset of the ponderous mlslib.
+# (a) to build and install your own executable without the whole toolkit panoply
+# type
+#    make MY_PROG=/path/to/it/myprog.f90 withouttoolkit
+# (b) to omit even MLSMessage
+#    make MY_PROG=/path/to/it/myprog.f90 withoutmlsmessage
+#
+#
+#
+#
+#    The following are useful if you stored multiple configurations
+#     besides current one
+# clean_config   -- deletes configurations named using MLSCONFG on command-line
+#                    e.g., make clean_config MLSCONFG=NAG.Sun
+# distclean      -- deletes every configuration
+#
+#     The following are useful for distributing all or portions of the archive
+#    If the target is entered exactly as shown below, the
+#    resulting archive will be an uncompressed .tar file; but with:
+#    a "z" suffix, e.g. "tarz" -- use gzip to compress -> .tgz
+#    a "g" suffix, e.g. "targ" -- assume GNU tar compress -> .tgz
+#    (Unfortunately, this currently works only under linux version of tar)
+#
+# disttar        -- creates an archive of whole mlspgs
+# tar            -- creates archive of mlspgs suitable for SIPS
+#                  (see EVERYTHING variable)
+# substar        -- creates separate archives of subdirs; then tar them
+#                   (also util, notes and srclib are tarred up in this case)
+# nomlsmessagetar-- creates an archive of only a portion of mlspgs to allow
+#                   building or debugging something apart from the enchilada
+# notoolkittar   -- like nomlsmessagetar, but a little bigger
+
+# --------------- SETTING definitions
+# FOPTS              Override default compiler option; note that you must
+#                    use only legal options
+# LDOPTS             Override default (blank) loader option; note that you must
+#                    use only legal options
+# PVM_ROOT           Path to the root of the pvm libraries; note that they
+#                    must then be named \$PVM_ROOT/\$PVM_ARCH/lib*.a;
+# PVM_ARCH           (see above)
+# FFTW_ROOT          Path to the FFTW library; required for mlsl3
+#
+# BLAS               Path to an external blas library; note that the library
+#                    by default is named \$BLAS/libblas.a
+# LIB_BLAS           Alternate name x if blas lib named \$BLAS/libx.a
+# LAPACK             Path to an external lapack library; note that the library
+#                    by default is named \$LAPACK/liblapack.a
+# LIB_LAPACK         Alternate name x if lapack lib named \$LAPACK/libx.a
+# The following cannot be set by configure_full
+# TAR                Overrides name of tar command; e.g. path to GNU tar 
+#                    in case your tar won't gzip for targets *targ
+# FAFTER             Appears at the end of each line invoking the compiler
+#                    e.g., for post-processing to highlight warnings and errors
+#                    make FAFTER='2>&1 | hl'  # see util/hl.c for the source    
+# LAFTER             Appears at the end of the very long link statement
+# FC                 Overrides the name by which the Fortran compiler is called
+# CC                 Overrides the name by which the c compiler is called
+# INSTALLDIR         Destination where install moves mlsl1, etc.
+# MLSCFILE           Overrides the name of the .configure file
+# NOCLEANING         Don't rebuild everything on any change to .configure
+#                    if non-blank
+# NOHUNTING          Stop make from hunting if non-blank
+# EXTRA_PATHS        Extra directories to be searched for .h, .f9h, or .mod
+#                    files while compiling
+#
+# --------------- End Makefile help
+
+#             internal targets
+# Note that the above list of targets is supplemented by
+# internal targets. They are not usually explicitly
+# named on the make line (though it is legal to do so, of course)
+
+# internalcleanup    Remove old Make.dep.nn files
+# internaladd_copy   Print notice that (previous value) of COPY_NUMBER increment
+# internaldepends    Recalculates dependencies
+# internalupdate     Updates the Makefile in each MLSCONFG; then internaldepends
+
+#----------------------------------------------------------
+# LEVELS is the list of automatic targets; i.e.
+# they will be built when no target is specified
+# by entering
+
+# make
+#
+#          Default levels
+
+# We only build level 3 when requested explicitly
+# (and the directories still exist)
+ifdef BUILDL3
+  LEVELS = l1 l2 l3 l3m
+else
+  LEVELS = l1 l2
+endif
+#----------------------------------------------------------
+
+#-----------------------
+
+# These are all the configurations that will be removed by distclean
+REECHO=$(MLSBIN)/reecho.sh
+UNIQUE_NAME=$(MLSBIN)/unique_name.sh
+EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -excl CVS -excl NAG.nogc)
+
+# These shouldn't be tarred up as part of EVERYTHING (or ever)
+EXCL_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -prefix='--exclude' -suffixn='/\*' -excl CVS)
+
+# OTHER_SUBDIRS are *not* built automatically:
+# you must either name them individually on your make cmdline,
+# or use
+#   make all
+OTHER_SUBDIRS = fwdmdl cloudfwdm cfm idlcfm
+#         All the subdirectories
+
+#You may build all the subdirectories via the "all" target; i.e.,
+#by entering
+#   make all
+
+SUBDIRS := $(shell ${REECHO} -d blas lib $(LEVELS) $(OTHER_SUBDIRS))
+
+# The next isn't really everything, just everything the SIPS might need
+# so it will be bundled up by tar
+# Note that it does *not* include the Toolkit nor PVM nor FFTW 
+# because they are outside mlspgs
+EVERYTHING = $(SUBDIRS)  srclib \
+   util sids tables notes tests scripts \
+   cfm conv_uars doc idlcfm \
+   $(MakeFName) README.$(MakeFName) BEFORE.mls license.txt
+     
+# This is in case tar doesn't auotmatically mean GNU tar, you may still use it via
+# something like
+#    make tar TAR=/usr/local/gnu/bin/tar
+TAR=tar
+
+# These definitions allow us to tar up smaller portions of our software
+# for code reuse or debugging
+# They allow us to forego the toolkit and associated hdf libraries
+NO_MLSMESS_LIB := $(shell ${REECHO} -dir lib -path lib \
+numToChars.f9h    PseudoToolkit.ps90\
+MLSKinds.f90      output_m.f90        ReadANumFromChars.f9h\
+io_stuff.f90      isafillvalue.f9h    lexer_types.f90\
+MLSCommon.f90     MLSStrings_0.f90    PrintIt_m.f90\
+)
+
+NO_MLSMESS := $(NO_MLSMESS_LIB) $(NO_MLSMESS_SRCLIB)
+
+NO_TOOLKIT_LIB := $(shell ${REECHO} -dir lib -path lib \
+MLSMessage.f9h    MLSMessageSubstitute.f90 output_m.f90\
+isafillvalue.f9h  PrintIt_m.f90            io_stuff.f90 \
+lexer_types.f90   MLSCommon.f90            MLSStrings_0.f90\
+                  numToChars.f9h           PseudoToolkit.ps90\
+MLSKinds.f90      ReadANumFromChars.f9h    toggles_core.f90\
+)
+
+NO_TOOLKIT := $(NO_TOOLKIT_LIB) $(NO_TOOLKIT_SRCLIB)
+
+# The next 2 may be commented out if you're absolutely sure you won't need them
+tests_sub_dirs := $(shell ${REECHO} -d -excl tests/CVS tests/*)
+sids_l1boa := sids/l1boa
+  
+# This determines the command which make transmits to each of the
+# SUBDIRS when you invoke it with "make update":
+# likely candidates are "depends" or "depends ghostbuster"
+SUBDIRS_UPDATE = depends ghostbuster
+
+# utctotai lib sources
+UTCDIR=utctotai
+# If we can't count on the toolkit routines, sadly then
+# we must supply some of the PGS_TD stuff ourselves
+ifndef PGSTK
+  utctotai_sources = \
+ $(UTCDIR)/PGS_SMF1.c $(UTCDIR)/PGS_SMF.h $(UTCDIR)/PGS_TD_timeCheck.c \
+ $(UTCDIR)/PGS_TD_TAIjdtoTAI.c $(UTCDIR)/PGS_TD_UTCtoUTCjd.c \
+ $(UTCDIR)/mls_bindFORTRAN.c $(UTCDIR)/mls_LeapSec.c $(UTCDIR)/mls_UTCtoTAI.c \
+ $(UTCDIR)/mls_UTCjdtoTAIjd.c \
+ test.f90
+else
+  utctotai_sources = \
+ $(UTCDIR)/PGS_SMF.h \
+ $(UTCDIR)/mls_bindFORTRAN.c $(UTCDIR)/mls_LeapSec.c $(UTCDIR)/mls_UTCtoTAI.c \
+ $(UTCDIR)/mls_UTCjdtoTAIjd.c \
+ test.f90
+endif
+
+# We have custom build commands for the srclib .f90 source files
+# in custmblds, so omit build commands from the Makefile.dep
+# automatcially created in srclib
+CUSTOM_BUILDS=tree_checker.f90 getCF_m.f90 Parser_Tables_L2CF.f90
+CUSTOM_PREFXD := $(shell ${REECHO} -dir srclib -prefix=-db $(CUSTOM_BUILDS))
+
+# Here are some miscellaneous variables for special tools
+MIESOURCESWITHHDF = $(shell ${REECHO} -excl $(MIE)/WriteNoHDF_m.f90 $(MIE)/*.f90 $(MIE)/math77/*.f)
+MIESOURCESWOHDF = $(shell ${REECHO} -excl $(MIE)/WriteHDF_m.f90 $(MIE)/*.f90 $(MIE)/math77/*.f)
+
+MLSTOOLS = chunktimes checkpvmup compare createattributes \
+  dateconverter extinctionmaker fixAttribute fixDOI \
+  Goldbrick_More heconvert h5subset h5cat hl \
+  insertl2gpvalues killmaster \
+  l1bcat l1bdiff l1bdump l1h5subset \
+  l2auxcat l2auxchi l2auxdump l2gp2nc4 l2gpdiffnc4 l2gpcat l2gpdiff l2gpdump \
+  l2pcdiff l2pcdump l2q lr machineok misalignment \
+  nc42l2gp ncl2gpcat ncl2gpdiff ncl2gpdump resetl2gpDOIs resetl2gpstatus resetl2gpvalues \
+  Spartacus \
+  tellMasterToQuit vansGoldFilter WordSplit wrapLines
+
+ifdef HDFINC
+   IHDFINC := -I $(HDFINC)
+else
+   IHDFINC := -I $(HDF)/../include
+endif
+
+ifdef HDF5INC
+   IHDF5INC := -I $(HDF5INC)
+else
+   IHDF5INC := -I $(HDF5)/../fortran/src -I $(HDF5)/../include
+endif
+
+ifdef HDFEOSINC
+   IHDFEOSINC := -I $(HDFEOSINC)
+else
+   IHDFEOSINC := -I $(HDFEOS)/../../include
+endif
+
+ifdef HDFEOS5INC
+   IHDFEOS5INC := -I $(HDFEOS5INC)
+else
+   IHDFEOS5INC := -I $(HDFEOS5)/../../include
+endif
+
+#----------------------- Build instructions
+
+# Automatic targets
+
+levels:
+	 @for dir in $(LEVELS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir; \
+	done
+
+$(CONFDIR)/$(MLSCFILE):
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -pv -fl
+#	$(MAKE) -f $(MakeFName) internalsaymake internalmftests
+
+# Targets that must be named explicitly
+
+$(LEVELS):
+	$(MAKE) -f $(MakeFName) -C $@
+
+$(OTHER_SUBDIRS):
+	$(MAKE) -f $(MakeFName) -C $@
+
+all subdirs:
+	 @for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir; \
+	done
+
+lib:
+	$(MAKE) -f $(MakeFName) -C $@
+
+blas:
+	$(MAKE) -f $(MakeFName) -C $@
+
+l1--itm: l1
+	$(MAKE) -f $(MakeFName) -C l1 PROG=init_tables_module.o MARK_ALL_AS_UPTODATE=no
+
+#              (functional targets)
+#              summoned by "make command"
+mostlyclean:
+	@echo "Cleaning $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir mostlyclean; \
+	done
+	@if [ -d "bin/$(MLSCONFG)" ] ; then \
+	   echo "rming bin/$(MLSCONFG)" ; \
+	   rm -f -r bin/$(MLSCONFG) ; \
+	 fi
+	@echo "Cleaning $(tests_sub_dirs)"; \
+	 for dir in $(tests_sub_dirs) $(sids_l1boa); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir mostlyclean; \
+	done
+	@$(MAKE) -f $(MakeFName) internalcleanup
+
+clean:
+	@echo "Cleaning objects from $(SUBDIRS) bin"; \
+	 for dir in $(SUBDIRS) bin; do \
+	  rm -f -r $$dir/$(MLSCONFG); \
+	done
+	@$(MAKE) -f $(MakeFName) internalcleanup ; \
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)"
+	@$(MAKE) -f $(MakeFName) update
+
+configure_pvm:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -nc -pv
+	@$(MAKE) -f $(MakeFName) update
+
+configure_fopts:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -nc -fl
+	@$(MAKE) -f $(MakeFName) update
+
+configure_full:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -pv -fl
+	@$(MAKE) -f $(MakeFName) update
+
+configure_help help--mlsconfigure:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--mlsconfigure
+
+configure_subdirs:
+	@echo "Configuring $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+		cd $$dir ; \
+		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -nc; \
+		cd .. ; \
+	done
+
+depends:
+	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
+		$(MAKE) -f $(MakeFName) internaladd_copy ; \
+	else  \
+		echo "Resetting copy number from  $(COPY_NUMBER) to 1"; \
+		$(MAKE) -f $(MakeFName) internalcleanup ; \
+	fi
+	@$(MAKE) -f $(MakeFName) internaldepends
+
+doc:
+	$(MAKE) -f $(MakeFName) -C $@ depends
+	$(MAKE) -f $(MakeFName) -C $@ doc
+
+doc--api:
+	@echo "api for each of $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	echo " "; echo '           * * * ' "api for $$dir" ' * * *'; \
+	  $(MLSBIN)/add_idents.sh -api -id -n -d $$dir -suf .f90 -suf .f -suf .c; \
+	done; \
+	echo " "; echo '           * * * ' "api for srclib" ' * * *'; \
+	  $(MLSBIN)/add_idents.sh -api -id -n -d srclib -suf .f9h -suf .f90
+
+doc--toc:
+	@echo "toc for each of $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	echo " "; echo '           * * * ' "toc for $$dir" ' * * *'; \
+	  $(MLSBIN)/add_idents.sh -toc -id -n -d $$dir -suf .f90 -suf .f -suf .c; \
+	done; \
+	echo " "; echo '           * * * ' "toc for srclib" ' * * *'; \
+	  $(MLSBIN)/add_idents.sh -toc -id -n -d srclib -suf .f9h -suf .f90
+
+help--Makefile:
+	@sed -n '/'$(MakeFName)' help/,/End '$(MakeFName)' help/ p' $(CONFDIR)/$(MakeFName) \
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
+
+help--scripts:
+	@sed -n '/'$(SCRIPTS)'help/,/End '$(SCRIPTS)'help/ p' $(CONFDIR)/$(MakeFName) \
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
+
+disthelp: $(CONFDIR)/README.MakeFC
+	chmod a+x $(CONFDIR)/README.MakeFC; $(CONFDIR)/README.MakeFC
+
+firsthelp: $(CONFDIR)/BEFORE.mls
+	chmod a+x $(CONFDIR)/BEFORE.mls; $(CONFDIR)/BEFORE.mls
+
+help:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help
+
+help--brief:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--brief
+
+help--convert:
+	@$(MLSBIN)/batch_hcnvrt.sh -help
+
+help--depends:
+	@$(MLSBIN)/makemakedep.sh -help
+
+help--fopts:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--fopts
+
+help--ghostbuster:
+	@$(MLSBIN)/ghostbuster.sh -help
+
+help--platform:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--platform
+
+help--pvm:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--pvm
+
+help--reecho:
+	@$(MLSBIN)/reecho.sh -help
+
+help--toolkit:
+	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--toolkit
+
+# install the mls programs from $(LEVELS) into $(INSTALLDIR)
+install: $(LEVELS)
+	@echo "Installing programs from $(LEVELS) into $(INSTALLDIR)"; \
+	if [ -f license.txt ] ; then \
+	   cp license.txt $(INSTALLDIR) ; \
+	fi ; \
+	for dir in $(LEVELS); do \
+	case "$$dir" in \
+	"l1") \
+	   if [ -f $$dir/$(MLSCONFG)/mlsl0sn ] ; then \
+	      cp $$dir/$(MLSCONFG)/mlsl0sn $(INSTALLDIR) ; \
+	   fi ; \
+	   if [ -f $$dir/$(MLSCONFG)/mlsl1log ] ; then \
+	      cp $$dir/$(MLSCONFG)/mlsl1log $(INSTALLDIR) ; \
+	   fi ; \
+	   if [ -f $$dir/$(MLSCONFG)/mlsl1t ] ; then \
+	      cp $$dir/$(MLSCONFG)/mlsl1t $(INSTALLDIR) ; \
+	   fi ; \
+	   if [ -f $$dir/$(MLSCONFG)/mlsl1g ] ; then \
+	      cp $$dir/$(MLSCONFG)/mlsl1g $(INSTALLDIR) ; \
+         rm -f $(INSTALLDIR)/mlsl1.sh ; \
+	      sed "s=mlsxxyyzz_1=mlsl1log=; s=mlsxxyyzz_2=mlsl1g=; \
+           s=mlsxxyyzz_3=mlsl1t=; s=mlsbbiinn=$(INSTALLDIR)=; \
+           s=mlsxxyyzz_0=mlsl0sn=; s=mlshhoommee=$(MLSHOME)=; \
+           s=mlseexxttrraa==" \
+           $(MLSBIN)/mlsl1prog.sh > $(INSTALLDIR)/mlsl1.sh ; \
+         chmod a+x $(INSTALLDIR)/mlsl1.sh ; \
+	   fi; \
+		;; \
+	"l2") \
+			if [ -f $$dir/$(MLSCONFG)/mls$$dir ] ; then \
+	cp $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
+            rm -f $(INSTALLDIR)/mls$$dir.sh ; \
+	         sed "s=mlsxxyyzz=mls$$dir=; s=mlsbbiinn=$(INSTALLDIR)=; \
+              s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==; \
+              s=rreeggeexx=\*L2FWM\*.h5 \*L2GP-[A-CE-Z]\*.he5 \*L2GP-DGG_\*.he5 \*L2AUX-[A-C]\*.h5 \*L2AUX-DGM_\*.h5 \*MTX\*.h5=" \
+              $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mls$$dir.sh ; \
+            cp -a $(MLSBIN)/mlsl2pntk.sh $(INSTALLDIR); \
+            chmod a+x $(INSTALLDIR)/mls$$dir.sh $(INSTALLDIR)/mlsl2pntk.sh ; \
+			fi ; \
+         echo "Installing level 2 parallel executables into $(INSTALLDIR)"; \
+         cp -a $(MLSBIN)/jobstat-sips.sh $(MLSBIN)/../scripts/mlsqlog-scan-sips.py \
+          $(MLSBIN)/mlsl2p.sh $(MLSBIN)/slavetmplt.sh \
+          $(MLSBIN)/mlsl2pntk.sh $(MLSBIN)/slavetmpltntk.sh \
+          $(INSTALLDIR); \
+         cp -a $(MLSBIN)/jobstat-sips.sh $(MLSBIN)/../scripts/mlsqlog-scan-sips.py \
+          $(MLSBIN)/mlsl2p.sh $(MLSBIN)/slavetmplt.sh \
+          $(MLSBIN)/mlsl2pntk.sh $(MLSBIN)/slavetmpltntk.sh \
+          $(INSTALLDIR); \
+         chmod a+x $(INSTALLDIR)/*.sh $(INSTALLDIR)/*.py; \
+         echo "(Don't forget to scp them to your cluster)"; \
+		;; \
+	"l3") \
+			if [ -f $$dir/$(MLSCONFG)/mlsl3d ] ; then \
+	         cp $$dir/$(MLSCONFG)/mlsl3d $(INSTALLDIR) ; \
+            rm -f $(INSTALLDIR)/mlsl3d.sh ; \
+	         sed "s=mlsxxyyzz=mlsl3d=; s=mlsbbiinn=$(INSTALLDIR)=; \
+              s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==; \
+              s=rreeggeexx=\*L3DM*.he5 \*L3SP\*.he5=" \
+              $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mlsl3d.sh ; \
+            chmod a+x $(INSTALLDIR)/mlsl3d.sh ; \
+			fi ; \
+		;; \
+	"l3m") \
+			if [ -f $$dir/$(MLSCONFG)/mlsl3m ] ; then \
+	         cp $$dir/$(MLSCONFG)/mlsl3m $(INSTALLDIR) ; \
+            rm -f $(INSTALLDIR)/mlsl3m.sh ; \
+	         sed "s=mlsxxyyzz=mlsl3m=; s=mlsbbiinn=$(INSTALLDIR)=; \
+              s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==; \
+              s=rreeggeexx=\*L3MM*.he5 \*L3MZ\*.he5 \*L3DZ\*.he5=" \
+              $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mlsl3m.sh ; \
+            chmod a+x $(INSTALLDIR)/mlsl3m.sh ; \
+			fi ; \
+		;; \
+	*) \
+			if [ -f $$dir/$(MLSCONFG)/mls$$dir ] ; then \
+	cp $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
+            rm -f $(INSTALLDIR)/mls$$dir.sh ; \
+	         sed "s=mlsxxyyzz=mls$$dir=; s=mlsbbiinn=$(INSTALLDIR)=; \
+              s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
+              $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mls$$dir.sh ; \
+            chmod a+x $(INSTALLDIR)/mls$$dir.sh ; \
+			fi ; \
+		;; \
+	esac ; \
+	done
+	@cp $(MLSBIN)/mlsnrt*.sh $(INSTALLDIR)
+
+# install the mls programs, libraries, etc. from $(LEVELS) into $(INSTALLDIR)
+install-cfm: cfm
+	@$(MAKE) -f $(MakeFName) -C cfm alone
+	cp cfm/$(MLSCONFG)/libcfm.* $(INSTALLDIR); \
+   if [ -f cfm/$(MLSCONFG)/cfm.mod ] ; then \
+     cp cfm/$(MLSCONFG)/cfm.mod $(INSTALLDIR) ; \
+   fi
+	@echo "This cfm library needs other toolkit libraries to link properly"; \
+	echo "install-fullcfm to install stand-alone version"
+
+install-fullcfm: cfm
+	$(MAKE) -f $(MakeFName) -C cfm all
+	cp cfm/$(MLSCONFG)/libcfm_all.* $(INSTALLDIR); \
+   if [ -f cfm/$(MLSCONFG)/cfm.mod ] ; then \
+     cp cfm/$(MLSCONFG)/cfm.mod $(INSTALLDIR) ; \
+   fi
+
+install-idlcfm: idlcfm
+	@$(MAKE) -f $(MakeFName) -C idlcfm install
+
+install-l1: l1
+	@$(MAKE) -f $(MakeFName) install LEVELS=l1
+
+install-l2: l2
+	$(MAKE) -f $(MakeFName) install LEVELS=l2
+
+install-l3: l3
+	@$(MAKE) -f $(MakeFName) install LEVELS="l3 l3m"
+
+install-l3d: l3 l3m
+	@$(MAKE) -f $(MakeFName) install LEVELS=l3
+
+install-l3m: l3m
+	@$(MAKE) -f $(MakeFName) install LEVELS=l3m
+        
+# Make and then install mls tools from their source files
+# and the shell scripts that go along with them
+# Note the trickery where we rename a copy of zeros.sh its pseudonym
+# misalignment.sh. Summoned by this name it performs a different action.
+# The following assumes you have somewhere defined MLSTOOLSDIR
+install-mlstools:
+	@if [ "$(MLSTOOLSDIR)" = "" ] ; then \
+  echo "MLSTOOLSDIR not defined, so unable to install" ; \
+  exit 1 ; \
+  fi; \
+  $(MAKE) -f $(MakeFName) tools; \
+  cd $(INSTALLDIR); \
+  cp $(MLSTOOLS)  $(MLSTOOLSDIR); \
+  cd $(MLSHOME); \
+  cd util; \
+  cp jobstat-sips.sh ronin.sh slavetmpltntk.sh slavetmplt.sh \
+  tkreset.sh zeros.sh $(MLSTOOLSDIR); \
+  cp zeros.sh $(MLSTOOLSDIR)/misalignment.sh; \
+  cd ../scripts; \
+  cp l1pcffrag_generator.pl $(MLSTOOLSDIR)
+  
+install-nrt: install-l1 install-l2 l2q createattributes insertl2gpvalues
+	@cp $(MLSBIN)/mlsnrt*.sh $(MLSBIN)/postl2script.sh $(INSTALLDIR)
+
+partialclean:
+	@echo "Cleaning objects from $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
+	done
+	@$(MAKE) -f $(MakeFName) internalcleanup ; \
+
+# Build executables out of sources from mlspgs/util directory
+# Let the build script know if the compiler requires
+# something special when the main program is in c
+UTIL_OPTS=-O MLSF95=${MLSF95}
+
+# unshar the sources for the executables (heconvert so far)
+$(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h: $(MLSBIN)/heconvert.shar
+	@cd $(MLSBIN); \
+   /bin/sh heconvert.shar
+
+# unshar the sources for the utctotai lib
+$(utctotai_sources): $(MLSBIN)/utctotai.shar
+	@if [ ! -d $(UTCDIR) ]; then \
+     mkdir $(UTCDIR); \
+	fi ; \
+	cp $(MLSBIN)/utctotai.shar $(UTCDIR); \
+	cd $(UTCDIR); \
+	/bin/sh utctotai.shar
+
+# * Building lightweight tools w/o ponderous mlslib *
+# This next sequence is a bit of quackery-hackery needed
+# to make PseudoToolkit available as a fortran source file
+# only when needed, but hidden behind the gauzy guise of its ps90
+# file extension when not needed
+ps90tof90: $(CONFDIR)/$(MLSCFILE) lib/PseudoToolkit.ps90
+	/bin/rm -fr lib/pseudo
+	mkdir lib/pseudo
+	cp lib/PseudoToolkit.ps90 lib/pseudo/PseudoToolkit.f90
+
+withouttoolkit: $(CONFDIR)/$(MLSCFILE) $(MY_PROG) ps90tof90
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) -O DONT_LINK_TOOLKIT=yes \
+            $(MY_PROG) $(NO_TOOLKIT) lib/pseudo/PseudoToolkit.f90
+
+withoutmlsmessage: $(CONFDIR)/$(MLSCFILE) $(MY_PROG) ps90tof90
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) -O DONT_LINK_TOOLKIT=yes \
+            $(MY_PROG) $(NO_MLSMESS) lib/pseudo/PseudoToolkit.f90
+
+# build and install some of the executables out of util
+checkpvmup: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/checkpvmup.c
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+      -I $(PVM_ROOT)/include \
+	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
+      $(UTIL_OPTS) -main checkpvmup.c
+
+chunktimes: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/chunktimes.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+compare: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/compare.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+CondenseLeakLog: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/CondenseLeakLog.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+# In case the conv_uars directory contains more than one main program
+CONVSRCS_BARE =  $(shell ${REECHO} -dirn $(CONFDIR)/conv_uars/ -excl Dump_UARS_File.f90)
+CONVSRCS = $(shell ${REECHO} -nf -prefixn=$(CONFDIR)/conv_uars/ ${CONVSRCS_BARE})
+conv_uars: $(CONFDIR)/$(MLSCFILE) $(CONVSRCS) utctotai
+	echo $(CONVSRCS)
+	echo $(CONVSRCS_BARE)
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+          -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=conv_uars_main -m lib \
+          -C $(MLSCFILE) $(CONVSRCS)
+
+createattributes: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/createattributes.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+UARSRECL_BARE =  $(shell ${REECHO} -dirn $(CONFDIR)/conv_uars/ -excl conv_uars.f90)
+UARSRECL = $(shell ${REECHO} -nf -prefixn=$(CONFDIR)/conv_uars/ ${UARSRECL_BARE})
+Dump_UARS_File: $(CONFDIR)/$(MLSCFILE) $(UARSRECL) utctotai
+	echo $(UARSRECL)
+	echo $(UARSRECL_BARE)
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+          -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=Dump_UARS_File_main -m lib \
+          -C $(MLSCFILE) $(UARSRECL) 
+
+dateconverter: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/dateconverter.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+ECItoECR: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/ECItoECR.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+ECRtoECI: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/ECRtoECI.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+end_stmts: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/end_stmts.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+extinctionmaker: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/extinctionmaker.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+f90tex: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/f90tex.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+fixAttribute: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/fixAttribute.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+fixDOI: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/fixDOI.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+genmet: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/genmet.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+Goldbrick_More: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/Goldbrick_More.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c \
+           $(MLSBIN)/HE5_HdfEosDef.h
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+      -C $(MLSCFILE) $(MLSBIN)/convert.c \
+      -I $(MLSBIN) \
+      $(IHDFEOS5INC) \
+      $(IHDFEOSINC) \
+      $(IHDFINC) $(IHDF5INC) \
+      $(UTIL_OPTS) -main convert.c
+   
+init_gen: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/init_gen.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+insertl2gpvalues: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/insertl2gpvalues.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5subset.c
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) \
+      -i "$(IHDF5INC)" \
+      $(UTIL_OPTS) -main h5subset.c\
+      $(MLSBIN)/$@.c
+
+h5cat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5cat.c
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) \
+      -i "$(IHDF5INC)" \
+      $(MLSBIN)/$@.c \
+      $(UTIL_OPTS) -main h5cat.c
+
+hl: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/hl.c
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
+      $(UTIL_OPTS) -main hl.c
+
+killmaster: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/killmaster.c
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+      -I $(PVM_ROOT)/include \
+	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
+      $(UTIL_OPTS) -main killmaster.c
+
+l1bcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l1bcat.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+l1bdiff: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l1bdiff.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+l1bdump: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l1bdump.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+l1h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l1h5subset.c
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) \
+      -i "$(IHDF5INC)" \
+      $(UTIL_OPTS) -main l1h5subset.c\
+      $(MLSBIN)/$@.c
+
+l2auxcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2auxcat.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+l2auxchi: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2auxchi.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+l2auxdump: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2auxdump.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+l2gp2nc4: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/netcdf/l2gp2nc4.f90 l1--itm
+# Needs further refinement
+	cd $(CONFDIR)/tests/lib; \
+	mv *.f9[0h] hideme; \
+	cd ../../netcdf; \
+	cp l2gp2nc4.f90 MLSFiles.f90 MLSNetCDF4.f90 MLS_Swrdfld.f9h \
+	MLS_Swwrfld.f9h NCL2GP.f90 ../tests/lib; \
+	cd ../tests/lib; \
+	make update; \
+	make NEEDS_ITM=yes NETCDF=yes
+	cp $(CONFDIR)/tests/lib/$(MLSCONFG)/test $(INSTALLDIR)/l2gp2nc4
+
+l2gpdiffnc4: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/netcdf/l2gpdiffnc4.f90 l1--itm
+# Needs further refinement
+	cd $(CONFDIR)/tests/lib; \
+	mv *.f9[0h] hideme; \
+	cd ../../netcdf; \
+	cp l2gpdiffnc4.f90 MLSFiles.f90 MLSNetCDF4.f90 MLS_Swrdfld.f9h \
+	MLS_Swwrfld.f9h NCL2GP.f90 ../tests/lib; \
+	cd ../tests/lib; \
+	make update; \
+	make NEEDS_ITM=yes NETCDF=yes
+	cp $(CONFDIR)/tests/lib/$(MLSCONFG)/test $(INSTALLDIR)/l2gpdiffnc4
+
+l2gpcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpcat.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+l2gpdiff: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpdiff.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+l2gpdump: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpdump.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+l2pcdiff: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2pcdiff.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+l2pcdump: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2pcdump.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+l2q: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2q.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+lr: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/lr/*.f9[0h] utctotai lib
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+          -c $(MLSCONFG) -p $@ -M $(MAKE) -O short_name=lr_main -m lib \
+          -C $(MLSCFILE) $(MLSBIN)/lr/*.f9[0h] $(MLSBIN)/lr/*.grm \
+          lib/symbol_table.f90 lib/tree.f90
+
+machineok: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/machineok.c
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+      -I $(PVM_ROOT)/include \
+	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
+      $(UTIL_OPTS) -main machineok.c
+
+Mie_Tables: $(CONFDIR)/$(MLSCFILE) $(MIE)/Mie_Tables.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m fwdmdl \
+	-C $(MLSCFILE) $(MIESOURCESWITHHDF)
+
+Mie_Tables_nohdf: $(CONFDIR)/$(MLSCFILE) $(MIE)/Mie_Tables.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m fwdmdl \
+	-C $(MLSCFILE) $(MIESOURCESWOHDF)
+
+misalignment: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/misalignment.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+MLS_h5ls: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/MLS_h5ls.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+# This gathers all the hackery-quackery required to build
+# a special version of level 1 for processing moonscan dates in one place
+#
+# (1) preserve the standard, non-moonscan versions of level 1 pges and
+# source files
+#
+# (2) create a standalone installation directory for the moonscan
+# versions of l1
+#
+#
+#
+
+moonscan: $(CONFDIR)/$(MLSCFILE) install-l1
+	/bin/rm -fr $(INSTALLDIR)-moonscan $(INSTALLDIR)-original
+	cp -r $(INSTALLDIR) $(INSTALLDIR)-original
+	@echo Making moonscan L1, copying Calibration-moonscan.f9h to Calibration.f9h
+	cd l1; \
+	cp -f Calibration-moonscan.f9h Calibration.f9h; \
+	cat Calibration.f9h; \
+	touch Calibration.f9h
+	mv $(INSTALLDIR)/mlsl1.sh $(INSTALLDIR)/mlsl1.sh-original
+	$(MAKE) -f $(MakeFName) install-l1
+	sed  '/MLSBIN=/ a\
+	MLSBIN=$$MLSBIN-moonscan\
+	' $(INSTALLDIR)/mlsl1.sh-original > $(INSTALLDIR)/mlsl1.sh
+	chmod a+x $(INSTALLDIR)/mlsl1.sh
+	mv $(INSTALLDIR) $(INSTALLDIR)-moonscan
+	mv $(INSTALLDIR)-original $(INSTALLDIR)
+	@echo Done making moonscan L1, copying Calibration-normal.f9h to Calibration.f9h
+	cd l1; \
+	cp -f Calibration-normal.f9h Calibration.f9h; \
+	cat Calibration.f9h; \
+	touch Calibration.f9h
+
+nc42l2gp: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/netcdf/nc42l2gp.f90 l1--itm
+# Needs further refinement
+	cd $(CONFDIR)/tests/lib; \
+	mv *.f9[0h] hideme; \
+	cd ../../netcdf; \
+	cp nc42l2gp.f90 MLSFiles.f90 MLSNetCDF4.f90 MLS_Swrdfld.f9h \
+	MLS_Swwrfld.f9h NCL2GP.f90 ../tests/lib; \
+	cd ../tests/lib; \
+	make update; \
+	make NEEDS_ITM=yes NETCDF=yes
+	cp $(CONFDIR)/tests/lib/$(MLSCONFG)/test $(INSTALLDIR)/nc42l2gp
+
+ncl2gpcat: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/netcdf/ncl2gpcat.f90 l1--itm
+# Needs further refinement
+	cd $(CONFDIR)/tests/lib; \
+	mv *.f9[0h] hideme; \
+	cd ../../netcdf; \
+	cp ncl2gpcat.f90 MLSFiles.f90 MLSNetCDF4.f90 MLS_Swrdfld.f9h \
+	MLS_Swwrfld.f9h NCL2GP.f90 ../tests/lib; \
+	cd ../tests/lib; \
+	make update; \
+	make NEEDS_ITM=yes NETCDF=yes
+	cp $(CONFDIR)/tests/lib/$(MLSCONFG)/test $(INSTALLDIR)/ncl2gpcat
+
+ncl2gpdiff: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/netcdf/ncl2gpdiff.f90 l1--itm
+# Needs further refinement
+	cd $(CONFDIR)/tests/lib; \
+	mv *.f9[0h] hideme; \
+	cd ../../netcdf; \
+	cp ncl2gpdiff.f90 MLSFiles.f90 MLSNetCDF4.f90 MLS_Swrdfld.f9h \
+	MLS_Swwrfld.f9h NCL2GP.f90 ../tests/lib; \
+	cd ../tests/lib; \
+	make update; \
+	make NEEDS_ITM=yes NETCDF=yes
+	cp $(CONFDIR)/tests/lib/$(MLSCONFG)/test $(INSTALLDIR)/ncl2gpdiff
+
+ncl2gpdump: $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/netcdf/ncl2gpdump.f90 l1--itm
+# Needs further refinement
+	cd $(CONFDIR)/tests/lib; \
+	mv *.f9[0h] hideme; \
+	cd ../../netcdf; \
+	cp ncl2gpdump.f90 MLSFiles.f90 MLSNetCDF4.f90 MLS_Swrdfld.f9h \
+	MLS_Swwrfld.f9h NCL2GP.f90 ../tests/lib; \
+	cd ../tests/lib; \
+	make update; \
+	make NEEDS_ITM=yes NETCDF=yes
+	cp $(CONFDIR)/tests/lib/$(MLSCONFG)/test $(INSTALLDIR)/ncl2gpdump
+
+remake_gh: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/remake_gh.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -O LDOPTS=-static \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+resetl2gpDOIs: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/resetl2gpDOIs.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+resetl2gpstatus: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/resetl2gpstatus.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+resetl2gpvalues: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/resetl2gpvalues.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+Spartacus: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/Spartacus.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+tellMasterToQuit: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/tellMasterToQuit.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+UnwrapList: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/UnwrapList.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+utctotai: $(CONFDIR)/$(MLSCFILE) $(utctotai_sources)
+	@echo "Installing universal time library into $(INSTALLDIR)"; \
+	if [ ! -d $(INSTALLDIR) ] ; then \
+	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
+	fi
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+	-c $(MLSCONFG) -p $@ -M $(MAKE) -T lib -ni\
+	-C $(MLSCFILE) $(utctotai_sources)
+	mv ./tests/misc/$(MLSCONFG)/libmisc.a $(INSTALLDIR)/libutctotai.a
+
+vansGoldFilter: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/vansGoldFilter.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+WordSplit: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/WordSplit.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+wrapLines: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/wrapLines.f90 l1--itm
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+WrapList: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/WrapList.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
+update:
+	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
+		$(MAKE) -f $(MakeFName) internaladd_copy ; \
+	else  \
+		echo "Resetting copy number from  $(COPY_NUMBER) to 1"; \
+		$(MAKE) -f $(MakeFName) internalcleanup ; \
+	fi
+	@$(MAKE) -f $(MakeFName) internalupdate
+	@$(MAKE) -f $(MakeFName) internaldepends
+	@$(MAKE) -f $(MakeFName) internalmftests
+	@$(MAKE) -f $(MakeFName) REVERSE=-reverse internalupdate
+	if [ ! -x $(MLSBIN)/mkpath.sh ] ; then \
+	   chmod a+x $(MLSBIN)/mkpath.sh; \
+	fi
+	if [ ! -d $(INSTALLDIR) ] ; then \
+	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
+	fi
+
+# Useful for cleaning multiple configurations
+
+clean_config_test:
+	@echo "Cleaning $(SUBDIRS) according to configuration $(MLSCONFG)"; \
+    if [ "$(MLSCONFG)" = "" ] ; then \
+      echo "Empty configuration name" ; \
+      exit 2 ; \
+    elif [ ! -d "lib/machines/$(MLSCONFG)" ] ; then \
+      echo "Unrecognized configuration name" ; \
+    fi ; \
+	 mv $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/temp.configure; \
+	 echo "MLSCONFG=$(MLSCONFG)" > $(CONFDIR)/$(MLSCFILE); \
+	 echo "$(MAKE) -f $(MakeFName) mostlyclean"; \
+    if [ ! -d "lib/machines/$(MLSCONFG)/CVS" ] ; then \
+	   echo "rm -f -r lib/machines/$(MLSCONFG)" ; \
+	 fi ; \
+	 mv $(CONFDIR)/temp.configure $(CONFDIR)/$(MLSCFILE)
+
+clean_config:
+	@echo "Cleaning $(SUBDIRS) according to configuration $(MLSCONFG)"; \
+    if [ "$(MLSCONFG)" = "" ] ; then \
+      echo "Empty configuration name" ; \
+      exit 2 ; \
+    elif [ ! -d "lib/machines/$(MLSCONFG)" ] ; then \
+      echo "Unrecognized configuration name" ; \
+    fi ; \
+	 mv $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/temp.configure; \
+	 echo "MLSCONFG=$(MLSCONFG)" > $(CONFDIR)/$(MLSCFILE); \
+	 $(MAKE) -f $(MakeFName) mostlyclean; \
+    if [ ! -d "lib/machines/$(MLSCONFG)/CVS" ] ; then \
+	   rm -f -r lib/machines/$(MLSCONFG) ; \
+	 fi ; \
+	 mv $(CONFDIR)/temp.configure $(CONFDIR)/$(MLSCFILE)
+
+distclean:
+	@echo "Cleaning configurations $(EVERY_MLSCONFG)"; \
+	 for dir in $(EVERY_MLSCONFG); do \
+	  $(MAKE) -f $(MakeFName) clean_config_test MLSCONFG=$$dir; \
+	done
+	@$(MAKE) -f $(MakeFName) internalcleanup
+
+#For preparing source distributions
+
+disttar:
+	@echo "tar-ing the mlspgs distribution"; \
+        rm -f ../mlspgs.tar machines.tar; \
+	$(TAR) hcvf ../mlspgs.tar * --exclude $(CONFDIR)/$(MLSCFILE)\
+	--exclude CVS\
+	--exclude Make.dep\* $(EXCL_MLSCONFG) \
+	--exclude bin ; \
+	$(TAR) hcvf machines.tar lib/machines customblds/ --exclude CVS; \
+	$(TAR) hAvf ../mlspgs.tar machines.tar
+
+disttarz: disttar ../mlspgs.tar
+	@echo "... then gzipping it"; \
+	cd ..; rm -f mlspgs.tgz; gzip mlspgs.tar; mv mlspgs.tar.gz mlspgs.tgz
+
+disttarg:
+	@echo "tar-ing the mlspgs distribution with GNUtar -z option"; \
+        rm -f ../mlspgs.tgz machines.tgz; \
+	$(TAR) hcvzf ../mlspgs.tgz * --exclude $(CONFDIR)/$(MLSCFILE) \
+	--exclude CVS\
+	--exclude Make.dep\* $(EXCL_MLSCONFG) \
+	--exclude bin ; \
+	$(TAR) hcvzf machines.tgz lib/machines customblds/ --exclude CVS; \
+	$(TAR) hAvzf ../mlspgs.tgz machines.tgz
+
+# These are just the modules and files need for building with the output_m
+# module but without MLSMessage-ing
+nomlsmessagetar:
+	@echo "tar-ing without MLSMessge"; \
+        echo "$(NO_MLSMESS)" ; \
+        rm -f ../mlspgs_nomess.tar; \
+	$(TAR) hcvf ../mlspgs_nomess.tar $(NO_MLSMESS) 
+
+# These are just the modules and files need for building with the MLSMessage
+# module but without the dread toolkit panoply
+notoolkittar:
+	@echo "tar-ing without Toolkit"; \
+        echo "$(NO_TOOLKIT)" ; \
+        rm -f ../mlspgs_notoolkit.tar; \
+	$(TAR) hcvf ../mlspgs_notoolkit.tar $(NO_TOOLKIT) 
+
+tar:
+	@echo "tar-ing mlspgs for sips"; \
+        echo "EXCL_MLSCONFG: $(EXCL_MLSCONFG)" ; \
+        rm -f ../mlspgs_sips.tar machines.tar; \
+	$(TAR) hcvf ../mlspgs_sips.tar $(EVERYTHING) --exclude CVS\
+	--exclude Make.dep\* $(EXCL_MLSCONFG) \
+	--exclude bin ; \
+	$(TAR) hcvf machines.tar lib/machines customblds/ --exclude CVS; \
+	$(TAR) hAvf ../mlspgs_sips.tar machines.tar
+
+tarz: tar ../mlspgs_sips.tar
+	@echo "... then gzipping it"; cd ..; rm -f mlspgs_sips.tgz; \
+	gzip mlspgs_sips.tar; mv mlspgs_sips.tar.gz mlspgs_sips.tgz
+
+targ:
+	@echo "tar-ing mlspgs for sips"; \
+        rm -f ../mlspgs_sips.tgz machines.tgz; \
+	$(TAR) hcvzf ../mlspgs_sips.tgz $(EVERYTHING) --exclude CVS \
+	--exclude Make.dep\* $(EXCL_MLSCONFG) \
+	--exclude bin ; \
+	$(TAR) hcvzf machines.tgz lib/machines customblds/ --exclude CVS; \
+	$(TAR) hAvzf ../mlspgs_sips.tgz machines.tgz
+
+substars:
+	@echo "tar-ing $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir tar; \
+	done; \
+	echo "tar-ing srclib"; \
+        rm -f srclib.tar; \
+	$(TAR) hcvf srclib.tar srclib --exclude CVS --exclude Make.dep\*; \
+	echo "tar-ing util"; \
+        rm -f util.tar; \
+	$(TAR) hcvf util.tar util --exclude CVS ; \
+	echo "tar-ing notes"; \
+        rm -f notes.tar; \
+	$(TAR) hcvf notes.tar notes --exclude CVS ; \
+	echo "tar-ing *.tar"; \
+	rm -f mlspgs_subs.tar
+
+substar: substars
+	@echo "... then tarring them";\
+	rm -f ../mlspgs_subs.tar ;\
+	$(TAR) -cvf ../mlspgs_subs.tar *.tar
+
+substarz: substar ../mlspgs_subs.tar
+	@echo "... then gzipping it"; cd ..; rm -f mlspgs_subs.tgz; \
+	gzip mlspgs_subs.tar; mv mlspgs_subs.tar.gz mlspgs_subs.tgz
+
+substarg: substars
+	@echo "... then GNUtarring them"; \
+	rm -f ../mlspgs_subs.tgz ;\
+	$(TAR) -cvzf ../mlspgs_subs.tgz *.tar
+
+# For internal use
+
+internaladd_copy:
+	@echo "updating copy number $(COPY_NUMBER) incremented by 1"
+
+# Automatically called to keep number of files Make.dep.nn under MAX_COPIES
+internalcleanup:
+	@echo "Automatic housekeeping in ./ $(SUBDIRS) srclib"; \
+	 for dir in $(SUBDIRS) srclib; do \
+	  cd $$dir; \
+		if [ -f Makefile.dep ] ; then \
+			rm -f Make.dep.* ;\
+		fi ; \
+	  cd ..; \
+	done
+	@echo "Automatic housekeeping in $(tests_sub_dirs)"; \
+	 for dir in $(tests_sub_dirs) $(sids_l1boa); do \
+	 	if [ -d $$dir ] ; then \
+	  		cd $$dir; \
+			if [ -f Makefile.dep ] ; then \
+			rm -f Make.dep.* ;\
+			fi ; \
+	 		cd ../..; \
+		fi; \
+	done
+
+ghostbuster:
+	@echo "Busting ghosts for $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir ghostbuster; \
+	done
+
+internaldepends:
+	@if [ "$(SUBDIRS)" = "" ] ; then \
+     exit 0 ; \
+   fi ; \
+   echo "Making dependencies for $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir $(SUBDIRS_UPDATE); \
+	done
+	@if [ "$(JUSTSUBDIRS)" = "" ]; then \
+	echo "Making dependencies for srclib"; \
+        cd srclib; \
+        temp_name_1=`../${UNIQUE_NAME} 1` ;\
+        temp_name_2=`../${UNIQUE_NAME} 2` ;\
+        ../$(MLSBIN)/makemakedep.sh -p $$temp_name_1 $(UP_OR_LOW)  $(CUSTOM_PREFXD) \
+           ../lib ../l2; \
+        sed 's/OBJS =/srclib_objs =/' $$temp_name_1 > $$temp_name_2; \
+        rm -f $$temp_name_1 ; \
+        mv $$temp_name_2 Makefile.dep; \
+	echo "Making dependencies for doc"; \
+        cd ../doc; \
+        $(MAKE) -f $(MakeFName) depends; \
+	fi
+
+internalupdate: 
+	@if [ "$(SUBDIRS)" = "" ] ; then \
+     exit 0 ; \
+   fi ; \
+   echo "Updating the Makefile in $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	 case "$$dir" in \
+	 "lib") \
+			PLATFORMS=$(PLATFORMS) ; \
+         m_option="-machine" ; \
+		;; \
+	 *) \
+			PLATFORMS=$(PLATFORMS) ; \
+         m_option="" ; \
+		;; \
+	 esac ; \
+		cd $$dir ; \
+		../$(MLSBIN)/updatemf.sh $$REVERSE -pc $$PLATFORMS \
+         -cf "../$(CONFDIR)/$(MLSCFILE)" $$m_option; \
+		cd .. ; \
+	done
+
+internalmftests:
+	@if [ "$(tests_sub_dirs)" = "" -o "$(JUSTSUBDIRS)" != "" ] ; then \
+     exit 0 ; \
+   fi ; \
+	echo "updating the Makefile in each $(MLSCONFG) "; \
+	 for dir in $(tests_sub_dirs); do \
+	 	if [ -d $$dir ] ; then \
+	  		cd $$dir; \
+                        $(MAKE) $(SUBDIRS_UPDATE); \
+		../../$(MLSBIN)/updatemf.sh -pc "$(PLATFORMS)" \
+         -cf "../../$(CONFDIR)/$(MLSCFILE)" ; \
+	 		cd ../..; \
+		fi; \
+	done; \
+	if [ -d "$(sids_l1boa)" ] ; then \
+     cd "$(sids_l1boa)"; \
+     $(MAKE) update; \
+   fi
+
+show_copy:
+	@echo "updated copy number $(COPY_NUMBER)"
+
+#----------------------- Bare target dependencies
+
+all: $(SUBDIRS)
+
+subdirs: $(SUBDIRS)
+
+install-all: install tools install-cfm install-fullcfm install-idlcfm
+
+update:
+
+# Make these source-file tools from the util directory
+tools: $(MLSTOOLS)
+
+.PHONY: all alltargets configure clean clean_config conv_uars\
+  configure_pvm configure_fopts configure_full configure_help configure_subdirs\
+  depends distclean disttar distarz distarg disthelp \
+  doc doc--api doc--toc extinctionmaker \
+  firsthelp  ghostbuster help--brief help--convert help--depends help--fopts\
+  help help--ghostbuster help--mlsconfigure --platform\
+  help--pvm help--reecho help--scripts help--toolkit \
+  install install-all install-cfm install-fullcfm \
+  install-l1 install-l2 install-l3 install-l3d install-l3m install-nrt \
+  internalcleanup internaldepends internalmftests \
+  internaladd_copy show_copy internalupdate levels \
+  mostlyclean partialclean $(SUBDIRS) subdirs\
+  substar substarz substarg substars tar targ tarz update\
+  nomlsmessagetar notoolkittar \
+  end_stmts Goldbrick_More \
+  lr Mie_Tables Mie_Tables_nohdf moonscan \
+  utctotai tools $(MLSTOOLS)
+  
+
+#---------------------------------------------------------------
+# $Log$
+# Revision 1.39  2024/01/18 22:14:38  pwagner
+# Ensure that install-nrt also installs needed tools
+#
+# Revision 1.38  2023/09/15 16:38:34  pwagner
+# Can now build ncl2gpcat tool
+#
+# Revision 1.37  2023/04/14 15:48:08  pwagner
+# Now able to build createattributes
+#
+# Revision 1.36  2023/03/16 16:22:37  pwagner
+# can now build the tool resetl2gpDOIs
+#
+# Revision 1.35  2023/01/19 23:20:29  pwagner
+# Can now build ncl2gpcat
+#
+# Revision 1.34  2022/12/21 00:17:37  pwagner
+# Can now build ncl2gpdump
+#
+# Revision 1.33  2022/12/08 19:00:23  pwagner
+# Can now build the ncl2gpdiff tool
+#
+# Revision 1.32  2022/09/16 21:15:59  pwagner
+# Added command to build l2gpdiffnc4
+#
+# Revision 1.31  2022/04/29 15:58:48  pwagner
+# Now able to build insertl2gpvalues
+#
+# Revision 1.30  2022/01/20 22:11:51  pwagner
+# Can now make resetl2gpvalues
+#
+# Revision 1.29  2020/04/27 17:07:05  pwagner
+# Light housekeeping
+#
+# Revision 1.28  2020/04/08 21:55:48  pwagner
+# Can now build l2gp2nc4
+#
+# Revision 1.27  2019/04/09 20:43:06  pwagner
+# New MLSStrings.f90 simplifies building w/o toolkit
+#
+# Revision 1.26  2019/01/18 18:51:40  pwagner
+# Updated lists of modules needed to build w/o toolkit
+#
+# Revision 1.25  2018/11/29 21:17:06  pwagner
+# install now cps instead of mving executables to INSTALLDIR
+#
+# Revision 1.24  2018/08/13 23:16:21  pwagner
+# Use MLSTOOLS; correct errors in install-mlstools
+#
+# Revision 1.23  2018/08/06 16:35:44  pwagner
+# Persevere when cleaning configurations
+#
+# Revision 1.22  2018/02/09 19:10:23  pwagner
+# Added build command for resetl2gpstatus
+#
+# Revision 1.21  2017/08/30 23:01:48  pwagner
+# A bare 'make' now makes 'all'
+#
+# Revision 1.20  2017/03/30 23:37:13  pwagner
+# Add install-mlstools target
+#
+# Revision 1.19  2017/01/05 18:45:04  pwagner
+# Changed method of disguising PseudoToolkit
+#
+# Revision 1.18  2017/01/05 01:01:42  pwagner
+# Now builds EC.. to EC..; must fix PseudoToolkit fiddling
+#
+# Revision 1.17  2016/12/20 17:47:08  pwagner
+# Repaired broken build commands for conv_uars and Dump_UARS_File; PseudoToolkit is troublesome
+#
+# Revision 1.16  2016/10/18 17:50:11  pwagner
+# Added targets to build tools and tarfiles without toolkit or without MLSMessage
+#
+# Revision 1.15  2016/10/04 00:31:11  pwagner
+# IHDFEOS5INC and IHDFEOSINC fixed
+#
+# Revision 1.14  2016/04/20 23:01:51  pwagner
+# Added l1bcat as a target; install-nrt also builds l2q
+#
+# Revision 1.13  2016/03/16 17:20:24  whdaffer
+# Added cat/touch Calibration.f9h to before/after moonscan build.
+#
+# Revision 1.12  2016/03/14 19:38:48  whdaffer
+# cat Calibration.f9h file instead of grepping
+#
+# Revision 1.11  2016/02/12 20:59:21  pwagner
+# install-l2 and install-nrt made more complete
+#
+# Revision 1.10  2015/11/18 21:44:09  pwagner
+# Repaired the help functionality; corrected and expanded comments
+#
+# Revision 1.9  2015/11/04 19:25:17  pwagner
+# Can build misalignment; EVERYTHINg includes conv_uars
+#
+# Revision 1.8  2015/08/25 21:55:33  pwagner
+# Omitted make depends, ghostbuster from internalmftests; restored
+#
+# Revision 1.7  2015/08/14 20:00:32  whdaffer
+# two small mods that Paul's fixes missed having to do with make moonscan
+#
+# Revision 1.6  2015/08/12 18:10:34  pwagner
+# Fixed some errors in make update
+#
+# Revision 1.5  2015/08/10 23:12:27  pwagner
+# After switching away from MakeFC
+#
+# Revision 1.155  2015/04/27 21:03:39  whdaffer
+# Moved copy of compile specific bin directories with make install-l1
+#
+# Revision 1.154  2015/04/23 17:52:31  whdaffer
+# Small changes to how L1 moonscan builds are done.
+#
+# Revision 1.153  2015/04/21 17:39:57  pwagner
+# Builds successfully with new sources in conv_uars
+#
+# Revision 1.152  2015/04/18 00:24:01  pwagner
+# Able to store two separate main programs in conv_uars
+#
+# Revision 1.151  2015/01/07 00:50:40  pwagner
+# Repaired build of moonscan
+#
+# Revision 1.150  2015/01/06 18:06:52  pwagner
+# Add commands to build moonscan versions of level 1
+#
+# Revision 1.149  2015/01/05 17:56:52  pwagner
+# Builds doc more reliably
+#
+# Revision 1.148  2014/08/05 00:14:19  pwagner
+# Try to get Makefiles to build lib before lr
+#
+# Revision 1.147  2014/06/24 22:45:50  quyen
+# Add build command for genmet
+#
+# Revision 1.146  2014/06/17 17:52:57  pwagner
+# Now builds conv_uars
+#
+# Revision 1.145  2014/05/27 18:42:58  pwagner
+# Added Parser_Tables_L2CF.f90 to CUSTOM_BUILDS
+#
+# Revision 1.144  2014/05/24 00:24:35  vsnyder
+# No longer need to make lib twice to make LR
+#
+# Revision 1.143  2014/01/29 21:01:56  pwagner
+# Shorten make update
+#
+# Revision 1.142  2014/01/22 18:21:41  pwagner
+# More changes, bug fixes
+#
+# Revision 1.141  2014/01/15 19:51:28  pwagner
+# Fixed bug where repository copy of mkpath.sh not executable
+#
+# Revision 1.140  2014/01/15 19:12:52  pwagner
+# Compatible with new lr
+#
+# Revision 1.139  2013/10/28 23:15:00  pwagner
+# May build lr
+#
+# Revision 1.138  2013/09/09 23:18:32  pwagner
+# Compute dependencies in srclib according to .mod-style
+#
+# Revision 1.137  2013/08/09 16:56:02  pwagner
+# Can build [Un]WrapList
+#
+# Revision 1.136  2013/06/05 18:58:10  pwagner
+# Should reverse hiding files in machines directory after calculating dependency
+#
+# Revision 1.135  2013/06/01 00:39:57  pwagner
+# Added l1bdump
+#
+# Revision 1.134  2013/01/14 21:19:06  pwagner
+# Make install depend on LEVELS
+#
+# Revision 1.133  2011/09/02 18:36:07  pwagner
+# Double-make workaround for tree_checker issue moved to l2
+#
+# Revision 1.132  2011/08/31 19:04:29  pwagner
+# clean now does a more thorough job
+#
+# Revision 1.131  2011/08/26 00:40:14  pwagner
+# Attempt to workaround tree_checker error in mlsl2
+#
+# Revision 1.130  2011/06/16 00:12:49  pwagner
+# Corrected syntax error in test for license.txt
+#
+# Revision 1.129  2011/05/16 22:35:13  pwagner
+# Added idlcfm
+#
+# Revision 1.128  2010/10/02 00:09:17  pwagner
+# Tries to automatically created shared libraries, too
+#
+# Revision 1.127  2010/10/01 20:23:46  pwagner
+# Hasty change to allow building init_gen
+#
+# Revision 1.126  2010/08/27 20:56:38  pwagner
+# Uses optional HDF*INC Makefile variables
+#
+# Revision 1.125  2010/08/20 23:40:52  pwagner
+# Can now build l2pcdump
+#
+# Revision 1.124  2010/06/29 20:11:34  pwagner
+# install-cfm also copies cfm.mod into INSTALLDIR
+#
+# Revision 1.123  2010/06/09 20:09:51  pwagner
+# New targets, install-cfm, install-fullcfm, install-all
+#
+# Revision 1.122  2010/05/06 17:44:51  pwagner
+# Mie_Tables again builds correctly
+#
+# Revision 1.121  2010/04/13 20:31:40  pwagner
+# Can now build tellMasterToQuit
+#
+# Revision 1.120  2010/04/12 23:33:07  pwagner
+# Tar up cfm and doc subdirectories, too
+#
+# Revision 1.119  2010/01/28 01:13:12  pwagner
+# install-nrt auto installs l1, l2
+#
+# Revision 1.118  2009/12/09 01:12:55  pwagner
+# l3 and l3m no longer built by default
+#
+# Revision 1.117  2009/11/30 19:27:16  pwagner
+# Should succeed even if some SUBDIRS missing
+#
+# Revision 1.116  2009/10/19 21:05:48  pwagner
+# Ignores L2PARALLEL; always install level 2 parallel executables
+#
+# Revision 1.115  2009/10/07 18:29:03  pwagner
+# Preparing to add callable forward model
+#
+# Revision 1.114  2009/09/18 19:55:49  pwagner
+# Able to build doc
+#
+# Revision 1.113  2009/09/02 22:06:58  pwagner
+# install-nrt made a target to install mlsnrt.sh
+#
+# Revision 1.112  2009/02/12 23:23:22  pwagner
+# Running mlspgs automatically prints license text
+#
+# Revision 1.111  2008/06/27 17:00:22  pwagner
+# Worked around Intel refusal to link when main program in c
+#
+# Revision 1.110  2008/05/22 17:36:07  pwagner
+# Added build commands for wrapLines, Mie_Tables
+#
+# Revision 1.109  2008/04/22 17:15:25  pwagner
+# installs ntk versions of l2 parallel scripts
+#
+# Revision 1.108  2008/04/10 20:21:05  pwagner
+# Can build Spartacus
+#
+# Revision 1.107  2007/03/23 22:30:55  pwagner
+# Fixed inadvertant commenting-out of utctotai_sources
+#
+# Revision 1.106  2007/03/23 00:34:15  pwagner
+# Corrected build command for l1--itm
+#
+# Revision 1.105  2007/01/18 23:47:37  pwagner
+# Added build commands for new tool dateconverter
+#
+# Revision 1.104  2006/11/22 20:45:02  pwagner
+# Should tar us scxripts directory as part of EVERYTHING
+#
+# Revision 1.103  2006/10/19 18:34:04  pwagner
+# Also copies scanner script into installdir to print chunk stats
+#
+# Revision 1.102  2006/08/23 00:01:07  pwagner
+# Corrected misspelled tool
+#
+# Revision 1.101  2006/08/10 23:05:43  pwagner
+# Added l2gpdump tool
+#
+# Revision 1.100  2006/06/28 00:17:05  pwagner
+# Added l2aucdump tool
+#
+# Revision 1.99  2006/05/24 20:42:30  pwagner
+# Added l2auxchi tool
+#
+# Revision 1.98  2006/04/03 23:08:18  pwagner
+# Improvements to install commands
+#
+# Revision 1.97  2006/04/01 01:11:07  pwagner
+# Moved l1 installation commands here
+#
+# Revision 1.96  2005/06/23 22:23:45  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.95  2005/05/31 17:44:05  pwagner
+# Added l1bdiff as build target
+#
+# Revision 1.94  2005/04/29 22:08:05  pwagner
+# Added l2auxcat build, tools target
+#
+# Revision 1.93  2004/12/14 21:27:59  pwagner
+# Added target to build l2q
+#
+# Revision 1.92  2004/09/15 18:12:18  pwagner
+# Added build commands for chunktimes
+#
+# Revision 1.91  2004/07/26 20:54:54  pwagner
+# Can build l2gpcat and diff w/o having built l1 first
+#
+# Revision 1.90  2004/07/22 19:54:25  pwagner
+# May now build l2gpdiff
+#
+# Revision 1.89  2004/06/03 18:28:19  pwagner
+# Avoided buggy install of parallels; print reminder to scp them
+#
+# Revision 1.88  2004/04/30 18:56:57  pwagner
+# Can build l2gpcat for knitting split dgg files
+#
+# Revision 1.87  2004/01/29 23:36:39  pwagner
+# Added make commands for WordSplit, killmaster, machineok
+#
+# Revision 1.86  2003/10/15 17:00:25  pwagner
+# Installs mlsl2p.sh slavetmplt.sh in (INSTALLDIR), too
+#
+# Revision 1.85  2003/09/30 00:10:11  pwagner
+# Added build of util/command
+#
+# Revision 1.84  2003/08/01 19:59:46  pwagner
+# installs l2 parallel executables into (PVM_EP) if (L2PARALLEL) set
+#
+# Revision 1.83  2003/06/03 20:38:24  pwagner
+# Renamed mkdir_cascade mkpath
+#
+# Revision 1.82  2003/05/06 20:38:51  pwagner
+# Fixed make update in tests sub dir
+#
+# Revision 1.81  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
+# Revision 1.80  2003/02/03 23:56:09  pwagner
+# New install for l1; separate installs available for each level
+#
+# Revision 1.79  2002/10/11 23:01:42  pwagner
+# Added doc--api and doc--toc targets
+#
+# Revision 1.78  2002/09/24 18:12:32  pwagner
+# Uses unique names for temp files
+#
+# Revision 1.77  2002/08/29 17:57:34  pwagner
+# Added build of MLS_h5ls; HDF5 is now requisite for all so cases removed for some only
+#
+# Revision 1.76  2002/08/23 20:34:25  pwagner
+# Uses temp_name instead of temp.dep
+#
+# Revision 1.75  2002/08/05 18:07:46  pwagner
+# turns main to MAIN__ if MLSF95 is Lahey
+#
+# Revision 1.74  2002/07/29 23:04:13  pwagner
+# Speedup by replacing mlsconfigure with updatemf.sh to update Makefile
+#
+# Revision 1.73  2002/07/26 20:43:18  pwagner
+# Adds cutomblds to machines.tar
+#
+# Revision 1.72  2002/07/26 19:51:42  pwagner
+# Repaired faulty tar targets
+#
+# Revision 1.71  2002/07/11 22:12:52  pwagner
+# Changes to support hdf5/hdfeos5
+#
+# Revision 1.70  2002/06/13 18:11:36  pwagner
+# Updates he5lib/CONFG/Makfile instead of rming it
+#
+# Revision 1.69  2002/05/13 17:59:45  pwagner
+# lib--hdf4 restores to lib stuff lost to l2--hdf5
+#
+# Revision 1.68  2002/05/10 20:29:28  pwagner
+# New targets xxx--hdf5 simplify building hdf5-savvy pges
+#
+# Revision 1.67  2002/04/29 17:37:20  pwagner
+# Can build concealed utctotai library
+#
+# Revision 1.66  2002/04/18 20:16:30  pwagner
+# Tiny changes in comments
+#
+# Revision 1.65  2002/02/21 21:55:42  pwagner
+# Sets to blank extra options in install
+#
+# Revision 1.64  2002/02/12 18:37:24  pwagner
+# Repaired builds for util executables; added h5cat
+#
+# Revision 1.63  2002/02/06 00:47:43  pwagner
+# Adds check for up-to-date machine files during update
+#
+# Revision 1.62  2002/01/29 00:46:47  pwagner
+# Builds he5lib when HDFVERSIONS defined
+#
+# Revision 1.61  2002/01/22 21:44:26  pwagner
+# Added commands to build heconvert
+#
+# Revision 1.60  2002/01/10 01:25:08  pwagner
+# Added he5lib to OTHER_SUBDIRS
+#
+# Revision 1.59  2001/11/17 00:21:41  pwagner
+# Individual help now available on platform, toolkit, pvm, and fopts
+#
+# Revision 1.58  2001/11/15 00:15:56  pwagner
+# Now builds blas/libmlspack.a explicitly
+#
+# Revision 1.57  2001/11/09 23:56:53  pwagner
+# Fixed problem with help--Makefile
+#
+# Revision 1.56  2001/11/09 21:47:08  pwagner
+# EVERY_MLSCONFG now calculated--allows for custom-named configs
+#
+# Revision 1.55  2001/11/08 00:39:14  pwagner
+# New help system; mention of NOCLEANING where appropriate
+#
+# Revision 1.54  2001/11/06 00:21:34  pwagner
+# Set MAX_COPIES to 1; make help brought up to date
+#
+# Revision 1.53  2001/10/18 16:43:37  pwagner
+# Removed target convert_spectroscopy anticipating its removal from util
+#
+# Revision 1.52  2001/10/10 23:29:14  pwagner
+# Fixed bug when upfating sids
+#
+# Revision 1.51  2001/10/10 23:24:51  pwagner
+# sids/l1boa added to list of extra directories to be updated
+#
+# Revision 1.50  2001/10/04 22:24:49  pwagner
+# Limit suffix-based rules to (MLSCONFG)
+#
+# Revision 1.49  2001/09/07 18:12:29  pwagner
+# Tweaked the tar command
+#
+# Revision 1.48  2001/08/17 23:16:54  pwagner
+# Fixed bug in build commands for h5subset
+#
+# Revision 1.47  2001/08/16 00:11:34  pwagner
+# Added hl to list of new targets
+#
+# Revision 1.46  2001/08/15 20:59:27  pwagner
+# util programs now installed in INSTALLDIR
+#
+# Revision 1.45  2001/08/14 23:56:40  pwagner
+# Added builds for all util/.f90 and util/.c
+#
+# Revision 1.44  2001/08/14 22:39:59  pwagner
+# There was no mkpath
+#
+# Revision 1.43  2001/08/11 00:10:33  pwagner
+# More housekeeping
+#
+# Revision 1.42  2001/08/10 17:43:40  pwagner
+# Fixed -h(elp) option; general housekeeping
+#
+# Revision 1.41  2001/08/07 20:59:03  pwagner
+# install now creates script versions; defines MLSHOME
+#
+# Revision 1.40  2001/07/26 23:09:25  pwagner
+# Added MLSINSTALLDIR, INSTALLDIR as destination for install
+#
+# Revision 1.39  2001/07/25 22:48:20  pwagner
+# fixed install target; general housekeeping
+#
+# Revision 1.38  2001/07/20 00:03:17  pwagner
+# Added l3m to LEVELS
+#
+# Revision 1.37  2001/06/01 20:11:50  pwagner
+# Fixed configure_full
+#
+# Revision 1.36  2001/05/31 23:26:57  pwagner
+# Ended role of l2_NEEDS_fwdmdl; cloudfwdm prereq of l2
+#
+# Revision 1.35  2001/05/30 17:39:18  pwagner
+# Added cloudfwdm to OTHER_SUBDIRS
+#
+# Revision 1.34  2001/05/24 17:14:01  pwagner
+# Added notes to EVERYTHING to be tarred up
+#
+# Revision 1.33  2001/05/14 23:58:42  pwagner
+# default .configure name now set by environment
+#
+# Revision 1.32  2001/05/14 17:37:14  pwagner
+# .configure now a variable file name
+#
+# Revision 1.31  2001/05/01 18:31:07  pwagner
+# Automatically update after any configure
+#
+# Revision 1.30  2001/04/18 22:20:25  pwagner
+# Removed dependence of tar on clean_all
+#
+# Revision 1.29  2001/03/23 21:40:41  pwagner
+# Stopped using internal_copy_number
+#
+# Revision 1.28  2001/03/23 17:12:39  pwagner
+# Realized mistake--cvs will corrupt this version
+#
+# Revision 1.27  2001/03/23 00:39:49  pwagner
+# Added internal targets, copy number, etc.
+#
+# Revision 1.26  2001/03/17 00:56:25  pwagner
+# Added new help; makefilesintests
+#
+# Revision 1.25  2001/03/12 22:46:57  pwagner
+# Revised clean, tar; automatic symlink to Makefile
+#
+# Revision 1.24  2001/03/09 00:18:40  pwagner
+# CVS excluded from tar_sips
+#
+# Revision 1.23  2001/03/08 23:26:41  pwagner
+# The effect of no .configure is to configure_full
+#
+# Revision 1.22  2001/03/08 21:08:01  pwagner
+# Tweaked EVERYTHING
+#
+# Revision 1.21  2001/03/08 20:59:53  pwagner
+# Added TAR=... option
+#
+# Revision 1.20  2001/03/08 00:53:21  pwagner
+# l2_NEEDS_fwdmdl now set by default
+#
+# Revision 1.19  2001/03/05 21:53:26  pwagner
+# fwdmdl prerequisite to l2 if l2_NEEDS_fwdmdl
+#
+# Revision 1.18  2001/03/02 01:06:19  pwagner
+# lib part of automatic targets
+#
+# Revision 1.17  2001/02/27 18:13:37  pwagner
+# New help configure_help targets; tweaks to all, subdirs targets
+#
+# Revision 1.16  2001/02/26 00:28:09  pwagner
+# configure_pvm and configure_fopts targets added
+#
+# Revision 1.15  2001/02/10 00:06:47  pwagner
+# update now a target of make -f MakeFC; replaces customized Makefiles with latest versions
+#
+# Revision 1.14  2001/02/09 21:46:43  pwagner
+# Eliminated l2pc from other_subdirs
+#
+# Revision 1.13  2001/01/23 19:16:26  pwagner
+# #-ed out loop over subdirs when configuring
+#
+# Revision 1.12  2001/01/16 21:31:18  pwagner
+# clean_all option added
+#
+# Revision 1.11  2001/01/13 00:42:09  pwagner
+# Mentions mlspgs_sips.tgz and mlspgs_subs.tar
+#
+# Revision 1.10  2001/01/12 00:30:18  pwagner
+# Added tar_sips and install options
+#
+# Revision 1.9  2001/01/10 23:45:33  pwagner
+# General housekeeping
+#
+# Revision 1.8  2001/01/05 22:55:15  pwagner
+# Added all option to build all
+#
+# Revision 1.7  2000/11/28 00:49:59  pwagner
+# configure now configures subdirs
+#
+# Revision 1.6  2000/11/15 18:22:10  pwagner
+# Now can make all of l1 l2 l3
+#
+# Revision 1.5  2000/11/06 23:26:58  pwagner
+# Calculates srclib dependency
+#
+# Revision 1.4  2000/11/02 23:23:45  pwagner
+# clean_objs option now available
+#
+# Revision 1.3  2000/10/24 21:08:22  pwagner
+# Added tar option
+#
+# Revision 1.2  2000/10/23 17:16:34  pwagner
+# Remove extra echo commands
+#
+# Revision 1.1  2000/10/18 21:57:35  pwagner
+# First commit
+#

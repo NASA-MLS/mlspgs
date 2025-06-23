@@ -1,0 +1,4 @@
+begin Output
+    l2cf: Boolean, formula="l2cf", /evaluate, /literal
+end Output
+

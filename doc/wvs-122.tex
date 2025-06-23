@@ -1,0 +1,189 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-122}
+\newcommand{\docdate}{8 April 2015}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\Delta B}
+\newcommand{\oDB}{\overline{\DB}}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\hMT}{\MT^s}
+\newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Paul, Michael, Van\\
+Subject: \>Computing cross-orbit viewing geometry\\
+From: \>Van Snyder\\
+Reference: \> \h{wvs-121}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Let $\mathbf{S}_m$ be the spacecraft position vector, and $\mathbf{T}_m$
+be the tangent point position vector, for MIF $m$ of an arbitrary MAF. 
+Then a vector that is normal to the plane defined by those vectors is
+
+\begin{equation}
+\mathbf{n} = \mathbf{S}_m \times \mathbf{T}_m \,.
+\end{equation}
+
+To calculate a position in the cross-orbit view from $\mathbf{S}_m$ to
+$\mathbf{T}_m$, rotate $\mathbf{T}_m$ about $\mathbf{n}$ by an amount
+specified by an angle $r$ taken from an {\tt xGrid} coordinate for the
+basis of the quantity to be described (for example, the magnetic field),
+using the method described in \h{wvs-121}.  Denote an unit vector in that
+direction by $\hat{\mathbf{T}}_{mr}$.  Then the vector to the rotated
+position, along the line of sight from $\mathbf{S}_m$ to $\mathbf{T}_m$,
+is
+
+\begin{equation}
+\mathbf{T}_{mr} = |\mathbf{T}_m| \sec r \,.
+\end{equation}
+
+The line from $\mathbf{S}_m$ to $\mathbf{T}_m$ passes through the points
+$\mathbf{T}_{mr}$ for all values of $r$.  The set of those lines for all
+MIFs in a MAF define a ruled surface in which viewing takes place; this
+surface would be a plane if the scan rate were constant.
+
+If a quantity, such as magnetic field, is desired to be evaluated in that
+surface, at specified altitudes, the geolocations of the desired points,
+denoted $\mathbf{G}_{jr}$ for altitude $j$ could be calculated by
+interpolating latitude and longitude in the subset $\{\mathbf{T}_{mr}\}$
+for each $r$, from $\{|\mathbf{T}_{mr}|\}$ to the set of desired
+altitudes $\{A_j\}$.
+
+Interpolating in latitude and longitude is probably sufficiently accurate
+near the equator, but might become significantly inaccurate near the most
+nearly polar positions of the orbit.  Extrapolating in latitude and
+longitude is probably always problematic.  Therefore, the vector
+$\mathbf{G}_{jr}$ ought to be computed by interpolating the three
+geocentric Cartesian coordinates (in ECR) of $\{\mathbf{T}_{mr}\}$ from
+$\{|\mathbf{T}_{mr}|\}$ to $A_j$.
+
+To carry out interpolation, the desired geolocations need to be expressed
+in geocentric Cartesian coordinates (in ECR).  If the desired heights are
+specified as geodetic heights instead of geocentric altitudes, these need
+to be converted to geocentric altitudes.  This is done by calculating the
+geocentric altitude of the Earth's surface, and then adding the geodetic
+height.  This isn't quite right, as the geodetic height is measured along
+the normal to the Earth's surface at the specified geodetic latitude,
+while the geocentric altitude is measured along a line from the center of
+the Earth, but the error is probably small.  If the resulting
+co{\"o}rdinates are used to calculate a magnetic field, the error in the
+magnetic field is almost surely small.
+
+For a particular value of $r$, the set of points $\mathbf{T}_{mr}$ would
+be on a straight line if the scan rate were constant.  If we extrapolate
+linearly from the two shortest values of $|\mathbf{T}_{mr}|$ to altitudes
+$A_j$ that are below the range of values of $|\mathbf{T}_{mr}|$, and from
+the two longest values of $|\mathbf{T}_{mr}|$ to altitudes $A_j$ that are
+above the range of values of $|\mathbf{T}_{mr}|$, this amounts to an
+assumption that the scan rate would be constant outside the ranges of
+altitudes $\{A_j\}$, if the tangent point altitudes were to encompass the
+altitudes $\{A_j \cos r \}$.  In practice this has proven to be extreme,
+as the scan rate for the first or last MIF, as indicated by the difference
+between tangent heights, might be significantly different from the local
+average scan rate.  This results in significant extrapolation error. 
+Therefore, extrapolation is performed using the average slope of
+components of $\mathbf{T}_{mr}$, computed from the top and bottom tangent
+altitudes of the longest subsequence of MIFs in the MAF at monotonic
+tangent altitudes. Denote the tangent altitudes with $h$, and the top and
+bottom with superscript $t$ and $b$, respectively.  Then the difference
+quotient used for extrapolation is
+
+\begin{equation}
+\frac{\mathbf{T}^t_{mr} - \mathbf{T}^b_{mr}}
+     {h^t - h^b} \,.
+\end{equation}
+
+Alternatives are:
+
+\begin{itemize}
+\item Use a least-squares fits to a straight line.
+\item Average the individual difference quotients between consecutive MIFs.
+\item If the scan rate is nonuniform, use least-squares fits to two
+straight lines and solve for where the break ought to be (this is a
+nonlinear problem).
+\item If the scan rate is nonuniform, use a least-squares fit to a
+parabola and extrapolate with straight lines using the slopes of the
+parabola at the ends of the range of the longest subsequence of MIFs in
+the MAF at monotonic tangent altitudes.
+\end{itemize}
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$

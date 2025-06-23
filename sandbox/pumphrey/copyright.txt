@@ -1,0 +1,5 @@
+! Copyright (c) 1999 the University of Edinburgh. All rights reserved 
+! U.K. Government funding under NERC contract F14/6/33 acknowledged. 
+!(If Caltech and NASA do this, we're going to as well, so there.)
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 also acknowledged.
+ 

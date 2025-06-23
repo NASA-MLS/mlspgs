@@ -1,0 +1,175 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\settowidth{\hW}{\bf wvs-022r1}
+%\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    21 May 2019\hfill\parbox[t]{\hW}{{\bf wvs-022r1}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Spectroscopy derivatives\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+The absorption is
+
+ \begin{equation}\begin{split}
+  \beta =\,& G H 
+ \text{ where }\\
+  G =\,& S_1 \tanh \left( \frac{h \nu}{2 k T} \right) \frac{\nu}{\nu_0}\,,
+  H = (H_1 + H_2)\,,
+  H_1 = u + y_i v\,, 
+  H_2 = \frac{n}{\sqrt\pi d}\,\\
+  n =\,& y - x_1 \sigma y_i\,, d = x_1^2 \sigma^2 + y^2,\,
+  \sigma = \nu + {\nu_0}_s\,,\\
+  w(z) =\,& u + i v = \exp(-z^2) \, \text{erfc}(-iz)\,,
+  z = x + i y\,, x = x_1(\nu - {\nu_0}_s)\,,\\
+  x_1 =\,& \frac{\sqrt{\ln 2}}{\nu_0 d_c} \sqrt{\frac{m}T}\,,
+  y = x_1 w p \left(\frac{300}T\right)^n \text{ and }
+  {\nu_0}_s = v_c \left[ \nu_0 + p_s p \left(\frac{300}T\right)^{n_s} \right]\,.
+ \end{split}\end{equation}
+
+ The derivatives w.r.t $w$ and $n$ are very similar:
+\begin{equation}
+ \frac{\partial \beta}{\partial w} =
+ \frac{\partial \beta}{\partial y} \frac{\partial y}{\partial w} =
+ \frac{y}{w} \frac{\partial \beta}{\partial y} =
+ \frac{y}{w}\, G\, \frac{\partial H}{\partial y} \text{ and }
+ \frac{\partial \beta}{\partial n} =
+ \frac{\partial \beta}{\partial y} \frac{\partial y}{\partial n} =
+ y\, \frac{300}T\, G\, \frac{\partial H}{\partial y}
+\end{equation}
+
+where
+
+\begin{equation}
+ \frac{\partial H}{\partial y} =
+   \frac{\partial u}{\partial y} + y_i\frac{\partial v}{\partial y} +
+   \frac1{\sqrt\pi d} \frac{\partial n}{\partial y} -
+   \frac{n}{\sqrt\pi d^2} \frac{\partial d}{\partial y}=
+   \frac{\partial u}{\partial y} + y_i\frac{\partial v}{\partial y}
+   + \frac1d \left(\frac1{\sqrt\pi} - 2 y H_2 \right)\,,
+\end{equation}
+
+and, by applying the Cauchy-Riemann equations
+
+\begin{equation}
+ \frac{\partial u}{\partial y} = - \frac{\partial v}{\partial x} =
+ - \Im\, \frac{\partial z}{\partial x} \frac{\text{d} w}{\text{d} z} =
+ - \Im\, \frac{\text{d} w}{\text{d} z} \text{ and }
+ \frac{\partial v}{\partial y} = \frac{\partial u}{\partial x} =
+   \Re\, \frac{\partial z}{\partial x} \frac{\text{d} w}{\text{d} z} =
+   \Re\, \frac{\text{d} w}{\text{d} z}\,.
+\end{equation}
+
+Using $\frac{\text{d} w}{\text{d} z} = - 2 z w + \frac{2i}{\sqrt{\pi}}$,
+
+\begin{equation}
+ \frac{\partial u}{\partial y} = - \Im\, \frac{\text{d} w}{\text{d} z} =
+ 2 \Im\, (zw) - \frac2{\sqrt{\pi}} \text{ and }
+ \frac{\partial u}{\partial v} = \Re\, \frac{\text{d} w}{\text{d} z} =
+ -2 \Re\, (zw)\,.
+\end{equation}
+
+\newpage
+The derivative w.r.t. $\nu_0$ is more complicated:
+
+\begin{equation}\begin{split}
+ \frac{\partial \beta}{\partial \nu_0} =\,&
+  \beta \left( \frac1{S_1} \frac{\partial S_1}{\partial \nu_0} -
+               \frac1{\nu_0} \right) + G \frac{\partial H}{\partial \nu_0} =
+ \frac\beta{S_1}\frac{\partial S_1}{\partial \nu_0} - \frac{G H_1}{\nu_0} -
+ \frac{G H_2}{\nu_0} + G \frac{\partial H_1}{\partial \nu_0} +
+                       G \frac{\partial H_2}{\partial \nu_0}\,.\\
+ \frac{\partial H_1}{\partial \nu_0} =\,& \Re \frac{\partial w}{\partial \nu_0} +
+ y_i \Im \frac{\partial w}{\partial \nu_0}\,.\,\,
+ \text{ Using the chain rule and } z = x_1 ( \nu - {\nu_0}_s ) + i y\,,\\
+ \frac{\partial w}{\partial \nu_0} =\,&
+  \frac{\text{d} w}{\text{d} z} \frac{\partial z}{\partial \nu_0}
+ = (a + i b ) \left( \frac{\partial x}{\partial \nu_0} +
+                      i \frac{\partial y}{\partial \nu_0} \right)
+ = a \frac{\partial x}{\partial \nu_0} - b \frac{\partial y}{\partial \nu_0}
+ + i \left[ b \frac{\partial x}{\partial \nu_0} + a \frac{\partial y}{\partial \nu_0}
+     \right] \text{, and}\\
+\frac{\partial H_1}{\partial \nu_0}
+ =\,& a \frac{\partial x}{\partial \nu_0} - b \frac{\partial y}{\partial \nu_0}
+ + y_i \left[ b \frac{\partial x}{\partial \nu_0} + a \frac{\partial y}{\partial \nu_0}
+     \right]\,,
+ \text{ where}\\
+a =\,& \Re \frac{\text{d} w}{\text{d} z}\,,
+b =    \Im \frac{\text{d} w}{\text{d} z}\,,
+\frac{\partial y}{\partial \nu_0} = -\frac{y}{\nu_0}\,,
+\frac{\partial x_1}{\partial \nu_0} = -\frac{x_1}{\nu_0}\,,
+\frac{\partial {\nu_0}_s}{\partial \nu_0} = v_c \text{ and } \\
+\frac{\partial x}{\partial \nu_0}
+ =\,& \frac{\partial x_1}{\partial \nu_0} (\nu - {\nu_0}_s)
+   - x_1 \frac{\partial {\nu_0}_s}{\partial \nu_0} =
+   -\frac{x}{\nu_0} - x_1 v_c\,.
+\end{split}\end{equation}
+
+\begin{equation}\begin{split}
+ \frac{\partial H_2}{\partial \nu_0} =\,&
+  \frac1{\sqrt\pi d}\frac{\partial n}{\partial \nu_0} -
+  \frac{n}{\sqrt\pi d^2}\frac{\partial d}{\partial \nu_0}\,.\\
+ \frac{\partial n}{\partial \nu_0} =\,& \frac{\partial y}{\partial \nu_0} -
+  \frac{\partial x_1}{\partial \nu_0} \sigma y_i -
+  x_1 \frac{\partial \sigma}{\partial \nu_0} y_i -
+  x_1 \sigma \frac{\partial y_i}{\partial \nu_0} =
+  -\frac{y}{\nu_0} + \frac{x_1}{\nu_0} \sigma y_i
+   - x_1 \frac{\partial {\nu_0}_s}{\partial \nu_0} y_i - 0 \\
+  =\,& -\frac{n}{\nu_0} - x_1 v_c y_i\,.\\
+ \frac{\partial d}{\partial \nu_0} =\,&
+  2 x_1 \frac{\partial x_1}{\partial \nu_0} \sigma^2
+  + 2 x_1^2 \sigma \frac{\partial \sigma}{\partial \nu_0}
+  + 2 y \frac{\partial y}{\partial \nu_0} =
+ -2\frac{x_1^2 \sigma^2}{\nu_0} - 2 x_1^2 \sigma v_c
+  -2 \frac{y^2}{\nu_0}\\
+ =\,& -2\frac{d}{\nu_0} - 2 x_1^2 \sigma v_c\,. \text{ Thus}\\
+ \frac{\partial H_2}{\partial \nu_0} =\,&
+  -\frac{n}{\sqrt\pi d \nu_0} -\frac{x_1 v_c y_i}{\sqrt\pi d}
+  +\frac{n}{\sqrt\pi d^2}\left(\frac{2 d}{\nu_0} + 2 x_1^2 \sigma v_c \right)\\
+ =\,& \frac{H_2}{\nu_0} - \frac{x_1 v_c y_i}{\sqrt\pi d}
+  +2 H_2 \frac{x_1^2 \sigma v_c}d\,.\\
+\end{split}\end{equation}
+
+Noticing that the $\frac{G H_2}{\nu_0}$ terms arising from
+$\frac{\partial G}{\partial \nu_0} H_2$ and
+$G \frac{\partial H_2}{\partial \nu_0}$ cancel, we finally have
+
+\begin{equation}
+\frac{\partial \beta}{\partial \nu_0} =
+ \beta \frac1{S_1} \frac{\partial S_1}{\partial \nu_0}
+  - G \left[\frac{H_1}{\nu_0} - \frac{\partial H_1}{\partial \nu_0}
+   + \frac{x_1 v_c}d
+    \left( \frac{y_i}{\sqrt\pi}- 2 H_2 x_1 \sigma \right) \right]\,.
+\end{equation}
+
+\label{lastpage}
+\end{document}
+% $Id$
+
+% $Log$

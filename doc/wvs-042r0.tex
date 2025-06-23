@@ -1,0 +1,76 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.2in
+
+\newcommand{\docname}{\bf wvs-042}
+\newcommand{\docdate}{8 September 2006}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>$H$--$\phi$ iteration in {\tt metrics}\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The present version of {\tt metrics} uses $H_{\text{ref}}$ and
+$\phi_{\text{basis}}$ to estimate $H$ and $\phi$ along the limb ray by using
+the following iteration:
+
+Guess $H$ and $\phi$ for each $\zeta$ along the limb ray\\
+{\bf do}\\
+\hspace*{0.25in} Interpolate in $H_{\text{ref}}$ using $\phi$ and
+  $\phi_{\text{basis}}$ to get a new $H$\\
+\hspace*{0.25in} Compute new $\phi := \cos^{-1} \frac{H_t}H$\\
+{\bf until} $H$ doesn't change much
+
+$H_{\text{ref}}$ is a two-dimensional array, having a number of rows that is the
+same as the maximum size of $\zeta$ and a number of columns equal to the
+size of $\phi_{\text{basis}}$.
+
+Rather than interpolate in $H_{\text{ref}}$ using $\phi$ and
+$\phi_{\text{basis}}$, I computed a new coordinate $H_{\text{basis}} := H_t
+\sec \phi_{\text{basis}}$, because $H_{\text{ref}}$ should be linear in that
+coordinate, and used the following simpler iteration:
+
+Compute $H = \frac{H_t}{\zeta_t}\zeta$\\
+{\bf do}\\
+\hspace*{0.25in} Interpolate in $H_{\text{ref}}$ using $H$ and $H_{\text{basis}}$
+to get a new $H$\\
+{\bf until} $H$ doesn't change much\\
+Compute $\phi := \cos^{-1} \frac{H_t}H$
+
+This always converges in one iteration.
+
+\label{lastpage}
+\end{document}
+% $Id$

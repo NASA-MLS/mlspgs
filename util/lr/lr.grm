@@ -1,0 +1,78 @@
+; Grammar for grammar
+
+; Semicolon not within a string enclosed in quotes or apostrophes
+; introduces a comment, which continues to the end of the line.
+
+; Define the terminal symbols using names from your Symbol_Types module.
+; The syntax is "grammar term = symbol name".  "grammar term" can be
+; either a name, or a string enclosed in quotes or apostrophes.
+
+'='    = t_equal
+'->'   = t_produces
+'=>'   = t_generates
+'?'    = t_question
+EOS    = t_eos
+EOG    = t_end_of_input ; EOG is generated; the parser assumes it is defined
+name   = t_identifier
+number = t_number
+string = t_string
+
+; Now the productions.  The syntax for one production is
+; LHS ( -> RHS ( => ACT '?' ? ) ? EOS )+
+; where LHS is a nonterminal symbol,
+;       RHS is a sequence of terminal and nonterminal symbols,
+;       ACT is the name of a tree node from your Tree_Types module, or a
+;           number,
+;       EOS means "end of statement", which is end of line or the
+;           beginning of a comment, unless the production is continued by
+;           a "$"
+;       '?' means "do the action only if the RHS generated more than one
+;           tree node,
+;       ? means "can appear zero or one times, and
+;       + means "can appear more than one time.
+
+; A comment beginning with semicolon continues to the end of the line.
+; If it appears and "$" does not appear before it, it is an end of statement.
+
+grammar -> item
+        -> grammar item
+
+item -> EOS
+     -> vocab
+     -> production
+
+vocab -> thing '=' name EOS => n_equal
+
+production -> lhs rhss => n_production
+
+lhs -> name
+    -> string
+
+rhss -> rhs
+     -> rhss rhs
+
+rhs -> rhs_alone EOS
+    -> rhs_alone act EOS => n_generates
+
+rhs_alone -> '->' => n_rhs
+          -> '->' things => n_rhs
+
+things -> thing
+       -> things thing
+
+thing -> name
+      -> number
+      -> string
+
+act -> '=>' action
+    -> '=>' action '?' => n_question
+
+action -> name
+       -> number
+
+; $Id$
+
+; $Log$
+; Revision 1.2  2014/01/14 00:19:16  vsnyder
+; Added CVS comments
+;

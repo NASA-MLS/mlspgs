@@ -1,0 +1,111 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+!  subroutine Monotonize_1dr4( values, Period, FillValue, strict )
+!     Make values montonically increasing by interpolating to next higher value
+!     Wherever values are < max(previous values)
+!     If you wish to make values monotonically decreasing, create
+!     a new array negvalues = - values
+!     and pass negvalues in as the arg
+!     The optional arg Period is used in cases like angles
+!     where the values may "wrap" around by + or - 360
+!     Note that abs(Period) must be larger than twice the expected proper
+!     increment for it to be treated sensibly
+!     ! Args
+!     real(r4), dimension(:), intent(inout) :: values
+!     real(r4), optional, intent(in) :: Period
+!     real(r4), optional, intent(in) :: FillValue
+!     ! Internal variables
+!     real(r4) :: dx
+!     real(r4) :: x1
+!     real(r4) :: x2
+    integer :: i
+    integer :: i1
+    integer :: i2
+    integer :: ib
+    integer :: iStart
+    logical :: myStrict
+    integer :: n ! Number of Periods separating successive values
+    logical :: stillTooLow
+    ! Executable
+    iStart = 1
+    if ( present(FillValue) ) then
+      iStart = FindFirst( values /= FillValue )
+      if ( iStart < 1 ) return ! How could every element be a FillValue?
+      if ( iStart >= size(values) ) return ! Another pathological case
+    endif
+    myStrict = .false.
+    if ( present(strict) ) myStrict = strict
+    dxmin = maxval(values) - minval(values)
+    if ( present(Period) .and. size(values) > 1 ) then
+      do i=2, size(values)
+        if ( isFillValue(values(i), FillValue, strict=.true.) .or. &
+          & isFillValue(values(i-1), FillValue, strict=.true.) ) then
+          ! Don't mess with FillValues
+        elseif ( 2*abs(values(i) - values(i-1)) > Period ) then
+          ! Next value is too far away--we'll subtract n*Period from it
+          n = roundUpOrDown( (values(i) - values(i-1)) / ( Period*1.d0 ) )
+          values(i) = values(i) - n*Period
+        endif
+      enddo
+    endif
+    x1 = minval(values)
+    dx = 0
+    stillTooLow = .false.
+    do i=iStart, size(values)
+      if ( stillTooLow ) then
+        if ( values(i) < x1 ) cycle
+        i2 = i
+        x2 = values(i)
+        dx = (x2 - x1) /max(1, i2-i1)
+        if ( dx > 0 ) dxmin = min(dxmin, dx)
+        do ib=i1+1, i2-1
+          values(ib) = x1 + (ib-i1)*dx
+        enddo
+        i1 = i2
+        x1 = x2
+        stillTooLow = .false.
+      elseif ( values(i) < x1 ) then
+        stillTooLow = .true.
+      else
+        dx = values(i) - x1
+        if ( dx > 0 ) dxmin = min(dxmin, dx)
+        i1 = i
+        x1 = values(i)
+      endif
+    enddo
+    ! Handle cases where
+    ! (1)  ! In case we ended on a down note(s)
+    if ( myStrict ) dx = dxMin
+    if ( StillTooLow ) then
+      do i=i1+1, size(values)
+        values(i) = x1 + (i-i1)*dx
+      enddo
+    endif
+    ! (2) We started with fill values
+    if ( iStart > 1 ) then
+      do i=1, iStart-1
+        values(i) = values(iStart) - (iStart-i)*dx
+      enddo
+    endif
+!  end subroutine Monotonize_1dr4
+
+! $Log$
+! Revision 1.2  2008/03/07 01:39:28  pwagner
+! Consider optional arg Period before monotonizing
+!
+! Revision 1.1  2005/08/15 20:36:16  pwagner
+! First commit
+!
+! Revision 1.1  2005/08/05 20:31:22  pwagner
+! First commit
+!

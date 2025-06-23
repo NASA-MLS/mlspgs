@@ -1,0 +1,182 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+\usepackage{wasysym}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-126}
+\newcommand{\docdate}{15 September 2015}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Calculate node of great circle and angular distance from a node\\
+From: \>Van Snyder\\
+%Reference: \>
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\section*{Introduction}
+Consider a great circle defined by two points $P_1(\phi_1,\lambda_1)$ and
+$P_2(\phi_2,\lambda_2)$ where $\phi_i$ is latitude and $\lambda_i$ is
+longitude.  It is desired to know the arc $\sigma_{01}$ along the great
+circle from the point $\ascnode(0,\lambda_0)$ where the great circle
+crosses the equator, and the longitude $\lambda_0$ of that point.
+
+There are at least two ways to compute $\lambda_0$.
+
+\section*{Spherical trigonometry}
+
+\begin{floatingfigure}[l]{3in}
+\includegraphics{wvs-126-1}
+\end{floatingfigure}
+
+First, compute the heading $\alpha_1$ from $P_1$ to $P_2$:
+
+\begin{equation}
+\tan\alpha_1 = \frac{\sin\lambda_{12}}
+                    {\cos\phi_1 \tan\phi_2 - \sin\phi_1 \cos\lambda_{12}}
+\end{equation}
+
+The heading $\alpha_0$ at $\ascnode$ is given by the sine rule:
+
+\begin{equation}
+\sin\alpha_0 = \sin\alpha_1 \cos\phi_1
+\end{equation}
+
+To obtain more accurate results, particularly when $|\alpha_0| \approx
+\pi/2$, use instead
+
+\begin{equation}
+\tan\alpha_0 = \frac{\sin\alpha_1 \cos\phi_1}
+                    {\sqrt{ \cos^2\alpha_1 + \sin^2\alpha_1 \sin^2\phi_1}}
+\end{equation}
+
+The angular distance $\sigma_{01}$ along the great circle from $\ascnode$
+to $P_1$ can be found from Napier's rules:
+
+\begin{equation}
+\tan \sigma_{01} = \frac{\tan\phi_1}{\cos\alpha_1}
+\,\, \text{If } \phi_1 = 0 \text{ and } |\alpha_1| = \pi/2 \text{, use }
+\sigma_{01} = 0
+\end{equation}
+
+The difference of longitudes $\lambda_{01}$ between $\ascnode$ and $P_1$
+is found from
+
+\begin{equation}
+\tan\lambda_{01} = \frac{\sin\alpha_0 \sin\sigma_{01}}{\cos\sigma_{01}}
+                 = \sin\alpha_0 \tan\sigma_{01}
+\end{equation}
+
+Finally, the longitude $\lambda_0$ at $\ascnode$ is $\lambda_1 -
+\lambda_{01}$.
+
+\section*{Vectors}
+
+Consider the vector $\mathbf{n}$, a unit normal at the center of the plane
+of the great circle containing $P_1$ and $P_2$.  Rotate that plane about
+the line containing its nodes $\ascnode$ and $\descnode$ (i.e., where the
+circle intersects the equator) until $\mathbf{n}$ is on the equator.  The
+vector $\mathbf{n}$ is perpendicular to the plane of the great circle, and
+therefore perpendicular to the line connecting $\ascnode$ and
+$\descnode$.  Therefore, rotating the plane about that line does not
+change the longitude $\lambda_n$ of $\mathbf{n}$.  Therefore, when
+$\mathbf{n}$ reaches the equator, $\lambda_0 = \lambda_n \pm \frac\pi2$.
+
+Let the co\"ordinates of $\mathbf{n}$ be $(x_n, y_n, z_n)$.  Therefore,
+$\lambda_n = \tan^{-1} \frac{y_n}{x_n}$, $\lambda_0 = \lambda_n \pm
+\frac\pi2 = \tan^{-1} \left( \frac{-x_n}{y_n} \right)$ or $\tan^{-1}
+\left( \frac{x_n}{-y_n} \right)$, and the co\"ordinates of $\ascnode$ and
+$\descnode$ are $(y_n, -x_n, 0)$ and $(-y_n, x_n, 0)$.  For our purposes,
+all we need is a consistent co\"ordinate along the great circle from $P_1$
+to $P_2$, without regard to which node is $\ascnode$ and which is
+$\descnode$, so either solution is usable.  Let $\mathbf{n}_{\ascnode}$ be
+the unit vector to $\ascnode$, e.g., $(y_n, -x_n, 0)$, let $\mathbf{p}_1 =
+(x_1, y_1, z_1)$ and $\mathbf{p}_2 = (x_2, y_2, z_2)$ be the unit vectors
+toward $P_1$ and $P_2$, respectively.  Then the angular distances of $P_1$
+and $P_2$ along the great circle containing them, measured from one of the
+equator crossings, are $\psi_1 = \cos^{-1} \left( \mathbf{n}_{\ascnode}
+\cdot \mathbf{p}_1 \right) = \cos^{-1} \left( x_1 y_n - x_n y_1 \right)$
+and $\psi_2 = \cos^{-1} \left( \mathbf{n}_{\ascnode} \cdot \mathbf{p}_2
+\right) = \cos^{-1} \left( x_2 y_n - x_n y_2 \right)$.
+
+The unit normal $\mathbf{n}$ is computed by the forward model in order to
+compute the azimuth of the viewing plane from the orbit plane.  Therefore,
+the vector method is more attractive than the spherical trigonometry
+method.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
+
+% $Log$

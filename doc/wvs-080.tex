@@ -1,0 +1,102 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-080r3}
+\newcommand{\docdate}{5 October 2009}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>TScat and derivatives\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+We calculate $T_\text{scat}$ by propagating a ray from space through a sample
+atmosphere to a specified point $s$.  The points on that ray are called $r$ in
+the sequel.
+
+At $s$ we have the phase function
+
+\begin{equation*}
+P_s(\theta) = \frac{\lambda^2}{2 \pi \beta_{c\_s}}
+  \int_0^\infty n(r)\, p_0(\theta,r)\, \text{d} r\,,
+\end{equation*}
+
+$\frac{\partial P_s(\theta)}{\partial x_s}$, radiance $T_{b_s}$ resulting from
+radiative transfer along the ray to $s$, $\frac{\partial T_{b_s}}{\partial x_s}$,
+and $\frac{\partial T_{b_s}}{\partial x_r}$, where $\theta$ is the angle between
+the incident ray and the scattered ray that originates at $s$,  $x$ is
+temperature, IWC, or a mixing ratio.
+
+$T_\text{scat}$ at $s$ is defined as
+
+\begin{equation*}
+T_{\text{scat}_s} =
+ \frac12 \int_{-\pi}^\pi P_s(\theta) T_{b_s}(\theta) \sin\theta
+  \, \text{d}\theta\,.
+\end{equation*}
+
+From this
+
+\begin{equation*}
+\frac{\partial T_{\text{scat}_s}}{\partial x_s} =
+ \frac12 \int_{-\pi}^\pi
+  \left( \frac{\partial P_s(\theta)}{\partial x_s} T_{b_s}(\theta) +
+         P_s(\theta) \frac{\partial T_{b_s}(\theta)}{\partial x_s} \right)
+  \sin\theta \, \text{d} \theta
+\end{equation*}
+
+and
+
+\begin{equation*}
+\frac{\partial T_{\text{scat}_s}}{\partial x_r} =
+ \frac12 \int_{-\pi}^\pi 
+  \left( \frac{\partial P_s(\theta)}{\partial x_r} T_{b_s}(\theta) +
+          P_s(\theta) \frac{\partial T_{b_s}(\theta)}{\partial x_r} \right)
+  \sin\theta \, \text{d} \theta =
+ \frac12 \int_{-\pi}^\pi P_s(\theta) \frac{\partial T_{b_s}(\theta)}{\partial x_r}
+  \sin\theta \, \text{d} \theta
+\end{equation*}
+
+since $P_s(\theta)$ does not depend upon $x_r$.
+
+\label{lastpage}
+\end{document}
+% $Id$
+
+% $Log$
+% Revision 1.4  2009/09/10 23:17:37  vsnyder
+% Typos corrections
+%
+% Revision 1.3  2009/09/10 23:09:20  vsnyder
+% Normalization is included in P, not something separate -- see wvs-070
+%

@@ -1,0 +1,214 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-140}
+\newcommand{\docdate}{19 July 2017}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Layer quantities and boundary quantities in the
+           forward model \\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-138}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\newcommand{\Z}{$\zeta$}
+
+\section*{Boundary quantities}
+
+\emph{Boundary quantities} in the forward model are computed at a point on
+the path that intersects a constant-pressure (\Z) surface, or at points
+between those boundaries needed for Gauss-Legendre (GL) quadrature.
+
+\begin{itemize}
+
+\item Temperature (Kelvin)
+
+\item Pressure ($\zeta = -\log_{10} P$, where $P$ is hectopascals or
+      millibars)
+
+\item Geodetic height (km)
+
+\item Geocentric height (km)
+
+\item Geodetic orbit angle $\phi$ (radians)
+
+\item Mixing ratio $f^k$ ($k$ is the species index)
+
+\item Absorption cross section $\beta^k$
+
+\item Absorption coefficient $\alpha = \sum_k \beta^k f^k$
+
+\item Derivatives of $\alpha$ with respect to mixing ratio or temperature
+
+\item Path geometry derivatives $\frac{\text{d}s}{\text{d}h}$ and
+      $\frac{\text{d}h}{\text{d}\zeta}$.  $\frac{\text{d}s}{\text{d}h}$ is
+      set to zero at the tangent point even though there is an infinite
+      square-root singularity there: $s = \sqrt{h^2 - h_T^2}$ and
+      therefore $\frac{\text{d}s}{\text{d}h} = \frac{h}s$.
+
+\end{itemize}
+
+Boundary quantities are represented on two kinds of grids.
+
+\subsection*{Coarse grid quantities}
+
+The \emph{coarse grid} consists only of the points where the path
+intersects a (\Z) surface that is in one of the \Z\ grids for temperature
+or some species.  The names of coarse-grid quantities frequently end with
+{\tt _c}.  On the coarse grid, the tangent point is represented twice.
+
+\subsection*{Fine grid quantities}
+
+There are three kinds of \emph{fine grid}.  The names of fine-grid
+quantities frequently end with {\tt _f}.
+
+\begin{enumerate}
+
+\item The coarse grid, together with intermediate points needed for GL
+      quadrature.  The tangent point is represented twice, with space for
+      points for GL quadrature between them, but the intervening GL points
+      are not used.  They are included to make index calculations easier.
+
+\item Only all the intermediate points that might be needed for
+      GL quadrature.
+
+\item Only the intermediate points where integrands for GL quadrature are
+      actually needed.
+
+\end{enumerate}
+
+\section*{Layer quantities}
+
+\emph{Layer quantities} in the forward model represent something about a
+layer between two points on the coarse grid.  Before the tangent point,
+the layer index $j$ refers to the layer between coarse-grid boundary
+points $j-1$ and $j$.  After the tangent point, the layer index $j$ refers
+to the layer between coarse-grid boundary points $j$ and $j+1$.
+
+\begin{itemize}
+
+\item {\tt del_s} = $\delta s_j =
+      \left\{ \begin{array}{l}
+        s_j - s_{j-1} \text{ before the tangent point} \\
+        s_{j+1} - s_j \text{ after the tangent point} \\
+        \end{array} \right. $
+
+\item {\tt del_zeta} = $\delta \zeta_j =
+      \left\{ \begin{array}{l}
+        \frac12(\zeta_j - \zeta_{j-1}) \text{ before the tangent point} \\
+        \frac12(\zeta_{j+1} - \zeta_j) \text{ after the tangent point} \\
+        \end{array} \right. $ \\[3pt]
+       The factor of $\frac12$ is to compensate for the GL points computed
+       on $-1 \,\cdots\, +1$, so the GL weights sum to 2.
+
+\item {\tt incoptdepth} = Incremental optical depth$_j$ = \\[3pt]
+      $\left\{ \begin{array}{l}
+        \int_{s_{j-1}}^{s_j} \alpha(s) \, \text{d} s \text{ before the
+          tangent point} \\
+          \\
+        \int_{s_j}^{s_{j+1}} \alpha(s) \, \text{d} s \text{ after the
+          tangent point} \\
+        \end{array} \right. $ \\[3pt]
+      at first, for preliminary calculations, then \\[3pt]
+      $\left\{ \begin{array}{l}
+        \int_{\zeta_{j-1}}^{\zeta_j} \alpha(\zeta) \,
+          \frac{\text{d}s}{\text{d}h}\,
+          \frac{\text{d}h}{\text{d}\zeta}\, \text{d} \zeta \text{ before the
+          tangent point} \\
+          \\
+        \int_{\zeta_j}^{\zeta_{j+1}} \alpha(\zeta) \,
+          \frac{\text{d}s}{\text{d}h}\,
+          \frac{\text{d}h}{\text{d}\zeta}\, \text{d} \zeta \text{ after the
+          tangent point} \\
+        \end{array} \right. $ \\[3pt]
+      For layers that do not need GL, a trapezoidal estimate is used.
+
+\item {\tt Do_GL(j)} = $\left\{ \begin{array}{l}
+      \text{ before the tangent point, layer from } j-1 \text{ to } j 
+      \text{ needs GL} \\
+      \text{ after the tangent point, layer from } j \text{ to } j+1 
+      \text{ needs GL} \\
+      \end{array} \right. $
+
+\end{itemize}
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
+
+% $Log$

@@ -1,0 +1,181 @@
+! Copyright 2007, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+      ! subroutine howfar( array1, array2, pct, gaps, mode, &
+      !  & array1AtN, array2AtN )
+      !  integer, parameter                             :: KINDVALUE = r4
+      !  ! Args
+      real(KINDVALUE), dimension(:), intent(in) :: array1, array2                 
+      real(KINDVALUE), dimension(:), intent(in) :: pct                            
+      type(Stat_T), dimension(:), intent(inout) :: gaps
+      ! There are 5 possible values for mode
+      !  value          meaning
+      !  -----          -------
+      !   abs           how far apart |array1 - array2|
+      !   rel           how far apart |array1 - array2| / max(|array1|,|array2|)
+      !   esti          set estimate = array2(1)
+      !   mean          set estimate = mean(array1)
+      !   medi          set estimate = median(array1)
+      !
+      ! Where an estimate is set, we find 2 values alpha, beta such that
+      ! alpha < pct of array1 < beta
+      !  gaps%min = alpha
+      !  gaps%max = beta
+      character(len=*), intent(in)              :: mode         
+      real(KINDVALUE), dimension(:, :), &
+        & optional, intent(out)                 :: array1AtN, array2AtN
+      ! Internal variables
+      logical, parameter                        :: DEEBUG = .false.
+      real(KINDVALUE)                           :: denominator                    
+      real(KINDVALUE)                           :: estimate                    
+      integer                                   :: i, j, n, nkeep                    
+      real(r8), dimension(size(array1))         :: diffs
+      ! real(r8), dimension(size(array1))         :: sdiffs
+      ! permutation p and its inverse ip map diffs as follows:
+      ! diffs(p)   -> sorted   sdiffs (i.e. sdiffs[i-1] < sdiffs[i])
+      ! sdiffs(ip) -> presorted diffs
+      integer, dimension(size(array1))          :: p
+      integer                                   :: nless                  
+      integer                                   :: nmore
+      integer, dimension(size(array1))          :: lesses
+      integer, dimension(size(array1))          :: mores
+      ! Executable
+      ! call output( 'sizes of array1, array2', advance='yes' )
+      ! call output( (/ size(array1), size(array2) /), advance='yes' )
+      ! It is necessary that 
+      ! array1 and array2 have the same size
+      if ( size(array1) /= size(array2) .and. &
+        & index( 'abs,rel', lowercase(mode(1:3)) ) > 0 )  return
+      if ( size(pct) < 1 .or. size(gaps) < 1 ) return
+      n = size(array1)
+      
+      ! Are we interested in how far array1 is from
+      ! an estimate value?
+      ! This is an alternative to its former use:
+      ! how far is array1 from array2
+      select case (lowercase(mode(1:3)))
+      case ('est')
+        estimate = array2(1)
+      case ('mea')
+        estimate = MLSMean(array1)
+      case ('med')
+        estimate = MLSMedian(array1)
+      end select
+      
+      select case (lowercase(mode(1:3)))
+      case ('abs')
+        ! 1st--deal with absolute differences
+        diffs = abs(array1-array2)
+        call sortp( diffs, 1, n, p )
+      case ('est', 'mea', 'med')
+        ! Deal with differences from array1's estimate
+        ! We ignore array2
+        ! estimate = MLSMedian(array1)
+        gaps%min = estimate
+        gaps%max = estimate
+        call FindAll( array1 <= estimate, lesses, nless, &
+          & which_not=mores )
+        nmore = n - nless
+        ! Start with the lesses
+        do i=1, nless
+          diffs(i) = array1( lesses(i) )
+        enddo
+        call sortp( diffs, 1, nless, p )
+        do i=1, min( size(pct), size(gaps) )
+          nkeep = nless - (pct(i)*nless)/100
+          nkeep = max(nkeep, 1)
+          nkeep = min(nkeep, nless)
+          gaps(i)%min = diffs(p(nkeep))
+        enddo
+        ! Next with the mores
+        if ( nmore < 1 ) return
+        do i=1, nmore
+          diffs(i) = array1( mores(i) )
+        enddo
+        call sortp( diffs, 1, nmore, p )
+        do i=1, min( size(pct), size(gaps) )
+          nkeep = (pct(i)*nmore)/100
+          nkeep = max(nkeep, 1)
+          nkeep = min(nkeep, nmore)
+          gaps(i)%max = diffs(p(nkeep))
+        enddo
+        return
+      case ('rel')
+        ! 2nd--deal with relative differences
+        diffs = 0.
+        do i=1, n
+          denominator = max(abs(array1(i)), abs(array2(i)))
+          if ( denominator == real(0., KINDVALUE) ) cycle
+          diffs(i) = abs(array1(i) - array2(i)) / denominator
+        enddo
+        call sortp( diffs, 1, n, p )
+      case default
+        return
+      end select
+      ! do i=1, n
+        ! sdiffs(i) = diffs(p(i))
+        ! ip(p(i)) = i
+      ! enddo
+      do i=1, min( size(pct), size(gaps) )
+        nkeep = (pct(i)*n)/100
+        ! Always keep at least one point (is this best?)
+        nkeep = max(nkeep, 1)
+        nkeep = min(nkeep, n) ! Even if pct > 100 wasn't caught by test above
+        ! call statistics( sdiffs(:nkeep), gaps(i) )
+        call statistics( diffs(p(:nkeep)), gaps(i) )
+        if ( DEEBUG ) then
+          call newline
+          call output( 'max, min, median using sorted indexing: ' , advance='no' )
+          ! call output( (/ sdiffs(gaps(i)%indexing(1)), &
+          !   & sdiffs(gaps(i)%indexing(2)), &
+          !   & sdiffs(gaps(i)%indexing(3)) /), advance='yes' )
+          call output( (/ diffs(p(gaps(i)%indexing(1))), &
+            & diffs(p(gaps(i)%indexing(2))), &
+            & diffs(p(gaps(i)%indexing(3))) /), advance='yes' )
+          call dump( gaps(i) )
+        endif
+        ! Map indexing back to original array1 indexing (pre-sorting order)
+        if ( all( gaps(i)%indexing > 0 ) ) then
+          do j=1, 3
+            gaps(i)%indexing(j) = p( gaps(i)%indexing(j) )
+          enddo
+        endif
+        if ( DEEBUG ) then
+          call dump( gaps(i), which='indexing' )
+          call newline
+          call output( 'max, min, median using presorted indexing: ' , advance='no' )
+          call output( (/ diffs(gaps(i)%indexing(1)), &
+            & diffs(gaps(i)%indexing(2)), &
+            & diffs(gaps(i)%indexing(3)) /), advance='yes' )
+        endif
+        if ( present(array1Atn) ) array1Atn(:,i) = array1(gaps(i)%indexing)
+        if ( present(array2Atn) ) array2Atn(:,i) = array2(gaps(i)%indexing)
+      enddo
+! $Log$
+! Revision 2.6  2020/01/30 18:30:45  pwagner
+! Fixed substring length error in mode
+!
+! Revision 2.5  2019/04/04 23:48:57  pwagner
+! Can now calculate confidence interval
+!
+! Revision 2.4  2012/06/22 20:26:49  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
+! Revision 2.3  2008/11/24 19:34:11  pwagner
+! Less wasteful of memory; should not segment dault so often
+!
+! Revision 2.2  2007/10/25 00:00:01  pwagner
+! Returns correct indexing to presorted array
+!
+! Revision 2.1  2007/10/12 23:36:16  pwagner
+! Added howfar procedures for comparing two arrays
+!

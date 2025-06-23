@@ -1,0 +1,9 @@
+type, public :: VGrid_T
+    integer:: Name                 ! Not used
+    integer :: VerticalCoordinate  ! One of t_vGridCoordinate's literals, or
+                                   ! 0 if empty
+    integer :: NoSurfs             ! Number of surfaces
+    real(rs), dimension(:,:), pointer :: Surfs => NULL()  ! Array of surfaces
+                                   ! (actually dimensioned (1:noSurfs,1))
+end type VGrid_T
+

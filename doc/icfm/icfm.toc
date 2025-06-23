@@ -1,0 +1,44 @@
+\contentsline {section}{\numberline {1}Introduction and background}{1}{section.1}
+\contentsline {section}{\numberline {2}Review of overall MLSCFM structure}{2}{section.2}
+\contentsline {subsection}{\numberline {2.1}MLS radiance measurements and related parameters}{2}{subsection.2.1}
+\contentsline {subsubsection}{\numberline {2.1.1}Major frames and minor frames}{2}{subsubsection.2.1.1}
+\contentsline {subsubsection}{\numberline {2.1.2}Bands and channels}{2}{subsubsection.2.1.2}
+\contentsline {subsubsection}{\numberline {2.1.3}MLS L1 files}{2}{subsubsection.2.1.3}
+\contentsline {subsubsection}{\numberline {2.1.4}A note on \texttt {GeodAngle}}{3}{subsubsection.2.1.4}
+\contentsline {subsection}{\numberline {2.2}Constructing the MLS state vector}{3}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.3}Quantities and Vectors in MLSCFM}{3}{subsection.2.3}
+\contentsline {subsection}{\numberline {2.4}Matrices in MLSCFM}{4}{subsection.2.4}
+\contentsline {subsection}{\numberline {2.5}Defining coordinate systems}{4}{subsection.2.5}
+\contentsline {subsubsection}{\numberline {2.5.1}Vertical coordinates -- \texttt {vGrid}}{4}{subsubsection.2.5.1}
+\contentsline {subsubsection}{\numberline {2.5.2}Horizontal coordinates -- \texttt {hGrid}}{5}{subsubsection.2.5.2}
+\contentsline {subsubsection}{\numberline {2.5.3}Frequency coordinates -- \texttt {fGrid}}{5}{subsubsection.2.5.3}
+\contentsline {subsection}{\numberline {2.6}Sources of information for MLS state vector components}{5}{subsection.2.6}
+\contentsline {subsection}{\numberline {2.7}Defining forward models}{5}{subsection.2.7}
+\contentsline {subsubsection}{\numberline {2.7.1}The `full' forward model}{6}{subsubsection.2.7.1}
+\contentsline {subsubsection}{\numberline {2.7.2}The `linearized' forward model}{6}{subsubsection.2.7.2}
+\contentsline {subsubsection}{\numberline {2.7.3}The `baseline' forward model}{6}{subsubsection.2.7.3}
+\contentsline {subsubsection}{\numberline {2.7.4}The `scan' forward model}{6}{subsubsection.2.7.4}
+\contentsline {subsection}{\numberline {2.8}Invoking forward models}{7}{subsection.2.8}
+\contentsline {subsection}{\numberline {2.9}A note on the `mockup'}{7}{subsection.2.9}
+\contentsline {section}{\numberline {3}Reference}{8}{section.3}
+\contentsline {subsection}{\numberline {3.1}Data types}{8}{subsection.3.1}
+\contentsline {subsubsection}{\numberline {3.1.1}\texttt {Vector}}{8}{subsubsection.3.1.1}
+\contentsline {subsubsection}{\numberline {3.1.2}\texttt {Quantity}}{8}{subsubsection.3.1.2}
+\contentsline {subsection}{\numberline {3.2}Procedures and Functions}{8}{subsection.3.2}
+\contentsline {subsubsection}{\numberline {3.2.1}\texttt {AddQuantity2Vector}}{8}{subsubsection.3.2.1}
+\contentsline {subsubsection}{\numberline {3.2.2}\texttt {Core2Qty}}{8}{subsubsection.3.2.2}
+\contentsline {subsubsection}{\numberline {3.2.3}\texttt {CreateQuantity}}{9}{subsubsection.3.2.3}
+\contentsline {subsubsection}{\numberline {3.2.4}\texttt {CreateVector}}{10}{subsubsection.3.2.4}
+\contentsline {subsubsection}{\numberline {3.2.5}\texttt {ForwardModel}}{10}{subsubsection.3.2.5}
+\contentsline {subsubsection}{\numberline {3.2.6}\texttt {ICFM\_Cleanup}}{10}{subsubsection.3.2.6}
+\contentsline {subsubsection}{\numberline {3.2.7}\texttt {ICFM\_SendQuantity}}{10}{subsubsection.3.2.7}
+\contentsline {subsubsection}{\numberline {3.2.8}\texttt {ICFM\_SendVector}}{11}{subsubsection.3.2.8}
+\contentsline {subsubsection}{\numberline {3.2.9}\texttt {ICFM\_Setup}}{11}{subsubsection.3.2.9}
+\contentsline {section}{\numberline {A}Examples}{11}{section.A}
+\contentsline {subsection}{\numberline {A.1}Starting the server}{11}{subsection.A.1}
+\contentsline {subsection}{\numberline {A.2}Invoking a forward model}{11}{subsection.A.2}
+\contentsline {section}{\numberline {B}Lists and tables}{14}{section.B}
+\contentsline {subsection}{\numberline {B.1}Types}{14}{subsection.B.1}
+\contentsline {subsection}{\numberline {B.2}Units}{15}{subsection.B.2}
+\contentsline {subsection}{\numberline {B.3}Molecules}{15}{subsection.B.3}
+\contentsline {subsection}{\numberline {B.4}Bands}{16}{subsection.B.4}

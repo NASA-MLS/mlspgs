@@ -1,0 +1,20 @@
+! Compute radiances based on atmospheric state information provided
+! by fwdModelIn and fwdModelExtra.
+subroutine ForwardModelWMaf (RequestedMAF, Config, FwdModelIn, FwdModelExtra, &
+                             FwdModelOut, Jacobian )
+    ! The 0-based index of the instance (maf or profile) stored in
+    ! fwdModelIn to run the forward model over.
+    ! If there is only 1 instance, then this field should be 0.
+    ! If there is N instance, then the appropriate values for this
+    ! field is 0 to N-1.
+    integer, intent(in) :: RequestedMAF
+    ! Configuration information for the forward model
+    type(ForwardModelConfig_T), dimension(:), intent(inout) :: CONFIG
+    ! Atmospheric input
+    type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
+    ! This is the output vector where radiances are stored
+    type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
+    ! The matrix equivalent of the forward model with the specific
+    ! setting in the config object.
+    type(matrix_T), intent(inout), optional :: JACOBIAN
+end subroutine

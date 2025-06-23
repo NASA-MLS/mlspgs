@@ -1,0 +1,6 @@
+! Clean up allocated memory, close opened files.
+! This subroutine will deallocate the forward model config database.
+subroutine CFM_MLSCleanup_Compact (forwardModelConfigDatabase)
+    ! The forward model configurations created by CFM_MLSSetup
+    type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
+end subroutine

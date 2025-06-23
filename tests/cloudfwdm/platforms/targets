@@ -1,0 +1,258 @@
+# "$Id$"
+SHELL = /bin/sh
+
+# Path to source files:
+S = ..
+
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../../..
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = ../../../lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = ../../../srclib
+
+# This is the directory name from which we will get init_tables_module
+# (either l1, l2, or l3)
+init_m_dir = l2
+
+itmdir=../../../$(init_m_dir)/$(MLSCONFG)
+
+# This is the fwdmdl directory name; repeated up in mlspgs
+fwd_dir = fwdmdl
+
+fwddir=../../../$(fwd_dir)/$(MLSCONFG)
+
+# This is our own directory name; repeated up in mlspgs
+our_dir = cloudfwdm
+
+ourdir=../../../$(our_dir)/$(MLSCONFG)
+
+dir2 = $(itmdir)/
+dir3 = $(fwddir)/
+
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = ../../../blas/$(MLSCONFG)
+
+MODPATHS = $(dir1) $(dir2) $(dir3) $(ourdir)
+
+UTILDIR=../../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.o ./
+vpath %.f90 ../ $(srclib)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../
+vpath %.c ../
+
+include $(srclib)/$(MLSF95).$(MLSPLAT)
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS := $(EXTRA_PATHS) \
+  $(shell ${REECHO} ${PATH_OPTS} \
+  $(UNPREFXDPTHS) $(MODPATHS) $(PGSINC) $(srclib) $S)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+include ../Makefile.dep
+
+# ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) common     -- a file of macros specific for this directory, e.g. paths
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   srclib/$(MLSF95).$(MLSPLAT) -- macros specific for the 
+#         compiler.platform combo; e.g., NAG.Sun
+#   Makefile.dep -- dependencies among the primary Fortran modules
+#   srclib/Makefile.dep -- dependencies among the shared Fortran modules
+#   srclib/targets.h -- linker lines whenever building an executable
+
+# ========================================================================
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+
+# ========================================================================
+#       The objects for the shared source files (in srclib)
+# Include their dependencies
+include $(srclib)/Makefile.dep
+
+# Add them to L2OBJS
+ALLOBJS = $(OBJS) $(srclib_objs) $(itmdir)/init_tables_module.o
+
+PROG_NAME=test
+
+UTILDIR=../../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+
+include $(srclib)/targets.h
+
+mlspack_dir=../../../blas/$(MLSCONFG)
+mlspack_linker_line=-L${mlspack_dir} -lmlspack
+mlspack_message=Building $(PROG_NAME) with mlspack
+
+utctotai_linker_line=-L${INSTALLDIR} -lutctotai
+utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
+
+# ========================================================================
+$(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) $(ourdir)/libcloud.a \
+    $(fwddir)/libfwdmdl.a $(libdir)/libmls.a $(CONFDIR)/$(MLSCFILE)
+		@echo "$(pvm_message)"
+		@echo "$(blas_message)"
+		@echo "$(lapack_message)"
+		@echo "$(hdf5_message)"
+		@echo "$(mlspack_message)"
+		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
+        -L${ourdir} -lcloud \
+        -L${fwddir} -lfwdmdl \
+        -L${libdir} -lmls \
+        $(utctotai_linker_line) \
+		-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
+		-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg -lsz \
+		-L${GCTP} -lGctp \
+        $(pvm_linker_line) \
+        $(blas_linker_line) \
+        $(lapack_linker_line) \
+        $(mlspack_linker_line) \
+        $(hdf5_linker_line) \
+        $(l_specials) $(LAFTER) \
+
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod $(PROG_NAME)
+
+tar:
+	rm -f libtest.tgz
+	tar hcvzf libtest.tgz * --exclude \*.o --exclude \*.mod --exclude $(PROG_NAME)
+
+# ========================================================================
+# $Log$
+# Revision 1.17  2007/05/29 17:42:19  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
+# Revision 1.16  2006/06/15 19:31:05  pwagner
+# Now links szlib; comtaible with toolkit 5.2.14.A
+#
+# Revision 1.15  2005/03/04 19:13:31  pwagner
+# Utilizes targets.h from srclib
+#
+# Revision 1.14  2003/03/03 22:59:32  pwagner
+# Removed troublesome customblds includes
+#
+# Revision 1.13  2003/02/28 18:54:13  pwagner
+# Forgot to define INSTALLDIR in last commit
+#
+# Revision 1.12  2003/02/28 18:46:37  pwagner
+# Links utctotai library
+#
+# Revision 1.11  2002/11/25 21:21:02  pwagner
+# gcc_version to allow building with Lahey on gcc post 2.96
+#
+# Revision 1.10  2002/09/06 00:09:07  pwagner
+# BLAS can now bring in more than a single
+#
+# Revision 1.9  2002/08/27 23:03:11  pwagner
+# Treats LF95 better
+#
+# Revision 1.8  2002/04/18 20:55:28  pwagner
+# .configure now a prerequisite for executable
+#
+# Revision 1.7  2001/11/21 00:25:34  pwagner
+# Added hdfeos5_linker_line
+#
+# Revision 1.6  2001/11/16 19:15:32  pwagner
+# Added stuff to work with mlspack
+#
+# Revision 1.5  2001/11/07 01:14:30  pwagner
+# lapack message refers to this case, not mlsl2
+#
+# Revision 1.4  2001/11/07 00:31:44  pwagner
+# Added lapack linker line and msg
+#
+# Revision 1.3  2001/10/11 18:15:29  pwagner
+# Allows PROG_NAME variable to specify name of executable built
+#
+# Revision 1.2  2001/07/16 18:00:21  pwagner
+# Builds correctly with hdf5 on new and older Linux
+#
+# Revision 1.1  2001/07/02 18:30:20  pwagner
+# First commit
+#
+# Revision 1.5  2001/06/06 23:51:27  pwagner
+# hdf5 linker line if needed
+#
+# Revision 1.4  2001/05/18 23:33:55  pwagner
+# Brought into harmony with latest non-tests versions
+#
+# Revision 1.3  2001/02/08 23:20:52  pwagner
+# variable_linker_line tied to PVM and BLAS
+#
+# Revision 1.2  2001/02/05 19:40:17  pwagner
+# LDOPTS added to load statements
+#
+# Revision 1.1  2001/02/01 23:12:31  pwagner
+# First commit
+#
+#

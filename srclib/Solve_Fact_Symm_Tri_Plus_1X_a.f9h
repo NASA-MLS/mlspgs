@@ -1,0 +1,50 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! subroutine Solve_Fact_Symm_Tri_Plus1X_a_r* ( H, D, R, U, C, Z )
+
+    ! Solve the system A b = L U b = z, where A has been factored as L U,
+    ! and its factors are represented by H, D, R, U, and C.  The solution
+    ! is returned in Z.  This solves with several right-hand side vectors.
+
+    real(rk), intent(in) :: H(:) ! (1:n-2) Subdiagonal of L except for (n,n-1)
+    real(rk), intent(in) :: D(:) ! (1:n) Inverse of diagonal of L
+    real(rk), intent(in) :: R(:) ! (1:n-1) Bottom row of L, except (n,n) = D(n)
+    real(rk), intent(in) :: U(:) ! (1:n-2) Superdiagonal of U
+                                 ! Diagonal of U is 1
+    real(rk), intent(in) :: C(:) ! (1:n-1) Right column of U, except for (n,n)
+    real(rk), intent(inout) :: Z(:,:) ! (1:n,:) input: RHS, output: solution
+
+    integer :: K, N
+
+    n = size(d)
+
+    ! Solve L y = z using Z temporarily to store y
+    z(1,:) = z(1,:) * d(1)
+    do k = 2, n-1
+      z(k,:) = ( z(k,:) - h(k-1) * z(k-1,:) ) * d(k)
+    end do
+    do k = 1, size(z,2)
+      z(n,k) = ( z(n,k) - dot_product(r,z(:n-1,k)) ) * d(n)
+    end do
+
+    ! Solve U b = y, returning b in Z
+    ! b(n) == y(n)
+    z(n-1,:) = z(n-1,:) - c(n-1) * z(n,:)
+    do k = n-2, 1, -1
+      z(k,:) = z(k,:) - u(k) * z(k+1,:) - c(k) * z(n,:)
+    end do
+
+! end subroutine Solve_Fact_Symm_Tri_Plus1X_a_r*
+
+! $Id$
+
+! $Log$

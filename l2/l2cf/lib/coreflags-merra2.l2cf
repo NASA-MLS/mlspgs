@@ -1,0 +1,39 @@
+!divert(-1)
+; $Id$
+
+!define(retrophase,{InitPtan})
+
+!divert!dnl
+
+; This l2cf fragment does all the quality flagging for the merra2 phase
+; products of the umls instrument
+
+begin Fill
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1})!dnl
+
+  Dump, text='In coreflags-merra2.l2cf'
+  ; Zero out Status
+  Fill, quantity=otherDiagnostics.statusTemperature_hr, method=explicit, $
+    explicitValues=0, /spread
+  Fill, quantity=otherDiagnostics.statusGPH_hr, method=explicit, $
+    explicitValues=0, /spread
+
+  ; Zero out Quality
+  Fill, quantity=otherDiagnostics.QualityTemperature_hr, method=explicit, $
+  explicitValues=0, /spread
+  Fill, quantity=otherDiagnostics.QualityGPH_hr, method=explicit, $
+  explicitValues=0, /spread
+
+  ; Zero out Convergence
+  Fill, quantity=otherDiagnostics.ConvergenceTemperature_hr, method=explicit, $
+  explicitValues=0, /spread
+  Fill, quantity=otherDiagnostics.ConvergenceGPH_hr, method=explicit, $
+  explicitValues=0, /spread
+
+end Fill
+
+; $Log$
+; Revision 1.1  2017/05/01 20:52:19  pwagner
+; First commit
+;

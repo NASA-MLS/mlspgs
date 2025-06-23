@@ -1,0 +1,93 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+! subroutine InterpolateExtrapolate ( OldX, OldY, NewX, NewY, Second )
+
+!   ! Interpolate ( OldX(:), OldY(:,:) ) to ( NewX(:), NewY(:,:) ), where
+!   ! the dimension upon which to interpolate is merge(2,1,second).
+!   ! Extrapolate outside the range of OldX using the average slope, not
+!   ! the slope nearest the end where NewX is outside the range of OldX.
+
+!   use MLSNumerics, only: Coefficients, InterpolateArraySetup, &
+!     & InterpolateArrayTeardown, InterpolateValues
+
+!   integer, parameter :: RK = kind(0.0e0)
+!   real(rk), intent(in) :: OldX(:), OldY(:,:), NewX(:)
+!   real(rk), intent(out) :: NewY(:,:)
+!   logical, intent(in) :: Second
+!   type(coefficients(r?)) :: Coeffs
+
+    real(rk) :: AvgDiff(size(oldY,merge(1,2,second)))
+    integer :: Bot, I, Top
+    integer :: D ! Dimension upon which to interpolate -- 1 or 2
+
+    d = merge(2,1,second) ! Dimension upon which to interpolate
+    bot = minloc(oldX,1)
+    top = maxloc(oldX,1)
+
+    ! Calculate the average slope of oldY/oldX using the extremes of oldX.
+    ! Alternatives are a least-squares fit to a straight line, or averaging
+    ! the individual difference quotients.
+    if ( d == 1 ) then
+      avgDiff = ( oldY(top,:) - oldY(bot,:) ) / ( oldX(top) - oldX(bot) )
+    else ! d == 2
+      avgDiff = ( oldY(:,top) - oldY(:,bot) ) / ( oldX(top) - oldX(bot) )
+    end if
+
+    ! Do the interpolations with clamped extrapolation.
+    call interpolateArraySetup ( oldX, newX, &
+      & Method='L', coeffs=coeffs, extrapolate='C' )
+    if ( d == 1 ) then
+      call interpolateValues ( coeffs, oldX, oldY, &
+        & newX, newY, Method='L', extrapolate='C' )
+    else ! d == 2
+      do i = 1, size(newY,1)
+        call interpolateValues ( coeffs, oldX, oldY(i,:), &
+          & newX, newY(i,:), Method='L', extrapolate='C' )
+      end do
+    end if
+    call interpolateArrayTeardown ( coeffs )
+
+    ! Do the extrapolations
+    if ( d == 1 ) then
+      do i = 1, size(newY,2)
+        where ( newX < oldX(bot) ) &
+          & newY(:,i) = oldY(bot,i) + avgDiff(i) * ( newX - oldX(bot) )
+        where ( newX > oldX(top) ) &
+          & newY(:,i) = oldY(top,i) + avgDiff(i) * ( newX - oldX(top) )
+      end do
+    else ! d == 2
+      do i = 1, size(newY,1)
+        where ( newX < oldX(bot) ) &
+          & newY(i,:) = oldY(i,bot) + avgDiff(i) * ( newX - oldX(bot) )
+        where ( newX > oldX(top) ) &
+          & newY(i,:) = oldY(i,top) + avgDiff(i) * ( newX - oldX(top) )
+      end do
+    end if
+
+! $Log$
+! Revision 2.5  2017/10/31 23:46:29  vsnyder
+! Make Coefficients and UnifDiscreteFn parameterized types
+!
+! Revision 2.4  2015/07/29 00:23:05  vsnyder
+! Repair incorrect loop bound in d==1 case
+!
+! Revision 2.3  2015/04/11 01:27:25  vsnyder
+! Tiny simplification
+!
+! Revision 2.2  2015/04/04 00:50:06  vsnyder
+! Remove debugging print
+!
+! Revision 2.1  2015/04/04 00:49:48  vsnyder
+! Initial commit
+!

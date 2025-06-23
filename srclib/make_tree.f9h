@@ -1,0 +1,169 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! This subroutine only works in Init_Tables_Module, where it should be
+! included by an include line.
+
+! $Id$
+
+  subroutine Make_Tree ( IDs, Continue, Trace )
+  ! Build a tree specified by the "ids" array.  "begin" marks the
+  ! beginning of a tree.  A tree-node marks the end of the corresponding
+  ! tree.  Pseudo-terminals are decorated with their indices.
+
+  ! If "continue" is absent or false, it is assumed that Make_Tree is starting
+  ! on an entirely new subtree.
+
+  ! If "continue" is present and true, it is assumed that Make_Tree is
+  ! continuing work on a previously-started subtree.  This is accomplished
+  ! by not making the internal stack initially empty.
+
+    ! You might need to copy these USE statements to the routines or modules
+    ! that incorporates this one by "include", because "make depends" can't
+    ! see through includes.  "use XYZ, only:" ought to be good enough.
+    use Symbol_Table, only: Symbol, Set_Symbol
+    use Symbol_Types, only: T_Identifier
+    use Tree, only: Build_Tree, Push_Pseudo_Terminal
+    implicit NONE
+
+    integer, intent(in) :: IDS(:)
+    logical, intent(in), optional :: Continue
+    integer, intent(in), optional :: Trace ! passed through to Build_Tree
+
+    integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
+    integer :: DECOR, I, J, K, ITEM, N_IDS, STRING, WHICH
+    integer, save :: M = 0, STACK(0:30) = 0
+    logical :: MyCont
+    integer :: Save_Symbol
+
+    myCont = .false.
+    if ( present(continue) ) myCont = continue
+
+    callno = callno + 1
+    n_ids = size(ids)
+
+    if ( .not. myCont ) then
+      m = 0
+      stack(0) = 0 ! just so it's defined, in case it gets incremented
+                   ! after build_tree
+      if ( ids(1) >= 0 ) then
+        m = 1
+        stack(1) = 0
+      end if
+    end if
+
+    do i = 1, n_ids
+      if ( ids(i) == begin ) then
+        m = m + 1
+        if ( m > ubound(stack,1) ) then
+          j = index(moduleName, ':') + 2
+          k = j + scan(moduleName(j:),'., $') - 2
+          if ( k == j-2 ) k = len(moduleName)
+          print *, adjustl(moduleName(j:k))//'%MAKE_TREE-E- Stack overflow!'
+          print *, 'Your tree is taller than ', ubound(stack,1), &
+            &      '.  Detected while'
+          print *, 'processing element ', i, ' of the list for call ', callno
+          stop
+        end if
+        stack(m) = 0
+      else
+        item = mod(ids(i), 1000)
+        which = mod(ids(i) / 1000, 1000)
+        decor = ids(i) / 1000000
+        select case ( which )
+        case ( f/1000 ) ! Fields
+          string = field_indices(item)
+        case ( g/1000 ) ! Functions
+          string = func_indices(item)
+        case ( l/1000 ) ! Enumeration literals
+          string = lit_indices(item)
+        case ( p/1000 ) ! Parameter names
+          string = parm_indices(item)
+        case ( s/1000 ) ! Specs
+          string = spec_indices(item)
+        case ( t/1000 ) ! Intrinsic data types
+          string = data_type_indices(item)
+        case ( z/1000 ) ! Sections
+          string = section_indices(item)
+        case ( n/1000 ) ! Tree nodes
+          call build_tree ( item, stack(m), decor, trace )
+          m = m - 1
+          if ( m < lbound(stack,1) ) then
+            j = index(moduleName, ':') + 2
+            k = j + scan(moduleName(j:),'., $') - 2
+            if ( k == j-2 ) k = len(moduleName)
+            print '(a)', adjustl(moduleName(j:k))//'%MAKE_TREE-E- Stack underflow!'
+            print '(a)', 'You probably forgot a "begin" or "l+" somewhere.  Detected'
+            print '(2(a,i0))', 'while processing element ', i, &
+                             & ' of the list for call ', callno
+            stop
+          end if
+          stack(m) = stack(m) + 1
+    cycle
+        end select
+        if ( string == 0 ) then
+          j = index(moduleName, ':') + 2
+          k = j + scan(moduleName(j:),'., $') - 2
+          if ( k == j-2 ) k = len(moduleName)
+          print *, adjustl(moduleName(j:k)) // &
+            & '%MAKE_TREE-E- The string for element ', i, ' of a list'
+          print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
+          stop
+        end if
+        save_symbol = symbol(string)
+        call set_symbol ( string, t_identifier ) ! make push_pseudo_terminal work
+        call push_pseudo_terminal ( string, 0, decor = item )
+        call set_symbol ( string, save_symbol ) ! in case it was a reserved word
+        stack(m) = stack(m) + 1
+      end if
+    end do
+  end subroutine Make_Tree
+
+! $Log$
+! Revision 1.12  2013/12/04 02:31:44  vsnyder
+! Don't clobber reserved word definition
+!
+! Revision 1.11  2013/09/19 23:33:46  vsnyder
+! Provide for tracing
+!
+! Revision 1.10  2012/02/01 00:05:44  vsnyder
+! Spiff an error message
+!
+! Revision 1.9  2005/06/22 20:03:56  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.8  2004/05/29 02:42:16  vsnyder
+! Rearrange function definition stuff
+!
+! Revision 1.7  2002/10/02 16:00:27  bwknosp
+! Added Id and RCS info
+!
+! Revision 1.6  2002/07/18 22:01:58  vsnyder
+! Add CONTINUE optional argument so trees needing more than 40 lines of
+! Fortran can be constructed.
+!
+! Revision 1.5  2001/06/07 21:56:55  pwagner
+! Added Copyright statement
+!
+! Revision 1.4  2001/04/04 17:59:17  vsnyder
+! Add a comment about adding "USE TREE" in the including scoping unit, because
+! "make depends" can't see the "use" here (because of the "include").
+!
+! Revision 1.3  2001/04/03 19:07:06  vsnyder
+! Make it usable from any module
+!
+! Revision 1.2  2001/03/02 20:44:45  vsnyder
+! Improve some error messages
+!
+! Revision 1.1  2001/03/02 20:42:56  vsnyder
+! Extracted from init_tables_module; it should be the same in all versions
+! of init_tables_module.
+!

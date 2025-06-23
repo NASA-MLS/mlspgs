@@ -1,0 +1,44 @@
+! Copyright 2011, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+!  subroutine BandWidth_dr4( array, bwidth, pctnzero )
+!     ! Args
+!     real(rk), dimension(:), intent(in )   :: array
+!     integer, intent(out)                  :: bwidth
+!     real, optional, intent(out)           :: pctnzero
+!     ! Internal variables
+    integer, dimension(2) :: shp
+    integer :: i, i1, i2, k, n, nzero
+    ! Executable
+    shp = shape(array)
+    n = min( shp(1), shp(2) )
+    bwidth = 1
+    if ( present(pctnzero) ) pctnzero = 0.
+    if ( all( array == 0._rk ) ) return
+    do i=1, n
+      i1 = FindFirst( array(i,:i) /= 0._rk )
+      i2 = FindLast( array(i,i:) /= 0._rk )
+      k = i-i1+1
+      if ( i1 > 0 ) bwidth = max(bwidth, 2*k - 1)
+      k = i2-i+1
+      if ( i2 > 0 ) bwidth = max(bwidth, 2*k - 1)
+    enddo
+    if ( present(pctnzero) ) then
+      nzero = count( array == 0._rk )
+      pctnzero = 100.*(shp(1)*shp(2) - 1.*nzero)/(shp(1)*shp(2))
+    endif
+!  end subroutine BandWidth_1dr4
+
+! $Log$
+! Revision 1.1  2011/12/07 01:10:23  pwagner
+! First commit
+!

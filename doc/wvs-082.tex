@@ -1,0 +1,100 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-082}
+\newcommand{\docdate}{15 January 2009}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Alyn, Michelle\\
+Subject: \>Current status of scattering additions to forward model\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+I've been adding support for scattering to the forward model.  The problem is
+in three stages.
+
+\begin{enumerate}
+
+\item Calculate Mie coefficients offline.  This is completed.  The program
+is in {\tt mlspgs/Mie}.
+
+\item\label{two} Use Mie coefficients to calculate $T_{\text{scat}}$,
+again to be done offline.  This is partly completed.
+
+\item Use $T_{\text{scat}}$ online, similarly to the way L2PC are used. 
+This has not been started.
+
+\end{enumerate}
+
+Item \ref{two} above requires several steps.
+
+\begin{enumerate}
+
+\item Allow the radiative transfer calculations to be carried out on only
+part of a path.  This appears to be completed, but needs more testing.
+
+\item Compute a path at a specified phase angle from the horizon, in the
+plane of an orbit with a specified inclination, that intersects a
+specified scattering point in the orbital plane.  See {\tt
+mlspgs/doc/wvs-074}.  Phase angles that result in paths that do not
+reflect from the Earth's surface are specified by pressure surfaces. 
+This appears to be working.  Phase angles that result in paths that
+reflect from the Earth's surface are specified explicitly.  This works
+for some angles, but for steeply reflecting rays, {\tt metrics} insists
+on putting the path on the other side of the earth from the scattering
+point.  The difficulty has been in trying to manipulate {\tt metrics} by
+remote control, through several layers of procedure references.  I have
+an IDL prototype in $\sim${\tt vsnyder/idl/scat\_gen.pro} that calculates
+paths correctly, but the method it uses doesn't fit into the full forward
+model.
+
+\item Convolve the radiances arriving at the scattering point from the
+several angles with the Mie phase function to product $T_{\text{scat}}$. 
+This has not been begun, but is a straight-forward problem.
+
+\end{enumerate}
+
+I have not checked in any of the code developed for item \ref{two}, but I
+have periodically checked that it does not produce results that disagree
+with any of my reference runs.  At present, the forward model and metrics
+codes in my directory are littered with PRINT statements.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.1  2009/06/22 23:05:45  vsnyder
+% Initial commit
+%

@@ -1,0 +1,409 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}
+\usepackage{longtable}
+
+\textwidth 6.5in
+\oddsidemargin 0in
+%\evensidemargin -0.5in
+\topmargin 0in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-107r13}
+\newcommand{\docdate}{24 July 2013}
+
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{rotating}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Van\\
+Subject: \>MIF Extinction\\
+From: \>Van Snyder\\
+% Reference: \>
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\section{The problem}
+
+To solve for MIF extinction in MLSL2, several changes are made in the
+interface, {\tt ForwardModel\-Wrap\-per}, between the {\tt Retrieve} and
+{\tt ForwardModel} modules.
+
+MIF extinction is a minor-frame quantity with a vertical grid the same as
+$P_\text{tan}$.  Extinction in the forward model is a geophysical
+quantity with a vertical grid specified by the {\tt L2CF}.
+
+When the retriever calls the forward model, MIF extinction is mapped to
+forward-model extinction by interpolating vertically in MIF extinction
+from $\{\zeta_{\text{tan}_i} = - \log_{10} P_{\text{tan}_i}\,|\, i = 1,
+\dots, N_m\}$, where $N_m$ is the number of MIFs per MAF, to the
+geophysical $\zeta_g$ grid specified for forward-model extinction, and
+then replicating the result for the $N_\phi$ solution profiles specified
+in the {\tt L2CF}.
+
+Within a retriever state vector MIF extinction block for a single band,
+the element $E^R_{i,n}$ has an associated MAF $(n)$ number, and
+coordinates $(\phi_\text{tan}, \zeta_\text{tan})_i$.  $E^R$ is not a
+coherent quantity.
+
+Within a forward-model state vector extinction block, the element
+$E^F_{g,j}$ has associated geophysical $(\phi_j,\,\zeta_g)$ coordinates,
+the values and numbers of which are specified in the {\tt L2CF}.  $E^F$
+is a coherent quantity.
+
+In the interface between the retriever and forward model, blocks of the
+retriever state vector that are not MIF extinction blocks are moved to
+the forward model state vector.  Let $P_r$ denote the lowest retrieved
+pressure and $\zeta_r = -\log_{10} P_r$.  Blocks that are MIF extinction
+blocks are mapped to the forward model state vector using
+%
+\renewcommand{\arraystretch}{2}
+\begin{equation}\label{one}
+E^F_{g,j} = \left\{
+\begin{array}{llll}
+ \overline{E}^R_{n}(\zeta_g)
+  & \zeta_g \geq \zeta_r & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
+ \overline{E}^R_{n}(\zeta_r) \times 10^{-2(\zeta_g - \zeta_r)}
+  & \zeta_g < \zeta_r    & j = 1, \dots, N_\phi & g = 1, \dots, N_\zeta \\
+\end{array} \right.
+\end{equation}
+%
+where $\overline{E}^R_{n}(\zeta)$ indicates interpolation from
+$\{E^R_{i,n}\}$, in $\{\zeta_i\}$ only, to $\zeta$, $N_\zeta$ is the
+number of $\zeta$ ($-\log_{10}$ pressure) levels specified in the {\tt
+L2CF} for the forward model's extinction state vector block,  and
+%
+\begin{equation}
+10^{-2(\zeta_g - \zeta_r)} = \left( \frac{P_g}{P_r} \right)^2 \,.
+\end{equation}
+
+Notice that $E^F_{g,j} = E^F_{g,1},\, j= 1, \dots, N_\phi$, where
+$N_\phi$ is the number of $\phi$ instances specified for $E^F$ in the
+{\tt L2CF}.
+
+The layout of the extinction blocks of the Jacobian used by the retriever
+and those of the Jacobian computed by the forward model are shown in the
+following table for a single band, wherein $N_M$ is the number of MAFs. 
+This layout is replicated vertically, i.e., another set of rows, for each
+band.
+
+\newpage
+\begin{longtable}{c|ccccc|p{0.25in}|ccccc|}
+\multicolumn{1}{r}{}
+& \multicolumn{5}{c}{Retriever Jacobian blocks} & \multicolumn{1}{c}{} &
+  \multicolumn{5}{c}{Forward Model Jacobian blocks} \\[-10pt]
+\multicolumn{1}{r}{}
+& \multicolumn{5}{c}{$N_M$} & \multicolumn{1}{c}{} &
+  \multicolumn{5}{c}{$N_\phi$} \\
+  \cline{2-6}\cline{8-12}
+% Rotating package doesn't render properly in xdvi
+      & $K^R_{11}$ &0 &0 &  & 0     & & $K^F_{11}$    & $K^F_{12}$    & $K^F_{13}$    & $\cdots$ & $K^F_{1 N_\phi}$ \\ 
+      &0 & $K^R_{22}$ &0 &  & 0     & & $K^F_{21}$    & $K^F_{22}$    & $K^F_{23}$    & $\cdots$ & $K^F_{2 N_\phi}$ \\ 
+$N_M$ &0 &0 & $K^R_{33}$ &  & 0     & & $K^F_{31}$    & $K^F_{32}$    & $K^F_{33}$    & $\cdots$ & $K^F_{3 N_\phi}$ \\ 
+      &  &  &  & $\cdots$   &       & & $\cdots$      & $\cdots$      & $\cdots$      & $\cdots$ & $\cdots$ \\    
+      &0 &0 &0 &0 & $K^R_{N_M N_M}$ & & $K^F_{N_M 1}$ & $K^F_{N_M 2}$ & $K^F_{N_M 3}$ & $\cdots$ & $K^F_{ N_M N_\phi}$ \\
+  \cline{2-6}\cline{8-12}
+\end{longtable}
+
+For retriever block $K^R_{nn}$, $n$ is the index of the MAF. Each
+$K^R_{nn}$ block has shape $(N_C \times N_m,N_m)$, where $N_C$ is the
+number of channels.  Within each $K^R_{nn}$ block, third and fourth
+subscripts $(ci)$ conspire to denote the row number (first subscript of
+the {\tt VALUES} component).  The subscript $c$ is the channel number and
+$i$ is the MIF $(\phi_\text{tan}, \zeta_\text{tan})_i$ number.  The row
+number of an element is $c + N_c(i-1)$.  The column number within the
+block (second subscript of the {\tt VALUES} component) is given by a fifth
+subscript here, always $i$.
+
+For forward model block $K^F_{nj}$, $n$ is the index of the MAF, while $j$
+is the index of profile solution coordinate $\phi_j$.  Each $K^F_{nj}$
+block has shape $(N_C \times N_m,N_\zeta)$.  Within each $K^F_{ij}$ block,
+there are three further subscripts $(cig)$.  The first two, $c$ and $i$
+conspire to denote the row number (first subscript) as above, while the
+third $(g)$ denotes the column number (second subscript, corresponding to
+$\zeta_g$) of an element of the {\tt VALUES} component.
+
+After the forward model returns, blocks of $K^F$ are mapped to blocks of
+$K^R$ using
+
+\begin{equation}\label{three}
+\begin{array}{lll}
+K^R_{nn,cii} = \sum_{g=1}^{N_\zeta}
+ \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+ 10^{-2(\zeta_g - \zeta_i)} & i = 1, \dots, N_m & c = 1, \dots, N_C\,. \\
+\end{array}
+\end{equation}
+
+Within forward-model radiance blocks $I^F_{ci,n}$ and retriever radiance
+blocks $I^R_{ci,n}$, $c$ and $i$ are combined using $c + N_C (i-1)$ to
+form the first subscript of the {\tt VALUES} component.  Forward-model
+radiance blocks $I^F_{ci,n}$ are mapped to retriever radiance blocks
+$I^R_{ci,n}$ using
+
+\begin{equation}\label{four}
+\begin{array}{lll}
+I^R_{ci,n} = I^F_{ci,n} + \sum_{g=1}^{N_\zeta}
+ \left( \sum_{j=1}^{N_\phi} K^F_{nj,cig} \right)
+ \left( E^R_{i,n} 10^{-2(\zeta_g - \zeta_i)} -
+  E^F_{g,1} \right) & i = 1, \dots, N_m & c = 1, \dots, N_C \,, \\
+\end{array}
+\end{equation}
+
+where $E^R$ is MIF extinction from the previous iteration of the
+retriever, and $E^F$ is extinction input to the forward model, as
+calculated by Equation (\ref{one}).  Remember that $E^F_{g,j} =
+E^F_{g,1},\, j = 1, \dots, N_\phi$.
+
+\section{Changes in mlsl2 and l2cf}
+
+Two new quantity types, MIFExtinction and MIFExtinctionv2, are introduced.
+These are not molecules, so it is impossible to tell the forward model to
+use them.
+
+Quantities of type vmr, with their molecules being either extinction or
+extinctionv2, and quantities of type either MIFExtinction or
+MIFExtinctionv2, are specified by the l2cf as quantities in the state
+vector template.
+
+A switch named {\tt TransformMIFExtinction} is provided in the {\tt
+ForwardModel} statement in the l2cf to request transformations between
+extinction and MIF extinction.
+
+If the switch is set, before calling the forward model, the forward model
+wrapper destroys any extinction molecules it finds in the state vector
+that correspond to MIF extinction quantities, then re-creates them by
+transformation from corresponding MIF extinction quantities using
+Equation (\ref{one}).  If it finds MIF extinction quantities without
+corresponding extinction molecules, it announces an error.
+
+If the switch isn't set, the forward model wrapper does not destroy
+extinction molecules, acting on the assumption that the retriever is
+retrieving extinction, not MIF extinction.
+
+Upon return from the forward model, the forward model wrapper destroys
+MIF extinction quantities in the state vector, and associated columns of
+the Jacobian.  If the switch is set it re-creates MIF extinction
+quantities by transforming from corresponding extinction molecules using
+Equations (\ref{four}) and (\ref{three}), and destroys extinction
+molecules, and associated columns of the Jacobian, that correspond to MIF
+extinction quantities.  It does not destroy extinction molecules and
+associated columns of the Jacobian if they do not correspond to MIF
+extinction quantities.  This allows to retrieve extinction and MIF
+extinction simultaneously, provided they do not correspond.
+
+If the switch isn't set, the forward model wrapper does not re-create MIF
+extinction quantities, and associated columns of the Jacobian.  This
+prevents the retriever from retrieving MIF extinction.
+
+The correspondence between an extinction molecule and a MIF extinction
+quantity is established if they are both $\nu^2$ quantities, or neither
+one is, and they are for the same radiometer.
+
+An alternative to having the switch is to determine whether the state
+vector has any MIF extinction quantities.  This requires one to make more
+substantial changes in the l2cf to select whether to retrieve extinction
+or MIF extinction, i.e., one must change the state vector template.
+
+\section{Notation}
+
+\vskip -10pt
+\renewcommand{\arraystretch}{1}
+\begin{longtable}{c|l||c|l}
+Symbol   & Usage              & Symbol    & Usage \\
+\hline
+         &                    &           & \\[-11pt]
+$E^F$    & FWM Extinction     & $E^R$     & Retriever (MIF) extinction\\
+$I^F$    & FWM radiance       & $I^R$     & Retriever radiance \\
+$K^F$    & FWM Jacobian block & $K^R$     & Retriever Jacobian block \\
+$N_c$    & Number of channels & $N_m$     & Number of MIFs per MAF\\
+$N_\phi$ & Number of profiles & $N_\zeta$ & Pressure levels per profile \\
+$c$      & Channel index      & $g$       & FWM vertical index \\
+$i$      & MIF index          & $j$       & Profile index       \\
+$n$      & MAF number         & $r$       & Lowest retrieved pressure index \\
+\end{longtable}
+
+\section{L2CF changes}
+
+\vspace*{-8pt}
+One must be careful when constructing the l2cf to retrieve MIF extinction.
+
+\vspace*{-5pt}
+
+\begin{itemize}\parskip 3pt
+
+\item There must be both extinction and MIF extinction quantities in the
+  retrieval state vector for bands in which MIF extinction is being
+  retrieved, because otherwise the forward model and MIF extinction
+  transformation have nowhere to record the Jacobians of radiance with
+  respect to extinction and MIF extinction, respectively.  This is because
+  the Jacobian column space is defined by reference to the retrieval state
+  vector.  This might eventually be handled automatically.
+
+\item Profile extinction for the band in which MIF extinction is being
+  retrieved needs to be a one-profile quantity, even (especially) in 2-D
+  retrievals.  Use an {\tt hGrid} something like \\
+  {\tt hGridSingle: hGrid, type=explicit, geodAngle=[0 degrees]}\\
+  for extinction quantities.
+
+\item It's important to use a rapidly-decaying profile for MIF extinction
+  apriori, e.g.,
+
+{\tt\small\begin{verbatim}
+    Fill, quantity=apriori.totalMIFExtinctionr3,method=profile, $
+      profileValues = [ 1000mb: 0.01, 681mb:0.01, 464mb : 0.008, 316mb : 0.004, $
+      215mb : 0.001, 147mb : 0.0005, 100mb : 0.0003, 68mb:0.0002,46mb: 0.0001,  $
+      32mb:7.0e-5,22mb:4.0e-5,15mb:9.3e-6, 10mb:2.7e-6, 1mb:1.0e-8, $
+      0.1mb:1.5e-10,0.01mb:2.0e-12,0.001mb:3.3e-14, 0.0001mb:3.0e-16, $
+      0.00001mb:3.0e-18], ptanQuantity=state.ptanGHz
+\end{verbatim}}
+
+\item Apriori precision for extinction needs to be huge, e.g.,\\[3pt]
+  {\tt Fill,
+  quantity=aprioriPrecision.totalextinctionv2r3,method=explicit, \$ \\
+     /spread, explicitValues=1.0e6}\\[3pt]
+  to prevent the Newton method from moving in the extinction direction. 
+  The Jacobian of radiance with respect to extinction is deleted by the
+  MIF extinction transformation, but the extinction apriori needs to be
+  present to prevent the overall Jacobian from being singular. Apriori
+  precision for MIF extinction should be what apriori precision for
+  extinction would be if MIF extinction were not being retrieved, e.g.,
+
+{\tt\small\begin{verbatim}
+    Fill, quantity=aprioriprecision.totalMIFExtinctionV2R3,method=profile, $
+      profileValues = [ 1000mb: 1.0E-7, 681mb:0.0005, 464mb : 0.001, 316mb : 0.001, $
+      215mb : 0.0006, 147mb : 0.0002, 100mb : 0.0001, 68mb:0.0001, 46mb: 7.0e-5, $
+      32mb:4.0e-5, 22mb:2.0e-5, 15mb:5.0e-6, 10mb:2.0e-6, 0.00001mb:1.0e-6], $
+      ptanQuantity=state.ptanGHz
+\end{verbatim}}
+
+\item There must be a lowest retrieved pressure quantity in the ``extra''
+  vector, e.g.,\\
+  {\tt lowestRetrievedPressure: Quantity, type=lowestRetrievedPressure \\
+     Fill, quantity=state.lowestRetrievedPressure, method=explicit, \$\\
+       explicitValues= -2.6 zeta }\\
+  It isn't needed in the retrieval state vector, or apriori vector.
+
+\item Mask bits need to be set in MIF extinction (and indeed in any
+  retrieved minor-frame quantity) so as not to try to retrieve where there
+  are no radiances.  There is a {\tt radianceQuantity} field of the subset
+  command from which to get masks, since one cannot predict where L1 will
+  mark bad radiances.  The quantity to be masked must be a minor-frame
+  quantity.  The only other fields allowed are {\tt additional}, {\tt
+  channel}, {\tt ignore} (which reverses the sense of {\tt channel}, and
+  {\tt instances}.  If the radiance quantity channels are masked first,
+  the {\tt channels} field isn't necessary.  If no channel field appears,
+  all are selected (or ignored).  The selected channels should be
+  consistent with the signal used for retrieval.
+
+\item Tikhonov regularization needs to be turned off for MIF extinction,
+  and for extinction in bands where MIF extinction is being retrieved.
+
+\item The {\tt TransformMIFExtinction} switch needs to be set in the
+forward model configuration.
+
+\end{itemize}
+
+\label{lastpage}
+\end{document}
+% $Id$
+
+% $Log$
+% Revision 1.12  2012/05/10 23:18:15  vsnyder
+% Add requirement to set TransformMIFExtinction switch
+%
+% Revision 1.11  2012/05/01 22:34:35  vsnyder
+% Describe subset-using-radiances command
+%
+% Revision 1.10  2012/04/20 23:46:00  vsnyder
+% Add l2cf considerations
+%
+% Revision 1.9  2012/04/18 22:52:45  vsnyder
+% Add table of notations
+%
+% Revision 1.8  2012/02/24 02:22:01  vsnyder
+% Correct rows -> columns
+%
+% Revision 1.7  2012/02/24 00:45:59  vsnyder
+% Explain strategy in mlsl2 and l2cf
+%
+% Revision 1.6  2012/02/02 02:01:56  vsnyder
+% Correct K^R_{nn} indexing description
+%
+% Revision 1.5  2012/01/25 00:02:52  vsnyder
+% Revise indexing
+%
+% Revision 1.4  2011/12/21 21:07:35  vsnyder
+% Correct some typos
+%
+% Revision 1.3  2011/12/15 01:54:53  vsnyder
+% Revise indexing
+%
+% Revision 1.2  2011/12/13 23:39:55  vsnyder
+% Include number of signals in row count for Jacobian layout
+%
+% Revision 1.1  2011/12/13 01:42:21  vsnyder
+% Initial commit
+%

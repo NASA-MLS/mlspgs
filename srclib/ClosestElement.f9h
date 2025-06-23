@@ -1,0 +1,108 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+!  subroutine ClosestElement_r* ( test, array, indices, options )
+
+  ! local variables
+  real(rk) :: diff, dx
+  integer :: i
+  integer :: ibegin
+  integer :: ibest
+  integer :: idn, iup
+  character(len=8) :: myOptions
+  integer :: N
+  ! Executable code
+  myOptions = ' '
+  if ( present(options) ) myOptions = options
+  N = size(array)
+  indices(1) = N
+
+  ! A quicker calculation is possible if a presorted array
+  if ( index(myOptions, 'p') > 0 ) then
+    if ( N < 2 ) return
+    dx = ( array(N) - array(1) ) / ( N - 1 )
+    if ( dx == 0._rk ) return
+    ibest = FindFirst( test == array )
+    iup = FindFirst( array > test )
+    idn = FindLast( array < test )
+    if ( idn < 1 ) idn = 1
+    if ( iup < 1 ) iup = N
+    if ( ibest > 0 ) then
+      ! This is the one we want, no question
+    elseif ( index(myOptions, 'l') > 0 ) then
+      ! always choose the lower, which is i (due to truncation)
+      ibest = idn
+    elseif ( index(myOptions, 'u') > 0 ) then
+      ! always choose the upper, which is i
+      ibest = iup
+    elseif ( iup <= idn ) then
+      ! it does not matter
+      ibest = iup
+    else
+      ! always choose the closer
+      ibest = iup
+      diff = abs( test - array(idn) )
+      if ( abs( array(ibest) - test ) > diff ) ibest = idn
+    endif
+    indices(1) = ibest
+    return
+  endif
+  ! Do we really need messing around with whether we have fillvalues?
+  ibest = FindFirst( .not. IsFillValue(array) )
+  ! call outputNamedValue( '1st non-fill index', ibest )
+  if ( ibest < 1 .or. ibest > N-1 ) then
+    indices(1) = ibest
+    return
+  endif
+  if ( test < minval(array) ) then
+    indices = minloc(array)
+    return
+  elseif ( test > maxval(array) ) then
+    indices = maxloc(array)
+    return
+  endif
+  diff = abs ( test - array(ibest) )
+  ! call outputNamedValue( '1st diff', diff )
+  ! call outputNamedValue( 'N', N )
+  ! call outputNamedValue( 'test', test )
+  ibegin = ibest + 1
+  do i = ibegin, N
+    ! call outputNamedValue( 'abs(test-array(i))', abs( test - array(i) ) )
+    ! Don't select elements that are
+    ! (1) Fill values
+    ! (2) greater than the test if we're told to pick only lower 'l'
+    ! (3) less than the test if we're told to pick only upper 'u'
+    if ( IsFillValue(array(i)) ) then
+      cycle
+    elseif ( index(myOptions, 'l') > 0 .and. test < array(i) ) then
+      cycle
+    elseif ( index(myOptions, 'u') > 0 .and. test > array(i) ) then
+      cycle
+    elseif ( abs( test - array(i) ) < diff ) then
+      ibest = i
+      diff = abs( test - array(i) )
+    endif
+  enddo
+  indices(1) = ibest
+
+!  end subroutine ClosestElement_r*
+
+! $Log$
+! Revision 1.3  2007/08/07 23:56:43  pwagner
+! Exploit quicker operation with pre-sorted array
+!
+! Revision 1.2  2007/03/02 18:20:17  pwagner
+! Add options to require closest but lower (upper)
+!
+! Revision 1.1  2006/01/05 00:54:49  pwagner
+! First commit
+!

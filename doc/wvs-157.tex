@@ -1,0 +1,407 @@
+% Instructions to generate graphics:
+% tgif -print -color -eps wvs-157-circ.obj; epstopdf wvs-157-circ.eps
+% tgif -print -color -jpeg wvs-157-circ.obj
+% This document references labels defined in wvs-146, which must be
+% processed first.  The makefile needs dependencies in the dvi subdirectory:
+%   wvs-157.dvi: wvs-157.tex wvs-157-circ.jpg wvs-146.aux
+%   wvs-146.aux: wvs-146.dvi
+% and, in the pdf subdirectory:
+%   wvs-157.pdf: wvs-157.tex wvs-157-circ.pdf wvs-146.aux
+%   wvs-146.aux: wvs-146.pdf
+
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\usepackage{xr-hyper}
+\externaldocument[146-]{wvs-146}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.1in
+
+\newcommand{\docname}{wvs-157r6}
+\newcommand{\docdate}{24 August 2020}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+   
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\renewcommand\d{\text{d}}
+\newcommand\T{\mathcal{T}}
+\newcommand{\M}{\mathcal{M}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-12pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill Read\\
+Subject: \>Computing the $\chi$ angle for SMLS\\
+From: \>Van Snyder\\
+References: \>\h{wvs-146}, \h{wvs-154}\\
+\end{tabbing}
+
+\parindent 0pt \parskip 4pt
+
+\vspace*{-15pt}
+
+\section{Introduction}
+
+In this diagram, similar to Figure 5.2 on page 23 of the ATBD, I have
+added the instrument and tangent vectors, and the third column of the
+ECR-to-FOV matrix.  \\[-15pt]
+
+\begin{centering}
+\includegraphics[scale=0.9,angle=270]{wvs-157-circ}\\[10pt]
+\end{centering}
+
+The third column of {\tt ECR_to_FOV} is a vector $\vec{F}$, in ECR, along
+the line of sight.
+
+Let $\vec{R}_s$ be the spacecraft position vector and $\vec{T}$ be the
+tangent position vector (both in ECR).
+
+There are (at least) four ways to define the plane of the line-of-sight
+frame (LOSF).
+
+\begin{itemize}
+
+\item The plane normal to $\vec{N} = \vec{R}_s \times \vec{T}$.
+
+\item The plane normal to $\vec{N} = \vec{R}_s \times \vec{F}$.
+
+\item The plane normal to $\vec{N} = \vec{F} \times \vec{T}$.
+
+\item The plane normal to $\vec{N} = \vec{F} \times \vec{G}$, where
+$\vec{G} = -\nabla E(\lambda_t,\phi_t,0)$, $E$ is the Earth reference
+ellipsoid, and $[\lambda_t,\phi_t,0]^T$ is the sub-tangent point .
+
+\end{itemize}
+
+EMLS uses the first definition.  The angle between the unit vector
+$\hat{n} = \frac{\vec{N}}{|\vec{N}|}$ and the north pole is the orbit
+inclination angle $\beta$.  If the orbit is not nearly equatorial, $\cos
+\beta = \hat{n}_3$ may be used, but this can have significant error for a
+nearly-equatorial orbit (see \h{wvs-154}).
+
+In the first three cases, in a three-dimensional model, the plane does not
+contain $\vec{G}$ unless the orbit is polar or equatorial.  The plane does
+contain the center of the Earth.
+
+In the fourth case, the plane is a \emph{normal section}, as described in
+Section \ref{146-Normal-Section} in \h{wvs-146}.
+
+The forward model calculates the refraction-corrected
+$\chi^{\text{refr}}_{\text{eq}}$ angle as
+
+\begin{equation}\label{one}
+\sin \chi^{\text{refr}}_{\text{eq}} = \frac{N_t}{N_s} \frac{H_t}{H_s}
+\text{ where } H_t = | \vec{H}_t | \text{ and } H_s = | \vec{H}_s | \,.
+\end{equation}
+
+\section{Calculations for EMLS}
+
+The routines in {\tt get_chi_angles_m} calculate $H_s = R_s + 38.9014\,
+\sin 2(\phi_t-51^\circ\hspace{-4.2pt}.\hspace{1pt}6814 )$ and remark that
+this is an empirical formula, which depends upon the orbit inclination,
+which is unique to each instrument, and, indeed, different for every MAF
+of SMLS.
+
+Two lines above Equation (8.5) in the ATBD, there is the formula
+$\vec{H}_s = \vec{R}_s - \vec{d}$, where the co\"ordinates of $\vec{d}$ in
+LOSF are defined by Equation (5.22):
+
+\begin{equation}\begin{split}\label{two}
+\vec{d} = \,& \left[ \left( N(\phi_t) - H_t^\oplus \right) \cos \phi_t,
+                 \left( \frac{c^2}{a^2} N(\phi_t) - H_t^\oplus \right)
+                 \sin \phi_t, 0 \right] \text{ where} \\
+R_{\text{eq}}^\oplus \equiv \,& H_t^\oplus = N(\phi_t) \,
+ \sqrt{ \sin^2 \phi_t + \frac{c^4}{a^4} \cos^2 \phi_t }\,,\\
+N(\phi) = \,& \frac{a^2}{\sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}}
+        = \frac{a}{\sqrt{1-e^2\sin^2\phi_t}}
+ \text{ is the radius in the prime vertical} \\
+ \,& \text{ (see Equation (\ref{146-RN}) in \h{wvs-146}) at geodetic angle } \phi
+  \text{ in the LOSF, and } \phi_t \\
+ \,& \text{ is the geodetic tangent angle in the LOSF.} \\
+\end{split}\end{equation}
+
+Combining the last two equations,
+
+\begin{equation}\label{Req}
+R_{\text{eq}}^\oplus \equiv H_t^\oplus =
+ \sqrt{\frac{a^4 \sin^2 \phi_t + c^4 \cos^2 \phi_t}
+            {a^2 \cos^2 \phi_t + c^2 \sin^2 \phi_t}} \,.
+\end{equation}
+
+Equations (\ref{two}) and (\ref{Req}) are incorrect.  A term involving
+$\frac{\d N(\phi)}{\d \phi}$ was omitted in the derivation.  The correct
+result is derived in \h{wvs-146} in Equation (\ref{146-principal-geod}) in
+Section \ref{146-Geod}, and displayed again in Section \ref{146-Prime}:
+
+\begin{equation}\label{Correct}
+R_{\text{eq}}^\oplus = R_M = a\,\frac{1-e^2}
+                                     {(1-e^2 \sin^2 \phi_t)^\frac32} \,,
+\end{equation}
+
+where eccentricity $e = 1 - \frac{c^2}{a^2}$.
+
+From the figure, $\vec{H}_t = \vec{R}_t - \vec{d}$, where $\vec{R}_t =
+\vec{T} - (\vec{T} \cdot \hat{n})\, \hat{n}$ is the projection of
+$\vec{T}$ into the LOSF.
+
+The semi-minor axis of the Earth-projected ellipse in the LOSF is given by
+Equation (5.2):
+
+\begin{equation}
+c^2 = \frac{a^2 b^2}{a^2 \sin^2 \beta + b^2 \cos^2 \beta}
+\end{equation}
+
+where $a$ and $b$ are the semi-major and semi-minor axes of the Earth.
+
+The geocentric tangent angle $\gamma_t$ is the angle between $\vec{T}$ and
+$\vec{Q}$, where $\vec{Q} = \pm \hat{z} \times \hat{n}$ are the directions
+of the intersections of the Earth-projected ellipse with the equatorial
+plane.  Having $\gamma_t$, one can calculate the geodetic tangent angle
+$\phi_t$ in the LOSF using $c^2 \tan \phi = a^2 \tan \gamma_t$ or Equation
+(5.4) in the ATBD:
+
+\begin{equation}\begin{split}
+\sin \phi_t = \,& \frac{a^2 \sin \gamma_t}
+                       {\sqrt{a^4 \sin^2 \gamma_t + c^4 \cos^2 \gamma_t}}
+                       \text{ and} \\
+\cos \phi_t = \,& \frac{c^2 \cos \gamma_t}
+                       {\sqrt{a^4 \sin^2 \gamma_t + c^4 \cos^2 \gamma_t}}\,. \\
+\end{split}\end{equation}
+
+This depends upon the quadrant of $\gamma_t$, which depends upon the sign
+chosen for $\vec{Q}$.  The normal to the Earth-projected ellipse at the
+tangent point, in LOSF, is given by Equation (5.7) in the ATBD:
+
+\begin{equation}
+\vec{n}_d = [\, -\sin \phi_t,\, \cos \phi_t,\, 0\, ]\,.
+\end{equation}
+
+The coordinates of $\vec{n}_d$ are in LOSF.  Let $A$ be $\vec{n}_d$ in
+ECR, $\hat{q} = \frac{\vec{Q}}{|\vec{Q}|}$, $\hat{y} =\hat{n} \times
+\hat{q}$, and $\mathbf{M}$ be the matrix whose columns are $\hat{q}$,
+$\hat{y}$, and $\hat{n}$.  Then $\mathbf{M} \vec{A} = \vec{n}_d$.
+
+The quadrant of $\phi_t$ can be chosen to minimize the angle between
+$\vec{A}$ and $\vec{R}_t$.  Having $\phi_t$ in the correct quadrant allows
+to calculate $\vec{d}$, and then $\vec{H}_t$ and $\vec{H}_s$, and then
+$\chi^{\text{refr}}_{\text{eq}}$.
+
+\section{Calculations in three dimensions}
+
+The tangent point can be expressed in geodetic co\"ordinates $(\lambda_t,
+\phi_t, h_t)$ corresponding to the tangent point $\vec{T}$ in ECR
+co\"ordinates.
+
+The position $\vec{T}_0$ of the sub-tangent point on the surface of the
+Earth is defined to have geodetic co\"ordinates $(\lambda_t, \phi_t, 0)$. 
+The ECR co\"ordinates $(x_t, y_t, z_t)$ of $\vec{T}_0$ can be calculated
+from those geodetic co\"ordinates using equations from section
+\ref{146-Rel} \h{wvs-146}.  Using $\rho^2_t = x^2_t + y^2_t$, the equation
+of the ellipsoid can be written
+
+\begin{equation}\label{Ellipsoid}
+E_{T_0} = x^2_t + y^2_t + \frac{z^2_t}{1-e^2}
+        = \rho^2_t + \frac{z^2_t}{1-e^2} = a^2 \,,
+\end{equation}
+
+where eccentricity $e = 1 - \frac{b^2}{a^2}$, $a$ is the equatorial radius
+of the Earth, and $b$ is the polar radius.  From Equation
+(\ref{Ellipsoid}), $z^2_t = ( 1 - e^2 ) ( a^2 - \rho^2_t )$.  The inward
+normal to the Earth reference ellipsoid $E$ at $\vec{T}_0$, is
+
+\begin{equation}\begin{split}\label{Gradient}
+\vec{G}_{T_0} = -\,& \nabla E_{T_0} =
+   - \left[ 2x_t, 2y_t, \frac{2z_t}{1-e^2} \right]^T
+ = - \left[ 2x_t, 2y_t, 2 \sqrt{( 1 - e^2 ) ( a^2 - \rho^2_t )} \right]^T
+ \,, \\
+ \text{ and }
+|\vec{G}_{T_0}| =\,& 2\,\sqrt{\frac{a^2-\rho^2_t}{1-e^2}} \,.
+\end{split}\end{equation}
+
+$\vec{G}_{T_0}$ is parallel to $\vec{H}_t$.  Let $\hat{g}_{T_0} =
+\frac{\vec{G}_{T_0}}{|\vec{G}_{T_0}|} = [ \xi_t, \eta_t, \zeta_t ]^T$ be
+the inward unit normal at $T_0$. Then
+
+\begin{equation}
+\vec{d} = \vec{T}_0 + R_{\text{eq}}^\oplus\, \hat{g}_{T_0} \,.
+\end{equation}
+
+
+The vector $\vec{R}_s$ is the geocentric position of the instrument.  The
+height of the instrument, measured from the center of the equivalent
+circular Earth is $H_s = | \vec{R}_s - \vec{d} |$.  The height of the
+tangent point, measured from the center of the equivalent
+circular Earth is $H_t = R_{\text{eq}}^\oplus + h_t$.  From the figure,
+
+\begin{equation}\label{Chi}
+\sin \chi_{\text{eq}} = \frac{H_t}{H_s} =
+  \frac{H_t}{\sqrt{H_t^2+s^2}} = \sqrt{1-(\vec{F}\cdot\vec{g})^2}
+  \,.
+\end{equation}
+
+The refracted $\chi$ angle is given by Equation (\ref{one}), \emph{viz.}
+
+\begin{equation}
+\sin \chi^{\text{refr}}_{\text{eq}} =
+ \frac{\mathcal{N}_t}{H_t}\sin \chi_{\text{eq}} =
+ \frac{\mathcal{N}_t H_t}{\mathcal{N}_s H_s} =
+ \frac{\mathcal{N}_t}{\mathcal{N}_s} \frac{H_t}{\sqrt{H_t^2+s^2}} =
+ \frac{\mathcal{N}_t}{\mathcal{N}_s} \sqrt{1-(\vec{F}\cdot\vec{g})^2} \,.
+\end{equation}
+
+By using $\cos\chi_{\text{eq}} = \vec{F}\cdot\vec{g}$, neither $H_s$ nor
+$s$ are required.
+
+% From Equation (A.4) in the ATBD, calculating the refracted path length
+% requires $H_s$.  Therefore, the tangent form in Equation (\ref{Chi}) is
+% probably not useful when refraction is to be taken into account.
+
+If the fourth definition of the LOSF is used, $R_{\text{eq}}^\oplus$ would be
+the radius of curvature of the normal section, as described in Equation
+(\ref{146-Req}) in section \ref{146-Normal-Section}, or Equation
+(\ref{146-Req2}) in section \ref{146-NoAz}, in \h{wvs-146}.
+
+The derivative of $\chi_\text{eq}^\text{refr}$ with respect to $H_t$ is
+also needed.
+
+\begin{equation}
+\frac{\text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+  \cos \chi^{\text{refr}}_{\text{eq}} =
+  \sin \chi^{\text{refr}}_{\text{eq}}
+  \left[ \frac1{\mathcal{N}_t}
+         \frac{\text{d} \mathcal{N}_t}{\text{d} H_t} +
+         \frac{s^2}{(H_t^2+s^2) H_t} \right].
+\end{equation}
+
+From the figure, $\frac{s^2}{\sqrt{H_t^2+s^2}} = \cos^2
+\chi_\text{eq} = ( \vec{F}\cdot\vec{g} )^2$.  Then
+
+\begin{equation}
+\frac{\text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+  \cos \chi^{\text{refr}}_{\text{eq}} =
+  \sin \chi^{\text{refr}}_{\text{eq}}
+  \left[ \frac1{\mathcal{N}_t}
+         \frac{\text{d} \mathcal{N}_t}{\text{d} \zeta_t}
+         \frac{\text{d} \zeta_t}{\text{d} H_t} +
+         \frac{\cos^2\chi_\text{eq}}{H_t} \right] =
+  \sin \chi^{\text{refr}}_{\text{eq}}
+  \left[ \frac1{\mathcal{N}_t}
+         \frac{\text{d} \mathcal{N}_t}{\text{d} \zeta_t}
+         \frac{\text{d} \zeta_t}{\text{d} H_t} +
+         \frac{( \vec{F}\cdot\vec{g} )^2}{H_t} \right].
+\end{equation}
+
+We have
+
+\begin{equation}\label{dndz}
+\mathcal{N}_t = 1 + a\, e^{-\zeta_t \ln 10} ~\Rightarrow~ 
+  \frac{ \text{d} \mathcal{N}_t }{ \text{d} \zeta_t } =
+   - \ln 10 ( \mathcal{N}_t - 1 ) \,.
+\end{equation}
+
+Therefore
+
+\begin{equation}
+\frac{\text{d} \chi^{\text{refr}}_{\text{eq}} }{ \text{d} H_t}
+  \cos \chi^{\text{refr}}_{\text{eq}} =
+  \sin \chi^{\text{refr}}_{\text{eq}}
+  \left[\frac{( \vec{F}\cdot\vec{g} )^2}{H_t}  -
+         \ln 10\, \frac{\mathcal{N}_t-1}{\mathcal{N}_t}
+         \frac{\text{d} \zeta_t}{\text{d} H_t} \right].
+\end{equation}
+
+By using $\cos\chi_{\text{eq}} = \vec{F}\cdot\vec{g}$, neither $H_s$ nor
+$s$ are required.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.10  2020/08/25 00:47:21  vsnyder
+% Clarify Equations 14 and 16 and definition of cos chi
+%
+% Revision 1.9  2020/08/21 19:57:24  vsnyder
+% Update revision number and date
+%
+% Revision 1.8  2020/08/21 19:54:24  vsnyder
+% Account for d(f.g)/d H_t
+%
+% Revision 1.6  2020/08/19 17:32:33  vsnyder
+% Correct a typo
+%
+% Revision 1.5  2020/08/12 00:00:28  vsnyder
+% Revised Equations 17 and 18
+%
+% Revision 1.3  2020/04/21 00:05:49  pwagner
+% Should work better with make
+%
+% Revision 1.2  2020/01/21 23:10:18  vsnyder
+% More material about computing chi angles
+%
+% Revision 1.1  2020/01/08 21:36:35  vsnyder
+% Initial commit
+%

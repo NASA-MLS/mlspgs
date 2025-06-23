@@ -1,0 +1,296 @@
+; --------------------------------------------------- Output -----
+
+;; Skip all output if requested to do so
+
+;; otherwise it was done with direct write; so must Copy
+
+;; Do we need ascend/descend info?
+
+begin Output
+
+;; We might make up a bunch of m4 flags to control the next two things
+Sleep, time=10000us
+Catenate
+
+;; These macros relate to storing standard products
+;; Special cases are handled by lists ending with 'StdProds' mostly
+;; Some are stored at high resolution: HiResStdProds
+;; Some are stored accompanied by a column abundance: ColumnStdProds
+;; Some are stored w/o a column abundance: NonColumnStdProds
+;; We're planning on only O3 accompanying its column
+;; (OH, IWC and RHI will be treated separately below)
+
+   ;;  ----- This idea, despite good intentions, proved disastrous when
+   ;;      Band 11 was off starting Jan 10 2010
+   ;;      We'll have to come up with a better system for detecting skipped phases
+   ;;      ;; Don't copy anything if we skipped some phases
+   ;;      BrOEmpty: Boolean, formula="false"
+   ;;      isSwathEmpty, type=l2dgg, swath='BrO-StdProd', file='DGG', Boolean=BrOEmpty
+   ;;      Dump, Boolean=BrOEmpty
+   ;;      Skip, Boolean=BrOEmpty  ;; No need if we skipped the BrO phase
+;; Here we carry out the idea of copying standard Products out of the
+;; DGG file and into their "proper" l2gp files
+;;
+;; for this to work, we must have added an invocation of
+;; storeStandardProductWithColumn or
+;; storeStandardProductWithoutColumn to the template
+;; l2cf for each of the Standard Products
+;; Otherwise, Output will complain "Swath not found"
+;; and the run will stop
+;;
+
+;; What if we wish to Copy APriori?
+
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='BrO-StdProd', inputtype=l2dgg, $
+    file='L2GP-BrO', rename='BrO', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='CH3CN-StdProd', inputtype=l2dgg, $
+    file='L2GP-CH3CN', rename='CH3CN', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='CH3Cl-StdProd', inputtype=l2dgg, $
+    file='L2GP-CH3Cl', rename='CH3Cl', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='CH3OH-StdProd', inputtype=l2dgg, $
+    file='L2GP-CH3OH', rename='CH3OH', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='ClO-StdProd', inputtype=l2dgg, $
+    file='L2GP-ClO', rename='ClO', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='CO-StdProd', inputtype=l2dgg, $
+    file='L2GP-CO', rename='CO', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='H2O-StdProd', inputtype=l2dgg, $
+    file='L2GP-H2O', rename='H2O', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='HCl-StdProd', inputtype=l2dgg, $
+    file='L2GP-HCl', rename='HCl', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='HCN-StdProd', inputtype=l2dgg, $
+    file='L2GP-HCN', rename='HCN', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='HNO3-StdProd', inputtype=l2dgg, $
+    file='L2GP-HNO3', rename='HNO3', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='HO2-StdProd', inputtype=l2dgg, $
+    file='L2GP-HO2', rename='HO2', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='HOCl-StdProd', inputtype=l2dgg, $
+    file='L2GP-HOCl', rename='HOCl', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='N2O-StdProd', inputtype=l2dgg, $
+    file='L2GP-N2O', rename='N2O', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='SO2-StdProd', inputtype=l2dgg, $
+    file='L2GP-SO2', rename='SO2', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='Temperature-StdProd', inputtype=l2dgg, $
+    file='L2GP-Temperature', rename='Temperature', $
+    /create
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='GPH-StdProd', inputtype=l2dgg, $
+    file='L2GP-GPH', rename='GPH', $
+    /create
+
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='BrO-APriori', inputtype=l2dgg, $
+    file='L2GP-BrO'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='CH3CN-APriori', inputtype=l2dgg, $
+    file='L2GP-CH3CN'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='CH3Cl-APriori', inputtype=l2dgg, $
+    file='L2GP-CH3Cl'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='CH3OH-APriori', inputtype=l2dgg, $
+    file='L2GP-CH3OH'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='ClO-APriori', inputtype=l2dgg, $
+    file='L2GP-ClO'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='CO-APriori', inputtype=l2dgg, $
+    file='L2GP-CO'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='H2O-APriori', inputtype=l2dgg, $
+    file='L2GP-H2O'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='HCl-APriori', inputtype=l2dgg, $
+    file='L2GP-HCl'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='HCN-APriori', inputtype=l2dgg, $
+    file='L2GP-HCN'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='HNO3-APriori', inputtype=l2dgg, $
+    file='L2GP-HNO3'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='HO2-APriori', inputtype=l2dgg, $
+    file='L2GP-HO2'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='HOCl-APriori', inputtype=l2dgg, $
+    file='L2GP-HOCl'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='N2O-APriori', inputtype=l2dgg, $
+    file='L2GP-N2O'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='SO2-APriori', inputtype=l2dgg, $
+    file='L2GP-SO2'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='Temperature-APriori', inputtype=l2dgg, $
+    file='L2GP-Temperature'
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='GPH-APriori', inputtype=l2dgg, $
+    file='L2GP-GPH'
+
+;; This is the way we'll do it if we store both column abundances
+;; (one found using mls tropopause, the other using the GMAO tropopause)
+
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='O3-StdProd column,O3-StdProd', inputtype=l2dgg, $
+    file='L2GP-O3', rename='O3 column,O3', $
+    /create
+
+Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='O3-APriori', inputtype=l2dgg, $
+    file='L2GP-O3'
+
+;; --------------------------------- Other files ---
+;; The IWC, RHI files require special treatment
+;; In each case we copy two related swaths into the same l2gp file
+Copy, type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='IWC-StdProd', inputtype=l2dgg, $
+    file='L2GP-IWC', rename='IWC', $
+    /create
+
+Copy, type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='IWP-StdProd', inputtype=l2dgg, $
+    file='L2GP-IWC', rename='IWP'
+
+Copy, type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='RHI-StdProd', inputtype=l2dgg, $
+    file='L2GP-RHI', rename='RHI', $
+    /create
+
+Copy, type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='UTRHI-StdProd', inputtype=l2dgg, $
+    file='L2GP-RHI', rename='UTRHI'
+
+Copy, type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='RHI-APriori', inputtype=l2dgg, $
+    file='L2GP-RHI'
+
+Copy, type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='UTRHI-APriori', inputtype=l2dgg, $
+    file='L2GP-RHI'
+
+Copy, type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='HNO3-190', inputtype=l2dgg, $
+    file='L2GP-HNO3'
+
+Copy, type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='HNO3-240', inputtype=l2dgg, $
+    file='L2GP-HNO3'
+
+Copy, type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='WMOTPPressure-StdProd', inputtype=l2dgg, $
+    file='L2GP-Temperature', rename='WMOTPPressure'
+
+end Output
+
+;; Separate OH into its own section
+;; so it may be skipped for days when Band15 is off
+begin Output
+
+  ;; Copy OH swath out to l2gp file unless empty
+  Band15OFFALLDAY: Boolean, formula="false"
+  isSwathEmpty, type=l2dgg, swath='OH-StdProd', file='DGG', Boolean=Band15OFFALLDAY
+  Dump, Boolean=Band15OFFALLDAY
+  Skip, Boolean=Band15OFFALLDAY  ;; No need to create OH if THz is off
+  Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='OH-StdProd', inputtype=l2dgg, $
+    file='L2GP-OH', rename='OH', $
+    /create
+
+    Copy, $
+  type=l2gp, hdfVersion=5, $
+    inputFile='DGG', swath='OH-APriori', inputtype=l2dgg, $
+    file='L2GP-OH'
+
+end Output
+
+;; Add ExtraNotes attribute if OH swath empty
+begin Output
+  SOMEGOODOH: Boolean, formula="not Band15OFFALLDAY"
+  Dump, Boolean=SOMEGOODOH
+  Skip, Boolean=SOMEGOODOH  ;; Don't write attribute if some OH good
+  WriteFileAttribute, attrName='ExtraNotes', attrValue='No good OH profiles', $
+    type=l2dgg, file='DGG'
+  WriteFileAttribute, attrName='ExtraNotes', attrValue='No good OH profiles', $
+    type=l2aux, file='L2AUX-DGM'
+
+end Output
+
+begin Output
+;; Now output the L2CF (but only if asked)
+
+;; Now output the L2CF template file (but only if asked)
+
+;; Now output the master ident file (but only if asked)
+
+Copy, inputFile='master.ident', inputtype=ascii, type=l2aux, $
+  file='L2AUX-DGM'
+
+;; These days pretty well everything is written with directWrite
+;; statements, except maybe matrices
+
+;; Now output any averaging kernel.
+
+end Output

@@ -1,0 +1,120 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.1in
+\textheight 9.2in
+
+\newcommand{\docname}{\bf wvs-037}
+\newcommand{\docdate}{15 June 2006}
+
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Updated non-GL correction in forward model\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The incremental optical depth in the full forward model is
+
+\begin{equation}\label{one}
+\Delta \delta_{s\rightarrow s-1} =
+       \int_{\zeta_i}^{\zeta_{i-1}} G(\zeta) \frac{\text{d}s}{\text{d}h}
+         \frac{\text{d}h}{\text{d}\zeta} \text{d} \zeta \,.
+\end{equation}
+
+Since $\frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}$ is singular
+at the tangent point, we remove the singularity
+
+\begin{equation}\begin{split}\label{two}
+\Delta \delta_{s\rightarrow s-1} =\,& 
+        G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}}
+        \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+        \text{d} \zeta        +
+        \int_{\zeta_i}^{\zeta_{i-1}} \left(G(\zeta)-G(\zeta_i)\right)
+        \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+        \text{d} \zeta \\
+                                 =\,& G(\zeta_i) \delta s_{i\rightarrow i-1} +
+        \int_{\zeta_i}^{\zeta_{i-1}} \left(G(\zeta)-G(\zeta_i)\right)
+        \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+        \text{d} \zeta \,.
+\end{split}\end{equation}
+
+Where $G(\zeta_i)\, \delta s_{i\rightarrow i-1}$ is not a sufficiently accurate
+estimate of $\Delta \delta_{s\rightarrow s-1}$, the second integral is
+estimated using 3-point Gauss-Legendre quadrature.  In the nonpolarized model,
+where $G(\zeta_i)\, \delta s_{i\rightarrow i-1}$ is sufficiently accurate, the
+forward model had been replacing $G(\zeta_i)\, \delta s_{i\rightarrow i-1}$
+with a slightly more accurate trapezoidal estimate for equation (\ref{one}),
+\emph{viz.}
+
+\begin{equation}
+\Delta \delta_{s\rightarrow s-1} \approx
+  \frac12 \left( G(\zeta_i) + G(\zeta_{i-1}) \right)
+   \delta s_{i\rightarrow i-1}\,,
+\end{equation}
+
+since it does not require significant extra computation. This admits the
+possibility that $G(\zeta_i) \neq G(\zeta_{i-1})$, but not that
+$\left.\frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}\right|_i
+\neq \left.\frac{\text{d}s}{\text{d}h}
+\frac{\text{d}h}{\text{d}\zeta}\right|_{i-1}$. The forward model has been
+changed to use $G(\zeta_i)\, \delta s_{i\rightarrow i-1}$, plus a correct
+trapezoidal estimate of the second integral in equation (\ref{two}),
+\emph{viz.}
+
+\begin{equation}\begin{split}
+\Delta \delta_{s\rightarrow s-1} \approx\,&
+  G(\zeta_i) \delta s_{i\rightarrow i-1} + \frac12
+  \left[\left( G(\zeta_{i-1}) - G(\zeta_i) \right)
+  \left.\frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+  \right|_{i-1} +
+  \left( G(\zeta_i) - G(\zeta_i) \right)
+  \left.\frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+  \right|_i \right]
+  \delta \zeta_{i\rightarrow i-1} \\
+=\,&
+  G(\zeta_i) \delta s_{i\rightarrow i-1} +
+  \frac12 \left( G(\zeta_{i-1}) - G(\zeta_i) \right)
+  \left.\frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+  \right|_{i-1} \delta \zeta_{i\rightarrow i-1}
+\end{split}\end{equation}
+
+This change will give slightly more accurate, but slightly different, radiances
+when the full forward model is run with a large tolerance.  If the tolerance is
+sufficiently small, the second integral in equation (\ref{two}) is always
+evaluated using 3-point Gauss-Legendre quadrature, in which case this change
+would have no effect.
+
+This change does not affect how derivatives are calculated.
+
+\label{lastpage}
+\end{document}
+% $Id$

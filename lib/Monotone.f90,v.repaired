@@ -1,0 +1,159 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Monotone
+
+  ! Compute indices for the longest monotone sequence of values in an array.
+
+  implicit NONE
+  private
+
+  public :: Get_Monotone, Get_Monotone_D, Get_Monotone_S
+  public :: IsMonotonic, IsMonotonic_r4, IsMonotonic_r8, IsMonotonic_int
+  public :: Longest_Monotone_Subsequence,Longest_Monotone_Subsequence_D
+  public :: Longest_Monotone_Subsequence_I, Longest_Monotone_Subsequence_S
+
+  ! This family of routines computes indices for the longest contiguous
+  ! monotone sequence of values in an array that begin or end at the minimum
+  ! or maximum value.  Longer internal sequences are not detected.  Equal
+  ! consecutive elements are treated as monotonic. The result is an integer
+  ! array of two elements.  The first element is never greater than the
+  ! second element, so you don't need to worry about the sign of the stride.
+
+  ! StartStop = get_monotone ( A )
+
+  interface Get_Monotone
+    module procedure Get_Monotone_D, Get_Monotone_S
+  end interface
+
+  ! This family of routines checks to see if an array monotonically increases
+  ! By default it returns TRUE if either monotonic increasing or decreasing
+  ! If optional DIRECTION is supplied and '+', TRUE means increasing
+  ! if '-', TRUE means drecreasing
+  ! We are strict in the sense that any "stalling" produces FALSE
+  ! Thus {0, 1, 2, 2, 3} is not monotonic
+  !
+  ! If you would like to know instead whether an array is "never falling"
+  ! or "never rising" that's a different though related condition
+
+  ! log IsMonotonic ( array, [char* direction] )
+
+  interface IsMonotonic
+    module procedure IsMonotonic_r4, IsMonotonic_r8, IsMonotonic_int
+  end interface
+
+  ! This family of routines finds indices of a longest monotonically increasing
+  ! (or decreasing) subsequence in an array.
+
+  interface Longest_Monotone_Subsequence
+    module procedure Longest_Monotone_Subsequence_D
+    module procedure Longest_Monotone_Subsequence_I
+    module procedure Longest_Monotone_Subsequence_S
+  end interface
+
+  ! Monotonize is still in MLSFillValues because it wants IsFillValue,
+  ! which is in MLSFillValues
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+    "$RCSfile$"
+  private :: not_used_here 
+  !---------------------------------------------------------------------------
+
+contains ! ============= Public Procedures ==========================
+
+  function Get_Monotone_D ( A ) result ( Seq )
+    double precision, intent(in) :: A(:)
+    integer :: Seq(2)     ! Start, Stop
+    double precision :: T ! Current test value
+    include 'Get_Monotone.f9h'
+  end function Get_Monotone_D
+
+  function Get_Monotone_S ( A ) result ( Seq )
+    real, intent(in) :: A(:)
+    integer :: Seq(2)     ! Start, Stop
+    real :: T             ! Current test value
+    include 'Get_Monotone.f9h'
+  end function Get_Monotone_S
+
+  logical function IsMonotonic_int ( Array, Direction ) result(sooDesu)
+    integer, dimension(:), intent(in) :: Array
+    character(len=*), intent(in), optional :: Direction
+    ! Internal variables
+    integer, dimension(size(array)-1) :: increment
+    integer :: incMax
+    integer :: incMin
+    include 'IsMonotonic.f9h'
+  end function IsMonotonic_int
+
+  logical function IsMonotonic_r4 ( Array, Direction ) result(sooDesu)
+    real, dimension(:), intent(in) :: Array
+    character(len=*), intent(in), optional :: Direction
+    ! Internal variables
+    real, dimension(size(array)-1) :: increment
+    real :: incMax
+    real :: incMin
+    include 'IsMonotonic.f9h'
+  end function IsMonotonic_r4
+
+  logical function IsMonotonic_r8 ( Array, Direction ) result(sooDesu)
+    double precision, dimension(:), intent(in) :: Array
+    character(len=*), intent(in), optional :: Direction
+    ! Internal variables
+    double precision, dimension(size(array)-1) :: increment
+    double precision :: incMax
+    double precision :: incMin
+    include 'IsMonotonic.f9h'
+  end function IsMonotonic_r8
+
+  subroutine Longest_Monotone_Subsequence_D ( A, Seq, Dir )
+    double precision, intent(in) :: A(0:)
+    integer, allocatable, intent(out) :: Seq(:)
+    integer, intent(in), optional :: Dir ! Direction, default +1 => increasing
+    include 'Longest_Monotone_Subsequence.f9h'
+  end subroutine Longest_Monotone_Subsequence_D
+
+  subroutine Longest_Monotone_Subsequence_I ( A, Seq, Dir )
+    integer, intent(in) :: A(0:)
+    integer, allocatable, intent(out) :: Seq(:)
+    integer, intent(in), optional :: Dir ! Direction, default +1 => increasing
+    include 'Longest_Monotone_Subsequence.f9h'
+  end subroutine Longest_Monotone_Subsequence_I
+
+  subroutine Longest_Monotone_Subsequence_S ( A, Seq, Dir )
+    real, intent(in) :: A(0:)
+    integer, allocatable, intent(out) :: Seq(:)
+    integer, intent(in), optional :: Dir ! Direction, default +1 => increasing
+    include 'Longest_Monotone_Subsequence.f9h'
+  end subroutine Longest_Monotone_Subsequence_S
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Monotone
+
+! $Log$
+! Revision 2.3  2015/04/07 02:48:50  vsnyder
+! Add LongestMonotoneSubsequence
+!
+! Revision 2.2  2015/03/27 02:07:05  vsnyder
+! Ensure StartStop(1) < StartStop(2)
+!
+! Revision 2.1  2015/03/27 01:05:38  vsnyder
+! Initial commit
+!

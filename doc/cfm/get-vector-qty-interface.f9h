@@ -1,0 +1,9 @@
+! Given a vector and an index into the quantity templates, find quantity
+! with matching template within vector.
+function GetVectorQtyByTemplateIndex ( vector, quantityIndex)
+   ! The vector where the quantity resides
+   type (vector_T), intent(in) :: vector
+   ! The index of the quantity in the quantity database; this index
+   ! is returned by AddQuantityTemplateToDatabase
+   integer, intent(in) :: quantityIndex
+end function

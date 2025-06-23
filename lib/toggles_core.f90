@@ -1,0 +1,93 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module TOGGLES
+
+  implicit NONE
+  public
+
+  ! Toggle indices.  The parser uses PAR, and the symbol/declaration
+  ! table software uses TAB, but they can have any values.
+  integer, parameter :: CON = 1    ! Trace constrainers visitation of tree
+                                   ! nodes, inverted by @C
+  integer, parameter :: EMIT = 2   ! Trace code emitting, inverted by @E
+  integer, parameter :: GEN = 3    ! Trace code generator, inverted by @G
+  integer, parameter :: LEX = 4    ! Print each token as lexer finishes,
+                                   ! inverted by @L
+  integer, parameter :: PAR = 5    ! Trace parser actions, inverted by @P
+  integer, parameter :: SYN = 6    ! Print abstract syntax tree, inverted
+                                   ! by @A
+  integer, parameter :: TAB = 7    ! Trace symbol/declaration table
+                                   ! activity, inverted by @S
+
+  ! Toggles:
+  logical, save :: TOGGLE(con:tab) = .false.
+
+  ! In case you want to have levels of output (not used in the parser):
+  integer, save :: LEVELS(con:tab) = 0
+
+  ! Some switches that anybody can look at (not used in the parser):
+  character(len=256), save :: Switches = ' '
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine INIT_TOGGLE
+    levels = 0
+    toggle = .false.
+    switches = ' '
+  end subroutine INIT_TOGGLE
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module TOGGLES
+
+! $Log$
+! Revision 2.7  2012/06/06 20:42:50  vsnyder
+! Make switches variable longer
+!
+! Revision 2.6  2009/06/23 18:25:44  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.5  2005/06/22 17:25:51  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.4  2002/10/08 00:09:15  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.3  2001/04/24 22:35:01  vsnyder
+! Make module variables SAVE, initialize 'levels'
+!
+! Revision 2.2  2001/03/16 21:25:39  vsnyder
+! Add character switches
+!
+! Revision 2.1  2000/10/11 18:33:25  vsnyder
+! Move from lib/cf_parser to lib; insert copyright notice
+!
+! Revision 2.0  2000/09/05 17:41:51  dcuddy
+! Change revision to 2.0
+!
+! Revision 1.2  2000/08/01 01:01:45  vsnyder
+! Added "levels" for those who want to control the amount of output.
+!

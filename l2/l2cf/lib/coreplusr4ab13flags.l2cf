@@ -1,0 +1,64 @@
+!divert(-1)
+; $Id$
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{!phase})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the Core+R4
+; products.
+
+begin Fill
+
+  ;; ------------------------------------ HCl-640
+  !define(flaggingBands,{13,14})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=HCl,chisqScale=1.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ O3-640
+  !define(flaggingBands,{13,14,30,31})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ SO2-640
+  !define(flaggingBands,{13,14})
+  !define(flaggingRadiometers,{R4})!dnl
+  !makeQualityForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+  !makeStatusForOneProduct(product=SO2,chisqScale=1.0,minRads=200,cloudMax=10K,cloudMin= -10K)
+
+end Fill
+
+; $Log$
+; Revision 1.10  2006/11/01 23:39:06  dwu
+; undo the changes since yesterday
+;
+; Revision 1.9  2006/11/01 20:52:40  dwu
+; compute r4 status based on R1 cloud flags
+;
+; Revision 1.8  2006/11/01 20:24:19  pwagner
+; Comments more accurately reflect T, GPH swath names
+;
+; Revision 1.7  2006/11/01 19:12:29  pwagner
+; Removed R3 as flagging radiometer
+;
+; Revision 1.6  2006/11/01 18:43:59  dwu
+; change r4 cloud flag thresholds, correction for T and GPH
+;
+; Revision 1.5  2006/11/01 18:41:29  dwu
+; change r4 cloud flag thresholds
+;
+; Revision 1.4  2006/10/11 23:04:55  pwagner
+; Special retrieval phase name retrophase needed for Convergence Ratio Fill
+;
+; Revision 1.3  2006/10/04 16:51:47  pwagner
+; Compatible w/ status bits from multiple radiometers; needs review
+;
+; Revision 1.2  2006/08/08 22:27:07  pwagner
+; Fills Quality, Status for Temperature, GPH; needs revision before v2.20
+;
+; Revision 1.1  2006/07/28 18:48:13  dwu
+; *** empty log message ***

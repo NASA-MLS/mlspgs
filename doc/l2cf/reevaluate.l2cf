@@ -1,0 +1,15 @@
+begin Construct
+  OKIter: Boolean, formula="true"
+  OKLimit: Boolean, formula="true"
+end Construct
+begin Fill
+  OKCount: Vector, template=timingTemplate
+  Reevaluate, Boolean=OKIter, manipulation="c", c=0, /literal
+  Reevaluate, Boolean=OKLimit, label="3"
+  dump, Boolean=OKIter
+  dump, Boolean=OKLimit
+  ; stdout will now show
+  ;                        okiter = 0
+  ;                        oklimit = 3
+end Fill
+

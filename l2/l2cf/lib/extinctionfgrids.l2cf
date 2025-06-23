@@ -1,0 +1,4 @@
+; This l2cf fragment is for defining the fGrids for extinciton
+fGridExtinctionConstant: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+

@@ -1,0 +1,101 @@
+\documentclass[12pt]{article}
+
+\newcommand{\docnum}{wvs-017r2}
+\newcommand{\docdate}{18 June 2004}
+
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+\oddsidemargin -0.25in
+\evensidemargin -0.25in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\settowidth{\hW}{\bf \docnum}
+%\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\bf \docnum}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Pre-frequency-averaging\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+This note expands on and analyzes some aspects of pre-frequency-averaging.
+
+Consider the frequency-averaged radiance from one channel
+
+\begin{equation}\begin{split}
+I =& \int \phi(\nu) \sum_{i=1}^{2N_p} \Delta B_i(\nu) \tau_i^s(\nu) \tau_i^w(\nu) \; d\nu
+\approx\ \sum_{n=1}^{N_f} \phi_n \Delta \nu_n \sum_{i=1}^{2N_p} \Delta B_{in}
+ \tau_{in}^s \tau_{in}^w \\
+ &\text{ where }
+ \tau_{in}^s =\; \exp\left(-\sum_{j=2}^i \sum_{k \in \text{strong}}
+ \delta_{jkn}\right),\;
+ \tau_{in}^w =\; \exp\left(-\sum_{j=2}^i \sum_{k \in \text{weak}}
+ \delta_{jkn}\right) \;,
+\end{split}\end{equation}
+
+$n$ indexes frequencies within the channel, $i$ and $j$ index path positions,
+$k$ indexes spectral lines, $\phi_n$ is the filter function for the
+$n^\text{th}$ frequency in the channel, and $\tau_{in}^s$ and $\tau_{in}^w$ are
+factors of the transmission due to sets of lines \{strong\} and \{weak\},
+respectively. The set \{weak\} is defined such that for each $k \in$ \{weak\},
+$\delta_{jkn}$ changes slowly as a function of $n$, i.e., it represents a weak
+spectral line or a weak tail of a line that has its center far from the
+channel.  The set \{strong\} comprises the indexes of the remaining lines.
+
+Since $\delta_{jkn}$ changes slowly as a function of $n$ for $k \in$
+\{weak\}, we can replace $\delta_{jkn}$ for $k \in$ \{weak\} by some kind of
+average w.r.t. $n$, \emph{viz}. $\overline{\delta_{jk}^w}$.
+
+Since the differential Planck radiation function $\Delta B_{in}$ changes very
+slowly with frequency within one channel, we can replace it with a channel
+average $\overline{\Delta B_i}$, which can be adequately approximated by
+evaluating $\Delta B_{in}$ at the channel center frequency.
+
+Exchanging the orders of summation on $i$ and $n$, letting
+$\overline{\delta_j^w} = \sum_{k\in\text{weak}} \overline{\delta_{jk}^w}$ and
+$\overline{\phi_n} = \phi_n \Delta\nu_n$, and replacing $\Delta B_{in}$
+with $\overline{\Delta B_i}$, we have
+
+\begin{equation}\label{exp2}\begin{split}
+ I \approx\;& \sum_{i=1}^{2N_p} \overline{\Delta B_i}
+    \sum_{n=1}^{N_f} \overline{\phi_n} \tau_{in}^s \tau_{in}^w
+    \approx \sum_{i=1}^{2N_p} \overline{\Delta B_i}\; \overline{\tau_{i}^w}
+    \sum_{n=1}^{N_f} \overline{\phi_n} \tau_{in}^s =
+    \sum_{i=1}^{2N_p} \overline{\Delta B_i} \; \overline{\tau_i^s} \;
+     \overline{\tau_i^w}\;, \text{ where } \\
+ &
+ \overline{\tau_i^s} = \sum_{n=1}^{N_f} \overline{\phi_n} \tau_{in}^s
+ \text{ and } \overline{\tau_{i}^w} =
+  \exp\left(-\sum_{j=2}^i \overline{\delta_j^w} \right)
+ \approx
+  \exp\left(-\sum_{j=2}^i \sum_{k \in \text{weak}} \delta_{jkn} \right) =\;
+   \tau_{in}^w\;.
+\end{split}\end{equation}
+
+The $\overline{\delta_j^w}$ quantities can be interpolated from tables that can
+be calculated off line.  The remaining quantities are calculated on line.
+
+\label{lastpage}
+\end{document}
+% $Id$

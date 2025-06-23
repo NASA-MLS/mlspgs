@@ -1,0 +1,61 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+  ! ---------------------------------------------  FindIntersection  -----
+  ! This family of routines finds the indices of the intersection between
+  ! two similarly montonic sets
+  ! e.g. given set1 = /(1, 3, 5, 7 )/, set2 = /(1, 2, 3, 4, 5)/
+  ! produces which1 = /(1, 2, 3)/, 
+  !      which2 = /(1, 3, 5)/, 
+  ! and the optional arg      how_many = 3
+  
+  ! Note that which1 and which2 are arrays of array indices
+  ! and that they will be monotonic, too
+  
+  ! (Actually, set1 and set2 may be non-monotonic as long as each value is
+  ! unique within its own set)
+  ! subroutine FindIntersectionInteger ( set1, set2, WHICH1, which2, HOW_MANY )
+  !   ! Formal arguments
+  !   integer, dimension(:), intent(in)     :: set1
+  !   integer, dimension(:), intent(in)     :: set2
+  !   integer, dimension(:), intent(out)    :: which1
+  !   integer, dimension(:), intent(out)    :: which2
+  !   integer, optional, intent(out)        :: how_many
+  ! Internal variables
+  ! integer                               :: myTol
+  ! integer :: i1, i2
+  ! integer :: my_how_many
+  ! Executable
+  which1 = 0
+  which2 = 0
+  my_how_many = 0
+  if ( size(set1) == 0 .or. size(set2) == 0 .or. &
+    & size(which1) == 0 .or. size(which2) == 0 ) then
+    if ( present(how_many) ) how_many = my_how_many
+    return
+  endif
+  do i1=1, size(set1)
+    i2 = findfirst( set2, set1(i1), Tol=myTol )
+    if ( i2 < 1 ) cycle
+    my_how_many = my_how_many + 1
+    if ( my_how_many > min( size(which1), size(which2) ) ) cycle
+    which1(my_how_many) = i1
+    which2(my_how_many) = i2
+  enddo
+  if ( present(how_many) ) how_many = my_how_many
+  
+  ! end subroutine FindIntersectionInteger
+! $Log$
+! Revision 1.1  2007/02/26 23:52:37  pwagner
+! First commit
+!

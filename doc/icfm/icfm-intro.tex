@@ -1,0 +1,27 @@
+\section{Introduction and background}
+\label{sec:Introduction}
+
+This document describes the external interface for, and other details
+of, the Aura Microwave Limb Sounder (MLS) `IDL Callable Forward Model' 
+(ICFM hereafter).  More information on Aura MLS can be found in
+\citet{WatersEtal06}. ICFM is an IDL programming interface to the 
+'Callable Forward Model' (CFM hereafter), of which more information
+can be found in \citet{NguyenEtal10}. ICFM allows users to call CFM
+from IDL by using PVM to communicate between IDL and Fortran processes.
+
+Section~\ref{sec:Review} reviews the overall structure of the CFM,
+including an outline of relevant underlying aspects of the MLS
+instrument, operations and data processing algorithms. This information
+can also be found in \citet{NguyenEtal10}.
+Section~\ref{sec:Reference} serves as a reference for the various data
+types and procedures that constitute the ICFM software.
+Appendix~\ref{app:Example} gives examples of code that invokes the
+foward model that can serve as a starting point for assimilation studies etc.
+Finally, Appendix~\ref{app:Lists} provides tables and
+lists of relevant terms (units etc.).
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "cfm"
+%%% End: 

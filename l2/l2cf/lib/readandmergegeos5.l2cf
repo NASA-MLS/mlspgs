@@ -1,0 +1,133 @@
+; ----------------------------------------------- Read / merge geos5
+
+; Assume the geos5 filenames obey the following format:
+; {something}_{typ}_v.{vers}.{yyyy}{mm}{dd}_{hhhh}.V01.hdf
+; where
+;   typ   is one of "dyn" or "prs"
+;   yyyy  is the year; e.g. 2009
+;   mm    is the month; e.g. 06
+;   dd    is the day; e.g. 09
+;   hhhh  is the time starting from 0000 and ending at 2359
+
+; This L2CF fragment reads and merges the geos5 data.
+; If given merra data instead, automatically read and sum the delp field
+begin ReadApriori
+  !ifdef(flagUsingPCF,
+    {!define(geos5TFile1,{})!define(geos5TFile2,{})!define(geos5TFile3,{})!define(geos5TFile4,{})
+     !define(geos5PFile1,{})!define(geos5PFile2,{})!define(geos5PFile3,{})!define(geos5PFile4,{})
+     !define(geos5TFileN,{})!define(geos5PFileN,{})
+     },{
+      !define(geos5Day1,{!TrimLastChar(!esyscmd(dateconverter -o yyyymmdd "!day"))})
+      !define(geos5Day2,{!TrimLastChar(!esyscmd(dateconverter +1 -o yyyymmdd "!day"))})
+      !ifdef(flagUsingMERRA,
+      {!dnl
+        !define(geos5TFile1,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5TFile2,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5TFile3,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5TFile4,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5TFileN,{, file='!inpathmerradn/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day2.hdf'})
+        !define(geos5PFile1,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5PFile2,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5PFile3,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5PFile4,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+        !define(geos5PFileN,{, file='!inpathmerrapn/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day2.hdf'})
+      },{
+        !ifdef(geos5Version,{},{!define(geos5Version,{GEOS510})})
+        !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.asm.tavg3d})})
+        !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
+        !define(geos5TFile2,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
+        !define(geos5TFile3,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
+        !define(geos5TFile4,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
+        !define(geos5TFileN,{, file='!inpathgeos5dn/!geos5Head_dyn_v.!geos5Version.!geos5Day2_0000.V01.hdf'})
+        !define(geos5PFile1,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_0000.V01.hdf'})
+        !define(geos5PFile2,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_0600.V01.hdf'})
+        !define(geos5PFile3,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_1200.V01.hdf'})
+        !define(geos5PFile4,{, file='!inpathgeos5pd/!geos5Head_prs_v.!geos5Version.!geos5Day1_1800.V01.hdf'})
+        !define(geos5PFileN,{, file='!inpathgeos5pn/!geos5Head_prs_v.!geos5Version.!geos5Day2_0000.V01.hdf'})
+        })
+    })
+!ifdef(flagUseOperationalGPH, {
+  geos5GPHInput1: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile1
+  geos5GPHInput2: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile2
+  geos5GPHInput3: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile3
+  geos5GPHInput4: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile4
+  geos5GPHInputNext: gridded, origin=geos5, field='HGHT', $
+    dimList='XDim,YDim,Height,Time' !geos5TFileN})
+  geos5TemperatureInput1: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile1, date='00:00:00'
+  geos5TemperatureInput2: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile2, date='06:00:00'
+  geos5TemperatureInput3: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile3, date='12:00:00'
+  geos5TemperatureInput4: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFile4, date='18:00:00'
+  geos5TemperatureInputNext: gridded, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' !geos5TFileN, date='00:00:00'
+  geos5PressureInput1: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile1, /sum, date='00:00:00'
+  geos5PressureInput2: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile2, /sum, date='06:00:00'
+  geos5PressureInput3: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile3, /sum, date='12:00:00'
+  geos5PressureInput4: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFile4, /sum, date='18:00:00'
+  geos5PressureInputNext: gridded, origin=geos5, field='PL,DELP', $
+    dimList='XDim,YDim,Height,Time' !geos5PFileN, /sum, date='00:00:00'
+end ReadApriori
+
+!define(convertEtaToPGPH,{!dnl
+  geos5ConvertedGPH$1: ConvertEtaToP, $
+    a=geos5GPHInput$1, b=geos5PressureInput$1, Grid=gridTemperature
+   delete, grid=geos5GPHInput$1
+})
+!define(convertEtaToP,{!dnl
+  geos5Converted$1: ConvertEtaToP, $
+    a=geos5TemperatureInput$1, b=geos5PressureInput$1, Grid=gridTemperature
+    delete, grid=geos5TemperatureInput$1
+    delete, grid=geos5PressureInput$1
+})
+
+!ifdef( flagUseOperationalGPH,{
+begin MergeGrids
+  ;; to save memory convert before catenating, not after
+  !forall( convertEtaToPGPH,1,2,3,4,Next)
+
+  mergedGPH: Concatenate, $
+    sourceGrid=[geos5ConvertedGPH1, geos5ConvertedGPH2, $
+    geos5ConvertedGPH3, geos5ConvertedGPH4, geos5ConvertedGPHNext]
+  delete, grid=geos5ConvertedGPH1
+  delete, grid=geos5ConvertedGPH2
+  delete, grid=geos5ConvertedGPH3
+  delete, grid=geos5ConvertedGPH4
+  delete, grid=geos5ConvertedGPHNext
+end MergeGrids })
+
+
+
+begin MergeGrids
+  ;; wmo p trop (using the values from mid-day)
+  geos5EtaWMOPTrop: wmoTrop, $
+    a=geos5TemperatureInput3, b=geos5PressureInput3
+  !define(flagUseGEOS5PTrop,{yes})
+    
+  ;; to save memory convert before catenating, not after
+  !forall( convertEtaToP,1,2,3,4,Next)
+
+  geos5Concatenate: Concatenate, $
+    sourceGrid=[geos5Converted1, geos5Converted2, $
+    geos5Converted3, geos5Converted4, geos5ConvertedNext]
+  delete, grid=geos5Converted1
+  delete, grid=geos5Converted2
+  delete, grid=geos5Converted3
+  delete, grid=geos5Converted4
+  delete, grid=geos5ConvertedNext
+  mergedTemperature: Merge, operational=geos5Concatenate, $
+    climatology=gridTemperature, height=1mb, scale=5km
+  !define(flagUseOperationalTemperature,{yes})
+  delete, grid=geos5Concatenate
+end MergeGrids
+

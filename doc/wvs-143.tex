@@ -1,0 +1,216 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-143r3}
+\newcommand{\docdate}{2 October 2017}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+   
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill, Van\\
+Subject: \>Definition of path of integration\\
+From: \>Van Snyder\\
+%Reference: \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+\section{By interpolating in tangent height}
+
+If the instrument is not within the atmosphere, the entire path through
+the atmosphere is integrated.  If the instrument is within the atmosphere,
+only the part of the path in the instrument viewing direction should be
+integrated.
+
+If the height of the instrument is greater than the highest height in the
+{\tt h_ref} array in the Full Forward Model the instrument is considered
+not to be within the atmosphere.  The {\tt h_ref} array records the height
+of each $\zeta$ surface for each profile, computed using the temperatures
+along each profile, assuming hydrostatic equilibrium.
+
+The vectors $\mathbf{S}_m$ to the instrument and $\mathbf{T}_m$ to the
+tangent point are minor-frame quantities in ECR co\"ordinates for MIF
+number $m$. The orthonormal matrix $\mathbf{E}_m$ is a minor-frame
+quantity that gives the rotation from ECR to FOV co\"ordinates.  The third
+column of $\mathbf{E}_m$, denoted $\mathbf{E}_{3m}$, is an unit vector in
+the direction of the line-of-sight of the instrument, in ECR
+co\"ordinates.  Each line of sight can be represented parametrically as
+the line whose loci are given by $\mathcal{L}_m(s) = \mathbf{S}_m +
+s\,\mathbf{E}_{3m}$.
+
+Assume there are several MIFs, and therefore there is some MIF number $r$
+such that $|\mathbf{T}_r| \neq 0$.  The number $r$ might be specified in
+the {\tt l2cf}, or if $|\mathbf{T}_r| = 0$ it might be re-calculated
+according to some to-be-specified algorithm.
+
+\begin{floatingfigure}{3.1in}
+\includegraphics[width=3in]{wvs-143-1}
+\end{floatingfigure}
+\vspace*{0.1in}
+
+Compute $\mathbf{N}_r = \mathbf{E}_{3r} \times \mathbf{T}_r$, the vector
+normal to the plane that would contain all field-of-view vectors if the
+instrument moves and scans in that plane.
+
+Compute a vector $\mathbf{T}_g$ to the Earth's surface at the longitude
+and geodetic latitude of $\mathbf{T}_r$, in ECR co\"ordinates, and a
+vector $\mathbf{V}_r = \mathbf{T}_r - \mathbf{T}_g$, normal to the Earth's
+surface at $\mathbf{T}_g$ (every point on $\mathbf{T}_g + s\,
+\mathbf{V}_r$ has the same longitude and geodetic latitude).  Compute an
+unit vector $\hat{\mathbf{V}}_r = \mathbf{V}_r / |\mathbf{V}_r|$.  For
+each $m$ there is a vector $\mathbf{V}_m = \mathbf{T}_m - \mathbf{T}_g$,
+and a geodetic tangent height $\hat{h}_m = |\mathbf{V}_m|$ if
+$\mathbf{T}_m \cdot \mathbf{V}_m > 0$ or $\hat{h}_m = -|\mathbf{V}_m|$
+otherwise.
+
+Compute a set of numbers $\{h_i\}$ where $h_i \geq 0$ are geodetic heights
+corresponding to $\{\zeta_i\}$, computed from hydrostatic equilibrium
+using temperatures on a geodetic profile at $\mathbf{T}_g$, and $h_i<0$
+are arbitrary pre-specified heights.  Use only the subset $\{h_i | h_i
+\geq \hat{h}_m\}$.
+
+Compute vectors $\{\mathbf{T}_i = \mathbf{T}_g + h_i \hat{\mathbf{V}}_r
+\}$.  Represent the points on path $i$ of integration parametrically as
+the loci of points on the line given by $\mathcal{L}_i(s) = \mathbf{C}_i +
+s\,\mathbf{U}_i$, where $\mathbf{U}_i = \frac{\mathbf{N}_r \times
+\mathbf{T}_i}{|\mathbf{N}_r \times \mathbf{T}_i|}$, and $\mathbf{C}_i =
+\mathbf{T}_i$ if $|\mathbf{T}_i| \geq |\mathbf{T}_g|$.  If $|\mathbf{T}_i|
+< |\mathbf{T}_g|$ the path of integration has two segments, one with
+$\mathbf{U}_i$ computed as above and the other its reflection, and for
+both segments $\mathbf{C}_i$ is the point where $\mathcal{L}_i(s)$
+intersects the Earth's surface.  This is equivalent to an assumption that
+the path and velocity of the instrument, and the scan rate, are such that
+path $i$ of integration is orthogonal to $\mathbf{T}_i$.  If $\mathbf{U}_i
+\cdot \mathbf{E}_{3r} > 0$, replace $\mathbf{U}_i$ with $-\mathbf{U}_i$,
+that is, $\mathbf{U}_i$ is a vector directed toward the instrument.
+
+The $i^\text{th}$ path of integration ends at the point on the path of
+integration that is nearest to $\mathbf{S}_m$, where $m$ is either $r$ or
+the point for which $\mathbf{T}_m$ is nearest to $\mathbf{T}_i$, or
+$|\mathbf{T}_m - \mathbf{T}_g|$ is nearest to $h_i$.  Once $m$ is chosen,
+this position can be computed using the method described in \h{wvs-142}.
+
+The $i^\text{th}$ path of integration begins on $\mathcal{L}_i(s)$ at the
+point nearest to $-\infty \mathbf{U}_i$.  If the path intersects the
+Earth's surface, this might not be on the segment nearest to
+$\mathbf{S}_m$.
+
+\section{By interpolating angles}
+
+
+\begin{floatingfigure}{3.1in}
+\includegraphics[width=3in]{wvs-143-2}
+\end{floatingfigure}
+\vspace*{0.1in}
+
+Let $\mathbf{T}_1$ and $\mathbf{T}_2$, and $\mathbf{S}_1$ and
+$\mathbf{S}_2$, be tangent and instrument positions, respectively,  and let
+$\mathbf{L}_1$ and $\mathbf{L}_2$ be line-of-sight unit vectors, in ECR
+co\"ord\-in\-ates at consecutive MIF numbers $m_1$ and $m_2$.  Assume all
+vectors are in a single plane with normal $\mathbf{N} = \mathbf{S}_1
+\times \mathbf{L}_1$.
+
+Let $\mathbf{A}_T$, $\mathbf{A}_S$ and $\mathbf{A}_L$ be angles between
+$\mathbf{T}_1$ and $\mathbf{T}_2$, $\mathbf{S}_1$ and $\mathbf{S}_2$, and
+$\mathbf{L}_1$ and $\mathbf{L}_2$, respectively.  Let $\zeta_1$ and
+$\zeta_2$ be tangent pressures at those MIF numbers.  Let $\zeta$ be the
+desired tangent pressure.  Let $\mathbf{T}_\zeta$, $\mathbf{S}_\zeta$, and
+$\mathbf{L}_\zeta$ be the tangent, instrument position, and line-of-sight
+vectors for the desired $\zeta$.
+
+Compute an interplating coefficient $\eta = ( \zeta_2 - \zeta ) / (
+\zeta_2 - \zeta_1)$.  Rotate the vectors $\mathbf{T}_1$, $\mathbf{S}_1$,
+and $\mathbf{L}_1$ about $\mathbf{N}$ toward $\mathbf{T}_2$,
+$\mathbf{S}_2$, and $\mathbf{L}_2$ by angles $\eta\,\mathbf{A}_T$,
+$\eta\,\mathbf{A}_S$, and $\eta\,\mathbf{A}_L$, giving $\mathbf{T}_\zeta$,
+$\mathbf{S}_\zeta$, and $\mathbf{L}_\zeta$, respectively, as described in
+\h{wvs-122}.  Scale the lengths of the vectors $\mathbf{T}_\zeta$,
+$\mathbf{S}_\zeta$, and $\mathbf{L}_\zeta$ such that $|\mathbf{T}_\zeta| =
+\eta |\mathbf{T}_1| + ( 1 - \eta ) |\mathbf{T}_2|$, and
+$|\mathbf{S}_\zeta| = \eta |\mathbf{S}_1| + ( 1 - \eta ) |\mathbf{S}_2|$. 
+$\mathbf{L}_\zeta$ remains an unit vector.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.3  2017/09/28 23:12:01  vsnyder
+% Need an unit vector in the direction of V_r
+%
+% Revision 1.2  2017/09/26 23:08:32  vsnyder
+% Almost completely revised
+%
+% Revision 1.1  2017/09/21 23:12:46  vsnyder
+% Initial commit
+%

@@ -1,0 +1,8 @@
+; --------------------------------------------- ChunkDivide ----
+;
+; This l2cf fragment gives a single chunk of length 1 MAF with
+; no overlaps.
+begin ChunkDivide
+  ChunkDivide, method=fixed, !ifdef(flagSkipL1BCheck,{/skipL1BCheck,}) $
+    maxLength=1 MAFs, overlap=0 MAFs, noChunks=3496
+end ChunkDivide

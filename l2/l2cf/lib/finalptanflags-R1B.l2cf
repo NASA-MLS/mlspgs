@@ -1,0 +1,24 @@
+!divert(-1)
+; $Id$
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+; This is used by the nrt only
+!define(retrophase,{FinalPtan})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the FinalPtan
+; products
+
+begin Fill
+  ;; ------------------------------------ Temperature-FinalPtan
+  !define(flaggingBands,{1,21,22})
+  !define(flaggingRadiometers,{R1A,R1B,R3})!dnl
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -4K)
+
+
+end Fill
+
+; $Log$

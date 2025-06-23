@@ -1,0 +1,22 @@
+! Create a VGrid, from a given formula, a starting value, a type
+! (currently only supported logarithmic type)
+type(VGrid_T) function CreateVGrid (coordinate, unit, type, start, &
+              formula, values) result (vGrid)
+   ! Currently only support l_zeta
+   integer, intent(in) :: coordinate
+   ! Must be either phyq_dimensionless or phyq_pressure
+   integer, intent(in) :: unit
+   ! Currently only support l_logarithmic (log-based vgrid)
+   integer, intent(in) :: type
+
+   ! If type is l_logarithmic, then start and formula
+   ! should be provided
+   ! The first value of surfaces
+   real(r8), intent(in), optional :: start
+   ! The format of formula is
+   ! "number_of_surfaces:num_decades_between_surfaces".
+   ! For example, "37:6" or "25:8,12:6".
+   character(len=*), intent(in), optional :: formula
+   ! If type is l_explicit, this must be present
+   real(r8), dimension(:), intent(in), optional :: values
+end function

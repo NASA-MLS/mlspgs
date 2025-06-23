@@ -1,0 +1,127 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-024r5}
+\newcommand{\docdate}{30 June 2010}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>PFA derivatives\\
+From: \>Van Snyder\\
+Reference: \>wvs-017\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+For non-PFA radiances for a particular channel $c$, we have
+
+\begin{equation}\label{lbl}
+I_c = \int \text{d} \nu\, \phi_c(\nu) \int
+ \text{d} B(\nu,T(\zeta)) \tau^s(\nu,\zeta) 
+ \approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_n
+               \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{in}
+\end{equation}
+
+where $n$ is the index of one of the $N_f$ frequencies in the channel,
+$\phi$ is the channel's filter function, $N_p$ is line-of-sight path
+length, and $s$ indicates ``Strong (line-by-line) calculation.''
+
+To combine PFA and non-PFA radiances for a particular channel $c$, we use
+
+\begin{equation}\label{combined}
+I_c \approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_n
+               \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{in} \tau^w_{ic}
+\end{equation}
+
+where $w$ indicates ``Weak-line (PFA) calculation''.  Approximating
+$\Delta B_{in}$ by $\Delta B_{ic}$, where $\Delta B_{ic}$ is evaluated at
+the channel center frequency, is acceptable because the change in
+frequency across a channel is negligible compared to the channel center
+frequency.
+
+Observing that $\tau_{in}^s = \exp(-\sum_{j=1}^i\delta_{jn}^s)$ and
+differentiating Equation (\ref{lbl}), we have
+
+\begin{equation}
+\begin{split}
+\frac{\partial I_c}{\partial x_k} \approx\,&
+ \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_n
+  \sum_{i=1}^{N_p} \frac{\partial \Delta B_{in}}{\partial x_k} \tau^s_{in} +
+  \Delta B_{in} \frac{\partial \tau^s_{in}}{\partial x_k} \\
+=\,&
+ \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_n
+  \sum_{i=1}^{N_p} \left( \frac{\partial \Delta B_{in}}{\partial x_k} - \Delta B_{in}
+   \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k} \right ) \tau^s_{in}
+\end{split}
+\end{equation}
+
+To combine PFA and non-PFA derivatives we use a similar definition for
+$\tau_{ic}^w$ and differentiate Equation (\ref{combined}):
+
+\begin{equation}\label{final}
+\begin{split}
+\frac{\partial I_c}{\partial x_k}
+\approx\,& \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_n \sum_{i=1}^{N_p}
+  \frac{\partial \Delta B_{ic}}{\partial x_k} \tau^s_{in} \tau^w_{ic} +
+  \Delta B_{ic} \frac{\partial \tau^s_{in}}{\partial x_k} \tau^w_{ic} +
+  \Delta B_{ic} \tau^s_{in} \frac{\partial \tau^w_{ic}}{\partial x_k} \\
+=\,& \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_n \sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{ic}}{\partial x_k} -
+  \Delta B_{ic}
+   \sum_{j=1}^i \left( \frac{\partial \delta^s_{jn}}{\partial x_k} +
+                      \frac{\partial \delta^w_{jc}}{\partial x_k}
+                \right)
+  \right) \tau^s_{in} \tau^w_{ic}
+\end{split}
+\end{equation}
+
+In Equations (\ref{combined}) and (\ref{final}) it is acceptable to
+include $\tau^w_{ic}$ and $\frac{\partial \delta^w_{jc}}{\partial x_k}$
+within the frequency averaging, even though they are already averages for
+a channel, because $\sum_{n=1}^{N_f} \phi_{nc} = 1$.
+
+The quantity $x_k$ encompasses both state vector elements and the variety of
+entity, i.e., temperature, mixing ratio, line center, line width and line width
+temperature dependence.
+
+\label{lastpage}
+\end{document}
+% $Id$
+
+% $Log$
+% Revision 1.3  2010/04/01 02:06:28  vsnyder
+% Do the integral in Equation 1 correctly, remove c subscript from Tau^s
+%
+% Revision 1.2  2010/03/30 22:57:59  vsnyder
+% Add channel index to strong tau and filter function, add integral in Equation 1
+%

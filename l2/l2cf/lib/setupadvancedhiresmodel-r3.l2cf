@@ -1,0 +1,72 @@
+;$Id$
+;; setupadvancedhiresmodel-r3
+;; This L2CF fragment is for use when we wish to setup an 'advanced'
+;; linear forward model (one that is linearised about a different state
+;; from the one in the l2pc files).
+;;
+;; We have two phi windows:
+;;    phiWindowSetup      used during the a sids to find y*
+;;    phiWindowAdvanced   used by the advanced linears fwdmdls themselves
+!ifdef(phiWindowAdvancedSetup,
+{!define(phiWindowSetup,{!phiWindowAdvancedSetup})},
+{!define(phiWindowSetup,{4 degrees})})
+begin Construct
+  r3SetupModel_HR: ForwardModel, type=full, $
+    signals=['R3:240.B8F:PT.C1:11+15:25','R3:240.B33W:O3.C3'], $
+    phiWindow=!phiWindowSetup, $
+    molecules= [ extinction, [ O2, O_18_O ],[ SO2, S_32_O2 ],$
+    [ O3, O3, O3_R3, O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [HNO3, HNO3]], $
+    LSBlblMolecules=[EXTINCTION,O3,O3_R3,O_18_O],$
+    USBlblMolecules=[EXTINCTION,O3,O3_R3],$
+    specificquantities = [temperature_hr,totalextinctionr3], $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    tolerance= 0.05K,$
+    /do_conv, /do_freq_avg 
+;; We skip the baseline deliberately
+
+end Construct
+
+begin Construct
+  r3YTemplate_HR: VectorTemplate, quantities=[band8, band33]
+end Construct
+
+;; Setup the vectors
+begin Fill
+  r3X_HR: Vector, template=stateTemplate
+  r3Y_HR: Vector, template=r3YTemplate_HR
+end Fill
+
+;; Now we construct the advanced linear models to use these
+begin Construct
+
+  advancedL2PCFwmR3B8: ForwardModel, type=linear, $
+    signals= ['R3:240.B8F:PT'], $
+    molecules=[extinction, O_18_O, O3, SO2, HNO3], $
+    specificQuantities=[temperature_HR,totalextinctionr3], $
+    /temp_der, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
+    binSelectors=[latBin,scalarbin, hrBin, latCost], $
+    xStar=r3X_HR, yStar=r3Y_HR
+
+  advancedL2PCFwmR3B33: ForwardModel, type=linear, $
+    signals= ['R3:240.B33W:O3.C3'], $
+    molecules=[extinction, O_18_O, O3, SO2, HNO3], $
+    specificQuantities=[temperature_HR,totalextinctionr3], $
+    /temp_der, $
+    phiWindow=!phiWindowAdvanced, !ifdef(flagDontLockBins,{},{/lockBins, })$
+    binSelectors=[latBin,scalarbin, hrBin, latCost], $
+    xStar=r3X_HR, yStar=r3Y_HR
+
+end Construct
+
+;$Log$
+;Revision 1.11  2013/04/11 16:35:34  pwagner
+;Replaced 4 degree phiWindows with 5 profiles
+;
+;Revision 1.10  2012/06/19 20:10:57  pwagner
+;flagDontLockBins removes /lockBins switch
+;
+;Revision 1.9  2006/08/11 00:50:40  lambert
+;added band33
+;

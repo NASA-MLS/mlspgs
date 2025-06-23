@@ -1,0 +1,207 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-088}
+\newcommand{\docdate}{2 November 2009}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[u]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill\\
+Subject: \>Canceling singularity incorrectly\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 7pt
+\vspace{-20pt}
+
+
+The full forward model evaluates the integral
+
+\begin{equation}\label{one}
+I = \int_0^S \,\text{d}s\,
+ \exp\left(-
+ \int_0^s \,\text{d}s^\prime \sum_{i=1}^n \rho_i(s^\prime) \beta_i(T(s^\prime))
+ \right)
+\end{equation}
+
+in $\zeta$ coordinates by re-writing it as
+
+\begin{equation}\label{two}
+I = \int_0^{\zeta(S)}
+     \,\frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}\,
+     \text{d}\zeta\,
+    \exp\left(-
+     \int_0^{\zeta}
+      \,\frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta^\prime}\,
+       \text{d}\zeta^\prime\, \sum_{i=1}^n \rho_i(\zeta^\prime) \beta_i(T(\zeta^\prime))
+    \right).
+\end{equation}
+
+There is a square root singularity at the limb tangent point introduced by
+
+\begin{equation}
+\frac{\text{d}s}{\text{d}h} =
+\frac{h(\zeta) + H^\oplus(\phi_t)}
+     {\sqrt{(h(\zeta) + H^\oplus(\phi_t))^2 -
+           (h(\zeta_t) + H^\oplus(\phi_t))^2}}
+\end{equation}
+
+where $h$ is the height of a point on the integration path, $\phi_t$ is the
+limb tangent orbit geodetic angle, $\zeta_t$ is $\zeta$ at the limb tangent,
+and $H^\oplus$ is the height of the earth surface measured from the center of
+the equivalent circular earth.
+
+This singularity is compensated in evaluating the inner integral by adding and
+subtracting the function value at one end of each panel, according to Equation
+(10.13) of the ATBD:
+
+\begin{equation}\label{three}
+\int_{\zeta_i}^{\zeta_{i-1}}
+ \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}\, \text{d}\zeta\,
+ G(\zeta) =
+G(\zeta_i) \int_{\zeta_i}^{\zeta_{i-1}}
+ \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}\, \text{d}\zeta\, +
+\int_{\zeta_i}^{\zeta_{i-1}}
+ \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}\, \text{d}\zeta\,
+ \left[ G(\zeta) - G(\zeta_i) \right].
+\end{equation}
+
+The first integral on the right-hand size is just $\int_{s_i}^{s_{i-1}}
+\text{d}s = \Delta s_{i \rightarrow i-1}$.
+
+The intent of the integrand in the second integral is to cancel the square-root
+singularity in the denominator of $\frac{\text{d}s}{\text{d}h}$ with an
+integrand that goes to zero.
+
+This only works when $i = t$, where $t$ is the tangent point.
+
+More correctly, the integral should be written as
+
+\begin{equation}\label{four}
+\int_{\zeta_i}^{\zeta_{i-1}}
+ \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}\, \text{d}\zeta\,
+ G(\zeta) =
+G(\zeta_t) \int_{\zeta_i}^{\zeta_{i-1}}
+ \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}\, \text{d}\zeta\, +
+\int_{\zeta_i}^{\zeta_{i-1}}
+ \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}\, \text{d}\zeta\,
+ \left[ G(\zeta) - G(\zeta_t) \right].
+\end{equation}
+
+In this case, the integrand of the second integral does go to zero at the same
+place as the square-root singularity in the denominator of
+$\frac{\text{d}s}{\text{d}h}$.
+
+In the forward model, Equation (\ref{three}) is evaluated by first computing
+$G(\zeta_i)$ for $i=1\dots n$.  Then an estimate of the error in the first
+integral in the right-hand size is computed using $G(\zeta_i)$ and
+$G(\zeta_{i-1})$.  If this is sufficiently small, the second integral is
+evaluated using a trapezoid rule, which amounts to a triangle rule since the
+integrand is zero at $\zeta_i$.  When this result is combined with the first
+integral, we have
+
+\begin{equation}\begin{split}\label{five}
+\int_{\zeta_i}^{\zeta_{i-1}}
+ \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}\, \text{d}\zeta\,
+ G(\zeta) \approx\,&
+ \Delta s_{i \rightarrow i-1} G(\zeta_i) +
+  \frac12 \Delta \zeta_{i \rightarrow i-1}
+   \left( G(\zeta_{i-1})-G(\zeta_i) \right)
+  \left.
+  \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+  \right|_{\zeta=\zeta_{i-1}} \\
+ \approx \,&
+ \frac12 \Delta s_{i \rightarrow i-1}
+  \left[ G(\zeta_i) + G(\zeta_{i-1}) \right]\,,
+\end{split}\end{equation}
+
+that is, pretty close to a trapezoid rule.  If the error is too large, a
+3-point Gauss quadrature is used for the second integral.
+
+Equation (\ref{four}) ought to be used.  When the error estimate is small, a
+trapezoidal estimate can still be used for the second integral, giving
+
+\begin{equation}\begin{split}\label{six}
+\int_{\zeta_i}^{\zeta_{i-1}}
+ \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}\, \text{d}\zeta\,
+ G(\zeta) \approx\,&
+ \Delta s_{i \rightarrow i-1} G(\zeta_t) + \\
+ \,&
+ \frac{\zeta_{i-1}-\zeta_i}2
+  \left[ \left( G(\zeta_i) - G(\zeta_t) \right)
+   \left. \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+    \right|_{\zeta=\zeta_i} +
+  \left( G(\zeta_{i-1}) - G(\zeta_t) \right)
+   \left. \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+    \right|_{\zeta=\zeta_{i-1}}
+  \right]
+\end{split}
+\end{equation}
+
+More generally, we would have
+
+\begin{equation}\begin{split}
+\int_{\zeta_i}^{\zeta_{i-1}}
+ \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}\, \text{d}\zeta\,
+ G(\zeta) \approx\,&
+ \Delta s_{i \rightarrow i-1} G(\zeta_t) + \\
+ \,&
+ (\zeta_{i-1}-\zeta_i)
+  \sum_{k=1}^m
+   w_k \left( G(\zeta_k) - G(\zeta_t) \right)
+   \left. \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+    \right|_{\zeta=\zeta_k}
+\end{split}
+\end{equation}
+
+where $\zeta_k$ and $w_k$ are abscissae and weights for the quadrature
+formula.  The forward model currently computes $w_k
+\left.\frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+\right|_{\zeta=\zeta_k}$ for Gauss abscissae, but not at the end points of the
+interval, which would be required to evaluate the trapezoidal rule correctly
+according to Equation (\ref{six}).
+
+The singularity ought also to be removed during evaluation of the outer integral
+by a similar strategy.  This would entail evaluating the inner integral with an
+upper limit of $\zeta_t$, and adding and subtracting this result as is done
+for the inner integral.
+
+Even better, but a lot of work, would be to integrate Equation (\ref{one})
+instead of Equation (\ref{two}), thereby not introducing the singularity.  This
+requires interpolating $\rho_i$ and $T$ in both $\phi$ and $\zeta$, instead of
+just $\phi$, but this is necessary already when Gauss quadrature is used.
+
+Fred Krogh has given me important ideas and advice concerning this note.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$

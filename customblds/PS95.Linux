@@ -1,0 +1,23 @@
+# "$Id$"
+
+#	special options for compiling some modules--override .f90 rules
+
+# Should put this elsewhere--but in a hurry
+TABLES_DIR=../../tables
+
+# split_path.sh can split off a file name from any prefixed paths
+SPLIT_PATH=$(UTILDIR)/split_path.sh
+
+# FC_NAME may be something like f95 if we need a real compiler, or
+# mark_as_uptodate.sh if we're being asked just to touch targets
+FC_NAME := $(shell ${SPLIT_PATH} -f $(FC))
+
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+DUSTIER := $(DUSTY)
+
+# Where we and the configuration-specific files that include us are to be
+custom = $(CONFDIR)/customblds
+
+include $(custom)/Makefile.h
+
+# $Log$

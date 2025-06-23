@@ -1,0 +1,117 @@
+! Copyright 2015, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module Get_Magnetic_Field_m
+!=============================================================================
+
+  implicit NONE
+
+  private
+
+  public :: Get_Magnetic_Field
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Get_Magnetic_Field ( FwdModelConf, FwdModelIn, FwdModelExtra, &
+                                & FMStat, PhiTan, Grids_Mag )
+
+    ! If a polarized model is being run, find the magnetic field in the
+    ! state vector or extra vector, and copy it to Grids_Mag.
+
+    use Constants, only: Rad2Deg
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelGeometry, only: Azimuth_Tol, Viewing_Azimuth
+    use ForwardModelIntermediate, only: ForwardModelStatus_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
+    use Intrinsic, only: L_GeodAltitude, L_MagneticField, L_Zeta
+    use Load_SPS_Data_M, only: Dump, EmptyGrids_T, Grids_T, Load_One_Item_Grid
+    use MLSKinds, only: RP
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSStringLists, only: SwitchDetail
+    use Output_m, only: Output
+    use Toggles, only: Emit, Levels, Switches, Toggle
+    use Trace_M, only: Trace_Begin, Trace_End
+    use VectorsModule, only: Vector_T, VectorValue_T
+
+    type(forwardModelConfig_T), intent(in) :: FwdModelConf
+    type(vector_T), intent(in) :: FwdModelIn, FwdModelExtra
+    type(forwardModelStatus_t), intent(in) :: FmStat ! Reverse comm. stuff
+    type (VectorValue_T), intent(in) :: PhiTan ! Tangent geodAngle component of
+                                ! state vector (minor frame quantity)
+    type (Grids_T), intent(out) :: Grids_mag ! All the coordinates for Magnetic field
+
+    real(rp) :: Azimuth         ! Angle (degrees) between the normal to
+                                ! the plane defined by the spacecraft
+                                ! position and velocity vectors, and the
+                                ! plane defined by the spacecraft
+                                ! position and PTan vectors.
+    type (VectorValue_T), pointer :: MagField ! Magnetic field
+    integer :: Me = -1          ! String index for trace
+    integer :: Print_Mag        ! For debugging output
+
+    call trace_begin ( me, 'ForwardModel.Get_Magnetic_Field', &
+      & cond=toggle(emit) .and. levels(emit) > 0  )
+
+    if ( FwdModelConf%polarized ) then
+
+      ! Compute the viewing azimuth angle
+      azimuth = viewing_azimuth ( FwdModelIn, FwdModelExtra, FwdModelConf, &
+                                & MIF=1, MAF=fmstat%maf )
+      magField => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,          &
+        & quantityType=l_magneticField, config=fwdModelConf )
+      if ( .not. (magField%template%stacked .and. magField%template%coherent) ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Magnetic field is not stacked and coherent' )
+      if ( magField%template%verticalCoordinate /= l_geodAltitude .and. &
+           magField%template%verticalCoordinate /= l_zeta ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'Magnetic field vertical coordinate is not geodetic altitude or zeta' )
+      call load_one_item_grid ( grids_mag, magField, fmStat%maf, phitan, &
+        & fwdModelConf, .false., across=abs(azimuth) > azimuth_tol )
+      print_mag = switchDetail(switches, 'MagGrid')
+      if ( print_mag > -1 ) then
+        if ( switchDetail(switches, 'Azimuth') < 0 ) & ! viewing_azimuth didn't print it
+          & call output ( rad2deg*azimuth, before='Azimuth ', &
+            & after=' degrees', advance='yes' )
+        call dump ( grids_mag, 'Grids_Mag', print_mag )
+      end if
+    else
+      call emptyGrids_t ( grids_mag ) ! Allocate components with zero size
+    end if
+
+    call trace_end ( 'ForwardModel.Get_Magnetic_Field', &
+      & cond=toggle(emit) .and. levels(emit) > 0  )
+
+  end subroutine Get_Magnetic_Field
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Get_Magnetic_Field_m
+
+! $Log$
+! Revision 2.1  2016/09/13 00:30:16  vsnyder
+! Initial commit
+!

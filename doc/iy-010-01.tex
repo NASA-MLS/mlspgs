@@ -1,0 +1,168 @@
+\section{Temperature First Derivative}
+
+
+The hydrostatic relation is
+\begin{equation*}
+h(\zeta) = \frac{g^{\oplus} {H^{\oplus}}^2}{g^{\oplus} H^{\oplus} - k \ln 10 \sum_{q=1}^Q f_q^T  P_q(\zeta)} - H^{\oplus}
+\end{equation*}
+The {\bf temperature} representation is of the form
+\begin{eqnarray*}
+T(\zeta) = \sum_{q=1}^Q \eta_q^T(\zeta) f_q^T.
+\end{eqnarray*}
+The species incremental opacity integral is
+\begin{eqnarray*}
+\triangle \delta_{i \rightarrow i-1}^k = \int_{\zeta_i}^{\zeta_{i-1}} F^{k}(\zeta) \, \beta^k \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta.
+\end{eqnarray*}
+Substituting
+\begin{eqnarray*}
+\frac{ds}{dh} &=& \frac{R}{\sqrt{R^2 - R_t^2}} \, = \, \frac{h+H^{\oplus}}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} }, \\
+\frac{dh}{d\zeta} &=& \frac{(h+H^{\oplus})^2 k T \log 10}{g_0 H^{\oplus \, 2} m},
+\end{eqnarray*}
+into the species incremental opacity integral and differentiating with respect to $f_q^T$ gives
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^k}{\partial f_q^T} &=& \frac{\partial }{\partial f_q^T} \int_{\zeta_i}^{\zeta_{i-1}} F^{k}(\zeta) \, \beta^k \big(P (\zeta),T(\zeta),\zeta \big) \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \, d\zeta \\
+\ \\
+\ \\
+&=& \frac{\partial }{\partial f_q^T} \int_{\zeta_i}^{\zeta_{i-1}} F^{k}(\zeta) \, \beta^k \big(P (\zeta),T(\zeta),\zeta \big) \, \frac{h+H^{\oplus}}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} } \, \frac{(h+H^{\oplus})^2 k T \log 10}{g_0 H^{\oplus \, 2} m} \, d\zeta \\
+\ \\
+\ \\
+&=& \int_{\zeta_i}^{\zeta_{i-1}} \Bigg\{ F^{k} \, \frac{\partial \beta^k}{\partial f_q^T} \, \frac{h+H^{\oplus}}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} } \, \frac{(h+H^{\oplus})^2 k T \log 10}{g_0 H^{\oplus \, 2} m} \\
+&& + F^{k} \beta^k \frac{\partial}{\partial f_q^T} \bigg[ \frac{(h+H^{\oplus})^3}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} } \bigg] \, \frac{k T \log 10}{g_0 H^{\oplus \, 2} m} \\
+&& + F^{k} \beta^k \frac{(h+H^{\oplus})^3}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} } \, \frac{\partial }{\partial f_q^T} \bigg[ \frac{k T \log 10}{g_0 H^{\oplus \, 2} m} \bigg] \, \Bigg\} \, d\zeta \\
+\ \\
+\ \\
+&=& \int_{\zeta_i}^{\zeta_{i-1}} \Bigg\{ F^{k} \, \underbrace{\frac{\partial \beta^k}{\partial T} \frac{\partial T}{\partial f_q^T}}_{\partial \beta^k / \partial f_q^T} \, \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \\
+&& + F^{k} \beta^k \frac{2(h+H^{\oplus})^2 \frac{\partial h}{\partial f_q^T} - 3(h_t+H^{\oplus})^2 \frac{\partial h}{\partial f_q^T} + (h+H^{\oplus})(h_t+H^{\oplus})\frac{\partial h_t}{\partial f_q^T}  }{ \Big( (h+H^{\oplus})^2-(h_t+H^{\oplus})^2 \Big)^{\frac{3}{2}} } (h+H^{\oplus})^2 \, \frac{k T \log 10}{g_0 H^{\oplus \, 2} m} \\
+&& + F^{k} \beta^k \underbrace{ \frac{(h+H^{\oplus})^3}{ \sqrt{(h+H^{\oplus})^2-(h_t+H^{\oplus})^2} } }_{ \frac{ds}{dh} (h+H^{\oplus})^2 } \, \eta_q^T(\zeta)  \underbrace{ \bigg[ \frac{k \log 10}{g_0 H^{\oplus \, 2} m} \bigg] }_{ \frac{dh}{d\zeta} / T / (h+H^{\oplus})^2 }\, \Bigg\} \, d\zeta.
+\end{eqnarray*}
+Approximation:
+\begin{equation*}
+\beta^k = \beta_{0}^k \bigg( \frac{T}{T_{0}} \bigg)^{n^k}.
+\end{equation*}
+Then,
+\begin{equation*}
+\frac{\partial \beta^k}{\partial T} = n^k \beta_{0}^k \bigg( \frac{T}{T_{0}} \bigg)^{n^k-1} \frac{1}{T_0} = \frac{n^k \beta^k}{T}.
+\end{equation*}
+Here, $n^k$ is calculated from
+\begin{eqnarray*}
+\frac{\beta_1^k}{\beta_2^k} &=& \bigg( \frac{T_1}{T_2} \bigg)^{n^k}, \ \ \ \ \ \ \ \ \ \mbox{or} \\
+n^k &=& \frac{ \displaystyle \log \frac{\beta^k(T_0 + \epsilon, P, \nu)}{\beta^k(T_0 - \epsilon, P, \nu)} }{ \displaystyle \log \bigg( \frac{T_0 + \epsilon}{T_0 - \epsilon} \bigg) },
+\end{eqnarray*}
+with, for example, $T_0 = 230$ and $\epsilon = 5$. \\
+Thus, the {\bf temperature derivative of the incremental opacity} equation is
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}^k}{\partial f_q^T}
+&=& \int_{\zeta_i}^{\zeta_{i-1}} \Bigg\{ F^{k} \beta^k \, \frac{n^k}{T} \, \eta_q^T(\zeta) \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \\
+&& + F^{k} \beta^k \frac{ \displaystyle 2(h+H^{\oplus})^2 \frac{\partial h}{\partial f_q^T} - 3(h_t+H^{\oplus})^2 \frac{\partial h }{\partial f_q^T} + (h+H^{\oplus})(h_t+H^{\oplus})\frac{\partial h_t}{\partial f_q^T}  }{ \Big( (h+H^{\oplus})^2-(h_t+H^{\oplus})^2 \Big)^{\frac{3}{2}} } \, \frac{dh}{d\zeta} \\
+&& + F^{k} \beta^k \, \frac{\eta_q^T(\zeta)}{T}  \frac{ds}{dh} \, \frac{dh}{d\zeta} \, \Bigg\} \, d\zeta.
+\end{eqnarray*}
+
+\begin{eqnarray*}
+\frac{\partial h}{\partial f_q^T} &=& \frac{ g^{\oplus} {H^{\oplus}}^2 k \; \log 10 \; P_q(\zeta) }{ \Big[ g^{\oplus} H^{\oplus} - k \log 10 \sum_{q=1}^Q f_q^T P_q(\zeta) \Big]^2 }, \\ \\
+\frac{\partial h_t}{\partial f_q^T} &=& \frac{ g^{\oplus} {H^{\oplus}}^2 k \; \log 10 \; P_q(\zeta_t) }{ \Big[ g^{\oplus} H^{\oplus} - k \log 10 \sum_{q=1}^Q f_q^T P_q(\zeta_t) \Big]^2 }.
+\end{eqnarray*}
+Since {\bf incremental opacity} is given by
+\begin{eqnarray*}
+\triangle \delta_{i \rightarrow i-1} = \triangle \delta_{i \rightarrow i-1}^{O_3} + \triangle \delta_{i \rightarrow i-1}^{N_2},
+\end{eqnarray*}
+we have
+\begin{eqnarray*}
+\frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_{q}^{T}} &=& \frac{\partial \triangle \delta_{i \rightarrow i-1}^{O_3}}{\partial f_{q}^{T}} + \frac{\partial \triangle \delta_{i \rightarrow i-1}^{N_2}}{\partial f_{q}^{T}}.
+\end{eqnarray*}
+The {\bf temperature derivative} of radiance is given as
+\begin{eqnarray*}
+\frac{\partial I(\vx)}{\partial f_q^T} &=& \sum_{i=1}^{2N} \bigg[ \frac{\partial \triangle B_i}{\partial f_q^T} - \triangle B_i \mathcal{W}_i \bigg]  \mathcal{T}_i,
+\end{eqnarray*}
+where
+\begin{eqnarray*}
+\mathcal{W}_{1, q} &=& 0, \\
+\mathcal{W}_{i, q} &=& \sum_{j=2}^{i} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial f_q^T} \\
+&=& \sum_{j=2}^{i-1} \frac{\partial \triangle \delta_{j \rightarrow j-1}}{\partial f_q^T} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_q^T}\\
+&=& \mathcal{W}_{i-1, q} + \frac{\partial \triangle \delta_{i \rightarrow i-1}}{\partial f_q^T}.
+\end{eqnarray*}
+
+
+%\begin{comment}
+
+\clearpage
+
+
+\section{Temperature Second Derivative}
+
+
+\begin{eqnarray*}
+\frac{\partial^2 \triangle \delta_{i \rightarrow i-1}^k}{\partial f_q^T \partial f_{\tilde{q}}^T}
+&=& \frac{\partial}{\partial f_{\tilde{q}}^T} \int_{\zeta_i}^{\zeta_{i-1}} \Bigg\{ F^{k} \beta^k \, \frac{n^k}{T} \, \eta_q^T(\zeta) \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \\
+&& + F^{k} \beta^k \frac{ \displaystyle 2(h+H^{\oplus})^2 \frac{\partial h}{\partial f_q^T} - 3(h_t+H^{\oplus})^2 \frac{\partial h }{\partial f_q^T} + (h+H^{\oplus})(h_t+H^{\oplus})\frac{\partial h_t}{\partial f_q^T}  }{ \Big( (h+H^{\oplus})^2-(h_t+H^{\oplus})^2 \Big)^{\frac{3}{2}} } \, \frac{dh}{d\zeta} \\
+&& + F^{k} \beta^k \, \frac{\eta_q^T(\zeta)}{T}  \frac{ds}{dh} \, \frac{dh}{d\zeta} \, \Bigg\} \, d\zeta \\
+\ \\
+\ \\
+&=& \int_{\zeta_i}^{\zeta_{i-1}} \Bigg\{ \frac{\partial}{\partial f_{\tilde{q}}^T} \bigg[ F^{k} \beta^k \, \frac{n^k}{T} \, \eta_q^T(\zeta) \, \frac{ds}{dh} \, \frac{dh}{d\zeta} \bigg] d\zeta \\
+&& + \frac{\partial}{\partial f_{\tilde{q}}^T}  \Bigg[ F^{k} \beta^k \frac{ \displaystyle 2(h+H^{\oplus})^2 \frac{\partial h}{\partial f_q^T} - 3(h_t+H^{\oplus})^2 \frac{\partial h }{\partial f_q^T} + (h+H^{\oplus})(h_t+H^{\oplus})\frac{\partial h_t}{\partial f_q^T}  }{ \Big( (h+H^{\oplus})^2-(h_t+H^{\oplus})^2 \Big)^{\frac{3}{2}} } \, \frac{dh}{d\zeta} \Bigg] \\
+&& + \frac{\partial}{\partial f_{\tilde{q}}^T}  \bigg[ F^{k} \beta^k \, \frac{\eta_q^T(\zeta)}{T}  \frac{ds}{dh} \, \frac{dh}{d\zeta} \bigg] \, \Bigg\} \ d\zeta \\
+\end{eqnarray*}
+
+%\end{comment}
+
+
+\clearpage
+
+
+\section{The Planck Radiation Function Derivative}
+
+
+\subsection{Analytical Expression for the Source Function Derivative for Temperature}
+
+The Planck radiation function $B$ expressed in temperature units is given by
+\begin{eqnarray*}
+B(\zeta) \ = \ \frac{\mbox{h} \nu}{k \big[ \exp\big( \frac{\mbox{h} \nu}{k T(\zeta)} \big) - 1 \big]},
+\end{eqnarray*}
+or, in discrete form
+\begin{eqnarray*}
+B_i \ = \ \frac{\mbox{h} \nu}{k \big[ \exp\big( \frac{\mbox{h} \nu}{k T_i} \big) - 1 \big]},
+\end{eqnarray*}
+where $\mbox{h}$ is Planck's constant, $k$ is Boltzmann's constant, $\nu$ is the radiation frequency, and $T$ is temperature. \\
+The derivative of $B$ with respect to $\zeta$ can be approximated by
+\begin{eqnarray*}
+\frac{dB}{d\zeta} \ \approx \ \frac{\triangle B}{\triangle \zeta}.
+\end{eqnarray*}
+The differential source function can be approximated as $dB \approx \triangle B$:
+\begin{eqnarray*}
+\triangle B_1 &=& \frac{B_1 + B_2}{2}, \\
+\triangle B_i &=& \frac{B_{i+1} - B_{i-1}}{2}, \\
+\triangle B_{2N} &=& I_0 - \frac{B_{2N-1} + B_{2N}}{2},
+\end{eqnarray*}
+where $I_0 = 2.7$ is the background cosmic radiance incident on the atmosphere. Note that $\displaystyle \sum_{i=1}^{2N} \triangle B_i = I_0$. \\
+The source function Jacobian for temperature is
+\begin{equation}
+\frac{\partial \triangle B_i}{\partial f_q^T} \ = \ \frac{ \displaystyle \frac{\partial B_{i+1}}{\partial f_q^T} - \frac{\partial B_{i-1}}{\partial f_q^T}}{2},
+\end{equation}
+where
+\begin{eqnarray*}
+\frac{\partial B_i}{\partial f_q^T} &=& -\frac{\mbox{h} \nu}{k \big[ \exp\big( \frac{\mbox{h} \nu}{k T_i} \big) - 1 \big]^2} \cdot \frac{- \mbox{h} \nu}{k T_i^2} \exp\Big( \frac{\mbox{h} \nu}{k T_i} \Big) \, \eta_q^T(\zeta_i) \\
+&=& \frac{B_i^2 \exp\big( \frac{\mbox{h} \nu}{k T_i} \big)}{T_i^2} \, \eta_q^T(\zeta_i).
+\end{eqnarray*}
+
+
+\subsection{Approximation of the Source Function Derivative for Temperature}
+
+
+The Planck radiation function $B$ can be approximated by $T$:
+\begin{eqnarray*}
+B(\zeta) \ = \ \frac{\mbox{h} \nu}{k \big[ \exp\big( \frac{\mbox{h} \nu}{k T(\zeta)} \big) - 1 \big]} \ \approx \ T(\zeta).
+\end{eqnarray*}
+Hence,
+\begin{eqnarray*}
+\triangle B_1 &=& \frac{T_1 + T_2}{2}, \\
+\triangle B_i &=& \frac{T_{i+1} - T_{i-1}}{2}, \\
+\triangle B_{2N} &=& I_0 - \frac{T_{2N-1} + T_{2N}}{2},
+\end{eqnarray*}
+where $I_0 = 2.7$. Since $\displaystyle \frac{\partial T(\zeta)}{\partial f_q^T} = \eta_q^T(\zeta)$, the source function Jacobian for temperature can be approximated by
+\begin{eqnarray*}
+\frac{\partial \triangle B_1}{\partial f_q^T} &=& \frac{ \eta_q^T(\zeta_{1}) + \eta_q^T(\zeta_{2})}{2}, \\
+\frac{\partial \triangle B_i}{\partial f_q^T} &=& \frac{ \eta_q^T(\zeta_{i+1}) - \eta_q^T(\zeta_{i-1})}{2}, \\
+\frac{\partial \triangle B_{2N}}{\partial f_q^T} &=& -\frac{ \eta_q^T(\zeta_{2N-1}) + \eta_q^T(\zeta_{2N})}{2}.
+\end{eqnarray*}
+
+
+% $Id$

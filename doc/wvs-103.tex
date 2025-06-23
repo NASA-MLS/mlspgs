@@ -1,0 +1,145 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-103r1}
+\newcommand{\docdate}{9 February 2011}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+\newcommand{\T}{\mathcal{T}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Nathaniel, Bill\\
+Subject: \>Error in temperature derivative of oxygen continuum\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-093}, \h{wvs-101}, JPL D-18130 \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Let
+
+\begin{equation}
+\theta = \log\left(\frac{300}T\right)
+\text{, }
+f = \left( c_3 p \exp(c_4 \theta) \right)^2
+  = \left( c_3 p \left(\frac{300}T\right)^{c_4} \right)^2
+\text{ and }
+D = \frac1{\nu^2 + f}\,.
+\end{equation}
+
+In the {\tt Abs_CS_O2_Cont_dT} subroutine in the {\tt get_beta_path_m}
+module in the forward model, we compute the oxygen continuum cross section
+
+\begin{equation}
+\beta = c_1 p^2 \nu^2 \exp(c_2 \theta) D
+      = c_1 p^2 \nu^2 \left( \frac{300}T \right)^{c_2} D\,.
+\end{equation}
+
+Observing that $\frac{\d\theta}{\d T} = -\frac1T$ the code computes
+
+\begin{equation}
+\frac{\beta}T ( c_4 f D - c_2 )
+\end{equation}
+
+and calls it $\frac{\partial \beta}{\partial T}$.
+
+I believe the correct expression is
+
+\begin{equation}
+\frac{\partial \beta}{\partial T} = \frac{\beta}T ( 2 c_4 f D - c_2 )
+\,.
+\end{equation}
+
+The values of $c_1 \dots c_4$ are $6.87\times10^{-9}$, 2.8, 0.56 and 0.8.
+
+When $\nu = 229968.33$ MHz, $T = 205$ K, and $p = 10^{-2}$ hPa, $f =
+5.767 \times 10^{-5}$, $D = 1.891 \times 10^{-11}$ and $2 c_4 f D = 1.736
+\times 10^{-19}$.  This is insignificant compared to $c_2 = 2.80$. 
+Therefore, the missing factor of 2 is irrelevant at low pressures and
+high temperatures.  Even at $T = 50$ K and $p = 300$ hPa, $2 c_4 f D =
+1.5 \times 10^{-5}$, while at $T=300$ K and $p = 1000$ hPa, $2 c_4 f D =
+9.49 \times 10^{-6}$, so the missing factor of 2 has very little effect
+in these regimes as well.
+
+$f D = O(\nu^{-2})$, so the effect is only about four times larger at 118
+GHz.  It would only have a tiny effect on the convergence rate for
+temperature retrievals.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.1  2011/02/08 02:24:52  vsnyder
+% Initial commit
+%

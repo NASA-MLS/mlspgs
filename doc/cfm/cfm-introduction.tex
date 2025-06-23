@@ -1,0 +1,48 @@
+\section{Introduction and background}
+\label{sec:Introduction}
+
+This document describes the external interface for, and other details
+of, the Aura Microwave Limb Sounder (MLS) `Callable Forward Model' (CFM
+hereafter).  More information on Aura MLS can be found in
+\citet{WatersEtal06}.  The task of the MLS forward model(s) is to
+compute MLS radiances corresponding to supplied profiles of atmospheric
+temperature and composition (along with auxiliary quantities,
+spectroscopy, and calibration information).  More information on the MLS
+forward models can be found in \citet{ReadEtal06} for the `full forward
+model' and \citet{SchwartzEtal06} for the `polarized model' used for
+Zeeman-split oxygen lines in the mesosphere.  \citet{WuEtal06} describe
+the cloud scattering forward model (used mainly for pre-launch
+simulations).
+
+The CFM is an extraction of the forward models from the MLS Level~2
+processing software (MLSL2 hereafter).  Extracting the forward models
+into stand-alone Fortran~90 modules enables their use in a variety of
+applications, including:
+\begin{itemize}
+\item Data assimilation systems evaluating and/or assimilating MLS
+  radiances.
+\item Off-line calculations to characterize MLS observations and to
+  evaluate systematic errors in MLS-like observing systems.
+\item OSSE frameworks to further evaluate MLS-like observing systems and
+  ascertain their ability to answer specific atmospheric science questions.
+\end{itemize}
+
+In its current form, this document is mainly aimed at the first of these
+applications.
+
+Section~\ref{sec:Review} reviews the overall structure of the CFM,
+including an outline of relevant underlying aspects of the MLS
+instrument, operations and data processing algorithms.
+Section~\ref{sec:Reference} serves as a reference for the various data
+types and procedures that constitute the CFM software.
+Appendix~\ref{app:Example} gives examples of code that invokes the CFM
+that can serve as a starting point for assimilation studies etc.
+Appendix~\ref{app:Compilation} describes the steps necessary to compile
+the CFM software.  Finally, Appendix~\ref{app:Lists} provides tables and
+lists of relevant terms (units etc.).
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "cfm"
+%%% End: 

@@ -1,0 +1,81 @@
+;must be after retrievalmacros
+begin Construct
+  ScanningUp: Boolean, formula="false"
+  ScanningDown: Boolean, formula="false"
+  ScanningUpXorDown: Boolean, formula="false"
+  GHzScanHeightInvalid: Boolean, formula="false"
+  testout: Boolean, formula="false"
+  MinTooLow: Boolean, formula="false"
+  MinTooHigh: Boolean, formula="false"
+  MaxTooLow: Boolean, formula="false"
+  MaxTooHigh: Boolean, formula="false"
+  MinOutOfRange: Boolean, formula="false"
+  MaxOutOfRange: Boolean, formula="false"
+  GHzScanHeightMif2: quantity, type=geolocation, module= GHz
+  GHzScanHeightMif28: quantity, type=geolocation, module= GHz
+  referenceMIF: quantity, type=geolocation, module= GHz
+  heightsTemplate: VectorTemplate, quantities = [ $
+    GHzScanHeightMif2, GHzScanHeightMif28, referenceMIF ]
+end Construct
+begin Retrieve 
+  Subset, quantity=apriori.tngtGeodAltGHz, mask=fill, surface=[ 2:2 ]
+end Retrieve
+begin Fill
+  GHzHeights: Vector, template=heightsTemplate
+   Fill, quantity=GHzHeights.GHzScanHeightMif2, method=vector, $
+   sourceQuantity=apriori.tngtGeodAltGHz, /ignoreTemplate, /sourceMask
+end Fill
+begin Retrieve 
+    Subset, quantity=apriori.tngtGeodAltGHz, mask=fill, surface=[ 28:28 ]
+end Retrieve
+begin Fill
+   Fill, quantity=GHzHeights.GHzScanHeightMif28, method=vector, $
+   sourceQuantity=apriori.tngtGeodAltGHz, /ignoreTemplate, /sourceMask
+end Fill
+begin Retrieve 
+  Subset, quantity=apriori.tngtGeodAltGHz, mask=fill, /reset
+end Retrieve
+begin Fill
+  Compare, a=GHzHeights.GHzScanHeightMif28, c=70000, formula="any a > c",$
+           Boolean=ScanningUp
+  Dump, Boolean=ScanningUp
+  Compare, a=GHzHeights.GHzScanHeightMif2, c=70000, formula="any a > c",$
+           Boolean=ScanningDown
+  Dump, Boolean=ScanningDown
+end Fill
+begin Fill
+   Skip, formula="ScanningUp and ScanningDown"
+   Skip, formula="(not ScanningUp) and (not ScanningDown)"
+   Reevaluate, Boolean=ScanningUpXorDown, formula="True"        
+end Fill
+begin Fill
+  Dump, Boolean=ScanningUpXorDown
+end Fill
+
+begin Fill 
+  Compare, a=apriori.tngtGeodAltGHz, c= -20000, formula="any a < c", $
+    Boolean=MinTooLow
+  Dump, Boolean=MinTooLow
+  
+  Compare, a=apriori.tngtGeodAltGHz, c= 20000, formula="all a > c", $
+    Boolean=MinTooHigh
+  Dump, Boolean=MinTooHigh
+  
+
+  Compare, a=apriori.tngtGeodAltGHz, c= 70000, formula="all a < c", $
+    Boolean=MaxTooLow
+   Dump, Boolean=MaxTooLow
+  
+  Compare, a=apriori.tngtGeodAltGHz, c= 110000, formula="any a > c", $
+    Boolean=MaxTooHigh
+  Dump, Boolean=MaxTooHigh
+  
+  
+  Reevaluate, Boolean=MinOutOfRange, formula="MinTooLow or MinTooHigh"
+  Reevaluate, Boolean=MaxOutOfRange, formula="MaxTooLow or MaxTooHigh"
+  Reevaluate, Boolean=GHzScanHeightInvalid, formula="MinOutOfRange or MaxOutOfRange"
+  Reevaluate, Boolean=GHzScanHeightInvalid, formula="GHzScanHeightInvalid or (not ScanningUpXorDown)"
+
+  
+  Dump, Boolean=GHzScanHeightInvalid
+end Fill

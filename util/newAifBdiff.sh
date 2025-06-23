@@ -1,0 +1,503 @@
+#!/bin/sh
+#newAifBdiff.sh
+
+# --------------- newAifBdiff.sh help
+# Executes supplied command 
+# which presumably creates a file newA & possibly newB;
+# if new B same as old B, keeps old A;
+# else deletes old A and B, replacing with new A and B
+# (works even if A and B name the same files
+#   meaning simply keep old A, and its date, unless new A different)
+# leaves record file that names A and tells whether it is new or old
+# if record file already exists, appends new line to it with above info
+# If newB not created (presumably because the_command failed)
+# then will exit with error after either
+# (a) restoring oldA (the default)
+# (b) not restoring oldA 
+#Usage:
+#newAifBdiff.sh [options] old_A old_B command [arg1] [arg2] ..
+#
+#    O p t i o n s
+# -a            no B; usage newAifBdiff.sh -a old_A command [args] ..
+#                 meaning keep old A (and its date) unless new A different
+# -c            do not restore oldA if the_command fails
+# -k            if keeping old A, keep old B, too
+#                (as no diff betw. old and new B, means keep date of old B)
+# -nr           leave no record file
+# -x n          ignore actual error status from command: exit with "n"
+# -h[elp]       print brief help message; exit
+# old_A         the file to be conditionally replaced
+# old_B         the file to be compared with new_B
+# command       the command to be executed (producing new_A and _B)
+# arg1 ..       optional arguments passed to command
+#Result:
+#file(s) named the same as old_A and old_B
+#record file named newAifBdiff.out
+#and anything else done by command as a side-effect
+#Useful as an adjunct to Makefile for conditionally
+#compiling according to whether .mod file of prerequisite has changed;
+#this reduces the cascade of massive recompilations that results
+#when the prerequisite changes
+#
+#Notes:
+#(1) The option(s) marked with "-", if present,
+#    must precede the command and args on the command line
+#(2) Because the option, "-a", is legal to gnu diff, but not to Sun's diff
+#    we have ceased relying on it; instead we use the octal dump routine od
+#    if your platform/os doesn't support it please let me know
+#(3) Unless you specify otherwise, using the -x n option,
+#    the script will attempt to pass the exit status of command back to
+#    whoever called it
+#  * * *  s p e c i a l   u s e   * * *
+#(4) If option -a is set and command is the shell script mark_as_uptodate.sh,
+#    then the following will be done
+#    (a) old_A will be touched
+#    (b) command will be summoned with its arguments
+#    (c) newAifBdiff.sh will exit w/o worrying about diffing or a record file
+#
+#Record file
+#file name: newAifBdiff.out
+#format: ascii text, two columns, 1st is file names, 2nd new/old
+#  file_name_of_1st_A   new
+#  file_name_of_2nd_A   old
+#      .  .  .
+#  file_name_of_this_A  new
+# --------------- End newAifBdiff.sh help
+#Bugs and limitations:
+#(1) Why have two ways to do essentially the same thing: newAifAdiff.sh?
+#(2) Why such a lousy name?
+#(3) How about optionally using a user-supplied program instead of diff?
+#      that way we could get rid of relying on octal dump routine
+#(4) Added a crude hack in diff_fun: trim 1st four lines after octal dump
+#      if we recognize commad as the Intel compiler (ifort)
+#      to eliminate unwanted time stamp from .mod files
+
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# "$Id$"
+
+# Purpose: A detailed explanation
+# (main usage)
+# make calls me
+# First, in order to forestall triggering
+# cascades of recompilation when modules are linked in an intricate
+# tree of "USE"-based interdependencies, object files may be rebuilt
+# without rebuilding .mod files. That's my job. I stand between make
+# and the compiler as the following pair of lines from Makefile.dep show
+#   mod_name.mod: source_name.f90
+#  	$(UTILDIR)/newAifBdiff.sh -a mod_name.mod \
+#        $(FC) -c $(FOPTS) $(INC_PATHS) source_name.f90
+
+# (special usage)
+# mark_as_uptodate.sh calls make which calls me
+# After the partial builds, mark_as_uptodate goes into action
+# It calls make with FC=mark_as_uptodate.sh
+# so when I intercept the build line above it no longer contains
+# a real compiler FC, but a pretend one: mark_as_uptodate.sh itself!
+# When I recognize this special case I and mark_as_uptodate.sh
+# cooperate to assure that both mod_name.mod and source_name.o
+# are brought up to date
+
+#---------------------------- get_unique_name
+#
+# Function returns a unique name based on arg, PID and HOSTNAME
+# e.g.,
+#           temp_file_name=`get_unique_name foo`
+#           echo $temp_file_name
+# might print foo.colossus.21455
+# if no arg, defaults to "temp" (very original name)
+# if two args present, assumes second is punctuation to
+# use in pace of "."
+
+get_unique_name()
+{
+
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+    #  echo $our_host_name
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
+      
+#------------------------------- diff_fun ------------
+#
+# Function to determine whether two files are different
+# w/o relying on Gnu's diff with its handy "-a" option
+# (Inferior standard versions of diff, like Sun's, lack this option)
+# usage: diff_fun arg1 [arg2] ..
+# returns (number) result as the_diff: 0 if none, else non-zero
+# If at least one of the files non-existent, then
+# (i) if called with a third arg and that arg is "yes", returns "-1"
+# (ii) otherwise, complains and exits with status 1
+
+# Special case: If Intel compiler, trim top 4 lines
+# (which should account for unwanted time stamp)
+
+diff_fun()
+{
+   is_ifort=`echo $the_command | grep -i ifort`
+   temp1=`get_unique_name 1`
+   temp2=`get_unique_name 2`
+   the_diff="0"
+	if [ $# -lt "2" ]
+	then
+      echo "Too few args to diff_fun"
+      exit 1
+	elif [ -f "$1" -a -f "$2" ]
+	then
+      rm -f $temp1 $temp2
+      od -t c "$1" > $temp1
+      od -t c "$2" > $temp2
+      if [ "$is_ifort" != "" ]
+      then
+        # The Intel compiler puts in the .mod files
+        # (1) A time stamp in the first few lines; and
+        # (2) Mixes up \v and \n
+        temp3=`get_unique_name 3`
+        sed -n '5,$ p' $temp1 > $temp3
+        mv $temp3 $temp1
+        sed 's/\\v/  /g; s/\\n/  /g' $temp1 > $temp3
+        mv $temp3 $temp1
+        sed -n '5,$ p' $temp2 > $temp3
+        mv $temp3 $temp2
+        sed 's/\\v/  /g; s/\\n/  /g' $temp2 > $temp3
+        mv $temp3 $temp2
+      fi
+      the_diff=`diff $temp1 $temp2 | wc -l`
+      rm -f $temp1 $temp2
+	elif [ "$3" = "yes" ]
+	then
+      the_diff="-1"
+   else
+      echo "newAifBdiff.sh/diff_fun: file not found"
+      echo ".. usually results from a severe Makefile or compilation error"
+      exit 1
+   fi
+}
+
+#
+#------------------------------- extant_files ------------
+#
+# Function to return only those files among the args
+# that actually exist
+# Useful when passed something like *.f which may 
+# (1) expand to list of files, returned as extant_files_result, or
+# (2) stay *.f, in which case a blank is returned as extant_files_result 
+#     (unless you have perversely named a file '*.f')
+# usage: extant_files arg1 [arg2] ..
+
+extant_files()
+{
+   extant_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               extant_files_result="$extant_files_result $file"
+         fi
+      done
+   fi
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+# The initial settings are
+# A, B same files              no  
+# old A exists                 yes 
+# old B exists                 yes 
+# keeping old unchanged B      no
+# keeping records of A         yes
+# diff_opt                     -a
+ASameAsB="no"
+oldAExists="yes"
+oldBExists="yes"
+keepUnchangedB="no"
+keepRecords="yes"
+RestoreIfTheCommandFails="yes"
+me="$0"
+my_name=newAifBdiff.sh
+# Special use (4) is signaled by $the_command being $marker_name
+marker_name=mark_as_uptodate.sh
+CALL_MARKER="no"
+
+# Short-circuit all the option-checking if special use (4)
+ALLOW_SHORT_CIRCUIT="yes"
+is_special_use_4=`echo "$@" | grep 'mark_as_uptodate\.sh'`
+if [ "$is_special_use_4" != "" -a "$ALLOW_SHORT_CIRCUIT" = "yes" ]
+then
+# For this short-circuit to work, we assume the command looks like the following:
+# $me -a module_name.mod path/mark_as_uptodate.sh ...
+# $0  $1  $2                $3                    ...
+  touch "$2"
+  exit 0
+fi
+
+# $the_marker is $marker_name with me's path prepended
+the_marker="`echo $0 | sed 's/newAifBdiff/mark_as_uptodate/'`"
+# $the_splitter is split_path with me's path prepended
+the_splitter="`echo $0 | sed 's/newAifBdiff/split_path/'`"
+record_file=newAifBdiff.out
+the_status="undefined"
+DEEBUG="no"
+NORMAL_STATUS=0
+MUST_EXIT_STATUS=""
+return_status=0
+
+wrong_list=""
+more_opts="yes"
+while [ "$more_opts" = "yes" ] ; do
+
+    case "$1" in
+    -h | -help )
+       sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
+       exit
+	;;
+    -a )
+       ASameAsB="yes"
+       shift
+	;;
+    -c )
+       RestoreIfTheCommandFails="no"
+       shift
+	;;
+    -k )
+       keepUnchangedB="yes"
+       shift
+	;;
+    -nr )
+       keepRecords="no"
+       shift
+	;;
+    -x )
+       shift
+       MUST_EXIT_STATUS=`expr $1`
+       shift
+	;;
+    * )
+       more_opts="no"
+       ;;
+    esac
+done
+
+old_A="$1"
+shift
+if [ "$ASameAsB" = "no" ]; then
+  old_B="$1"
+  shift
+else
+  old_B="$old_A"
+fi
+the_command="$1"
+shift
+if [ "$old_A" = "$old_B" ] ; then
+  ASameAsB="yes"
+fi
+if [ ! -f "$old_A" ] ; then
+  oldAExists="no"
+fi
+if [ ! -f "$old_B" ] ; then
+  oldBExists="no"
+fi
+if [ "$DEEBUG" = "yes" ]; then
+  echo "old_A: $old_A"
+  echo "old_B: $old_B"
+  echo "MUST_EXIT_STATUS: $MUST_EXIT_STATUS"
+  echo "the_command: $the_command"
+  echo "the_args: $@"
+  echo "ASameAsB: $ASameAsB"
+  echo "oldAExists: $oldAExists"
+  echo "oldBExists: $oldBExists"
+fi
+
+# First check for special use (4)
+#command_name=`$the_splitter -f $the_command`
+command_name=`perl -e '$reverse=reverse("$ARGV[0]"); @parts=split("/",$reverse); $reverse=$parts[0]; $reverse=reverse($reverse); print $reverse' $the_command`
+if [ "$command_name" = "$marker_name" ]; then
+#  echo "  special use (4)"
+#  echo "  old_A is $old_A"
+#  echo "  the_marker is $the_marker"
+#  echo "  the_args is $@"
+  touch $old_A
+  if [ "$CALL_MARKER" = "yes" ]; then
+    $the_marker "$@"
+    return_status=`expr $?`
+    if [ "$MUST_EXIT_STATUS" != "" ]; then    
+       exit "$MUST_EXIT_STATUS"
+    elif [ "$return_status" != "$NORMAL_STATUS" ]; then
+       exit 1
+    fi
+  fi
+  exit 0
+fi
+
+if [ "$keepRecords" = "yes" -a ! -f "$record_file" ]; then    
+  echo "#filename   status" > "$record_file"
+fi
+
+if [ "$oldBExists" = "no" ]; then
+# There's no old B => automatically new and old B differ, so need new A
+    message="There is no old B => automatically need new A"
+  "$the_command" "$@"
+  return_status=`expr $?`
+  the_status="new"
+  diff_fun $old_B $old_B
+elif [ "$ASameAsB" = "yes" ]; then
+# A and B the same, so check if new A diff from old
+  mv "$old_A" "$old_A.1"
+  "$the_command" "$@"
+  return_status=`expr $?`
+  diff_fun $old_A $old_A.1 $RestoreIfTheCommandFails
+  if [ "$the_diff" = "-1" ] ; then
+    mv "$old_A.1" "$old_A"
+    echo "$the_command failed; restoring $old_A"
+    exit 1
+  elif [ "$the_diff" -gt 0 ] ; then
+    rm -f "$old_A.1"
+      message="($the_diff) A, B same; old A, new A differ =>need new A"
+      the_status="new"
+  else
+    mv "$old_A.1" "$old_A"
+      message="($the_diff) A, B same; old A, new A same =>keep old A"
+      the_status="old"
+  fi
+elif [ "$oldAExists" = "no" ]; then
+# There's no old A so need new A
+  "$the_command" "$@"
+  return_status=`expr $?`
+    message="There is no old A => automatically need new A"
+    the_status="new"
+  diff_fun $old_A $old_A
+else
+# Most general case
+  mv "$old_A" "$old_A.1"
+  mv "$old_B" "$old_B.1"
+  "$the_command" "$@"
+  return_status=`expr $?`
+  diff_fun $old_B $old_B.1 $RestoreIfTheCommandFails
+  if [ "$the_diff" = "-1" ] ; then
+    mv "$old_A.1" "$old_A"
+    mv "$old_B.1" "$old_B"
+    echo "$the_command failed; restoring $old_A, $old_B"
+    exit 1
+  elif [ "$the_diff" -gt 0 ] ; then
+    rm -f "$old_A.1" "$old_B.1"
+      message="($the_diff) old B, new B differ =>need new A"
+     the_status="new"
+  else
+    mv "$old_A.1" "$old_A"
+      message="($the_diff) old B, new B same =>keep old A"
+      the_status="old"
+    if [ "$keepUnchangedB" = "yes" ] ; then
+      mv "$old_B.1" "$old_B"
+    else
+      rm -f "$old_B.1"
+    fi
+  fi
+fi
+if [ "$DEEBUG" = "yes" ]; then    
+  echo "$message"                 
+fi                                
+if [ "$keepRecords" = "yes" ]; then    
+  echo "$old_A   $the_status" >> "$record_file"
+fi
+
+# What status must we exit with?
+#echo "MUST_EXIT_STATUS: $MUST_EXIT_STATUS"
+#echo "return_status: $return_status"
+#echo "NORMAL_STATUS: $NORMAL_STATUS"
+if [ "$MUST_EXIT_STATUS" != "" ]; then    
+#   echo "exiting with status $MUST_EXIT_STATUS (special)"
+   exit "$MUST_EXIT_STATUS"
+elif [ "$return_status" != "$NORMAL_STATUS" ]; then
+#   echo "exiting with status 1"
+   exit 1
+else
+#   echo "exiting with status 0"
+   exit 0
+fi
+# $Log$
+# Revision 1.14  2009/07/08 00:40:16  pwagner
+# Error message slightly more informative
+#
+# Revision 1.13  2007/06/01 16:46:12  pwagner
+# Tries to ignore Intel time stamps of .mod files
+#
+# Revision 1.12  2005/06/23 22:20:45  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.11  2004/04/20 23:30:20  pwagner
+# Defaults to restoring older files if the_command fails
+#
+# Revision 1.10  2002/07/29 23:00:54  pwagner
+# Speedup through short-circuit for special use (4)
+#
+# Revision 1.9  2002/07/26 23:49:59  pwagner
+# Faster at marking files uptodate (but still slow)
+#
+# Revision 1.8  2002/07/25 20:58:08  pwagner
+# Improved marking up to date
+#
+# Revision 1.7  2002/07/22 22:08:44  pwagner
+# Uses get_unique_name for temp file names
+#
+# Revision 1.6  2002/07/10 23:44:26  pwagner
+# Exits with status 1 when LF95 should but does not
+#
+# Revision 1.5  2002/06/26 19:03:04  pwagner
+# Passes exit status from command back to whoever called
+#
+# Revision 1.4  2002/06/25 18:04:17  pwagner
+# Relies on octal dump routine instead of -a option to diff
+#
+# Revision 1.3  2002/06/21 20:32:06  pwagner
+# Conditionally passes option -a to diff
+#
+# Revision 1.2  2002/06/21 00:09:32  pwagner
+# Added -nr option
+#
+# Revision 1.1  2002/05/22 00:36:28  pwagner
+# First commit
+#

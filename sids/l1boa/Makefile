@@ -1,0 +1,233 @@
+#	Makefile
+#
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+#
+#special case:
+#the 1st time through, before .configure exists yet,
+#execute $(MLSBIN)/configure to create .configure
+
+#i.e., if you call are building this mls
+#by calling make with a different Makefile name,
+#say: make -f MakeFC
+#then rename the Makefiles in /l2 and /lib also MakeFC
+
+# "$Id$"
+
+MakeFName = Makefile
+
+# where to store .configure
+CONFDIR=../..
+
+# where configure and makemakedep.sh are stored
+MLSBIN=../../util
+
+# where sources for libmls.a are stored
+libmls_sources=../../lib
+
+# where objects and libmls.a are stored
+libmls_objs=$(libmls_sources)/$(MLSCONFG)
+
+# where sources for libmlsl1.a are stored
+mlsl1_sources=../../l1
+
+# where objects and libmlsl1.a are stored
+mlsl1_objs=$(mlsl1_sources)/$(MLSCONFG)
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+srclib=../../srclib
+
+# where sources (but not OBJS) used for hdf5 file versions are stored
+he5lib=../../he5lib
+
+# where he5 objects and libhe5.a are stored
+he5lib_objs=$(he5lib)/$(MLSCONFG)
+
+# where the MLSCONFG directory is (to hold objects, prog, etc.)
+OBJ_DIR = .
+
+# where the platforms directory is
+PLATFORMS = ../../tests/l1
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/$(MLSCFILE)
+
+# All the implicit pattern-matching involving suffixes
+# will be done in the uniquely-named sub-directories, not here--so
+.SUFFIXES:
+
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+
+TAR=tar
+
+SHELL = /bin/sh
+
+#--------------- Target definitions
+# $PROG          -- automatic; built when target is not specified
+
+#                           (functional)
+# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                  also (re)creates uniquely-named sub-sub-directories
+#                  with custom Makefiles where *.o, *.mod, etc. built
+# depends        -- runs makemakedep.sh to calculate dependencies
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
+# tar            -- creates a directory archive suitable for distribution
+#
+
+#----------------------------------------------------------
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
+mlsl1_f90 := $(shell ${REECHO} $(mlsl1_sources)/*.f $(mlsl1_sources)/*.f90 $(mlsl1_sources)/*.c)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
+he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
+
+ifdef BLAS
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
+else
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(blaslib_f)
+endif
+
+ifdef HDFVERSIONS
+   libl1_prereqs := $(libmls_objs)/libmls.a $(mlsl1_f90) \
+    $(he5lib_objs)/libhe5.a
+else
+   libl1_prereqs := $(libmls_objs)/libmls.a $(mlsl1_f90)
+endif
+
+UNPREFXDPTHS=$(HDF5)/../fortran/src $(HDF5)/../include
+EXTRA_PATHS =-I $(HDF5)/../fortran/src -I $(HDF5)/../include
+PROG=sids_l1boa
+# PROG=test
+
+#----------------------- Build instructions
+
+#$(DESIRED_PROG_NAME): $(PROG)
+#	cd $(OBJ_DIR)/$(MLSCONFG) && mv $(PROG) $(DESIRED_PROG_NAME)
+#
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(OBJ_DIR)/$(MLSCONFG) \
+     $(libmls_objs)/libmls.a $(OBJ_DIR)/$(MLSCONFG)/libl1.a
+		cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) PROG_NAME=$(PROG) $(PROG) \
+        EXTRA_PATHS="$(EXTRA_PATHS)"
+
+$(libmls_objs)/libmls.a: $(LIB_prereqs)
+	$(MAKE) libmls.a -C $(libmls_sources)
+
+$(OBJ_DIR)/$(MLSCONFG)/libl1.a: $(libl1_prereqs)
+	$(MAKE) -C $(mlsl1_sources)
+		cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) libl1.a
+
+$(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
+	@if [ "$(NOHUNTING)" != "" ] ; then \
+	   rm -f $(he5lib_objs)/libhe5.a ; \
+	fi ; \
+	$(MAKE) libhe5.a -C $(he5lib)
+
+.PHONY: configure depends clean tar mostlyclean tarz targ \
+  $(PROG) $(DESIRED_PROG_NAME) update ghostbuster
+
+tar:
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -mc "$(OBJ_DIR)"
+
+$(CONFDIR)/$(MLSCFILE):
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -mc "$(OBJ_DIR)"
+
+$(OBJ_DIR)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -mc "$(OBJ_DIR)" -nc
+
+depends:
+	@$(MLSBIN)/makemakedep.sh -nodep \
+        $(libmls_sources) $(mlsl1_sources) $(srclib); \
+     mv Makefile.dep Makefile.nodep
+	@$(MLSBIN)/makemakedep.sh \
+        $(libmls_sources) $(mlsl1_sources) $(srclib)
+
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh -lib $(OBJ_DIR)/$(MLSCONFG) ./ $(srclib)
+
+mostlyclean:
+	@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(OBJ_DIR)/$(MLSCONFG)/* ; \
+	fi ; \
+	if [ -d "$(OBJ_DIR)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(OBJ_DIR)/$(MLSCONFG) ; \
+	fi
+	rm -f Make.dep.*
+
+clean:
+	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		rm -f $(OBJ_DIR)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(OBJ_DIR)/$(MLSCONFG)/*.mod ; \
+		rm -f $(OBJ_DIR)/$(MLSCONFG)/$(PROG) ; \
+	fi
+	rm -f Make.dep.*
+
+tar:
+	rm -f ../$(PROG).tar
+	@echo "tar-ing l3"; \
+	$(TAR) hcvf ../$(PROG).tar * --exclude CVS\
+	--exclude Make.dep\* --exclude NAG.\* --exclude LF95.\*
+
+tarz: tar
+	@echo "... then gzipping it"; \
+	cd ..; rm -f $(PROG).tgz; gzip $(PROG).tar; mv $(PROG).tar.gz $(PROG).tgz
+
+targ:
+	rm -f ../$(PROG).tgz
+	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
+
+#update: depends ghostbuster
+update:
+	$(MLSBIN)/updatemf.sh -pc "$(PLATFORMS)" \
+         -cf "$(CONFDIR)/$(MLSCFILE)"
+#	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+#          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
+#          -mc "$(OBJ_DIR)" -nc -nd
+	$(MAKE) depends ghostbuster
+
+# $Log$
+# Revision 1.7  2002/07/29 23:13:07  pwagner
+# update uses updatemf.sh; hdf5-related paths available to compiler
+#
+# Revision 1.6  2002/05/10 22:13:58  pwagner
+# he5lib prereq is HDFVERSIONS set; depends produces Makefile.nodep, too
+#
+# Revision 1.5  2001/12/06 01:03:11  pwagner
+# Depends follows changes in l1 directory
+#
+# Revision 1.4  2001/11/09 21:57:07  pwagner
+# Does depends and ghostbuster after update, not beforre
+#
+# Revision 1.3  2001/11/07 00:30:04  pwagner
+# Improved and silenced update target
+#
+# Revision 1.2  2001/10/11 18:14:21  pwagner
+# Now builds sids_l1boa, not test
+#
+# Revision 1.1  2001/10/10 23:19:29  pwagner
+# First commit
+#
+
+

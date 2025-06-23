@@ -1,0 +1,95 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+! subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, &                 
+!   & FILLVALUE, WIDTH, FORMAT, LBOUND, OPTIONS )            
+!   double precision, intent(in) :: ARRAY(:,:,:)             
+!   character(len=*), intent(in), optional :: NAME           
+!   double precision, intent(in), optional :: FILLVALUE      
+!   integer, intent(in), optional :: WIDTH                   
+!   character(len=*), intent(in), optional :: FORMAT         
+!   integer, intent(in), optional :: LBOUND                  
+!   character(len=*), intent(in), optional :: options        
+!   integer :: I, J, K, L                                    
+!   integer :: NumZeroRows                                   
+!   double precision :: myFillValue                          
+!   character(len=64) :: myFormat                            
+!   integer :: nUnique                                       
+!   integer, dimension(MAXNUMELEMENTS) :: counts             
+!   double precision, dimension(MAXNUMELEMENTS) :: elements  
+    ! Executable
+    call theDumpBegins ( options, Name=Name )
+    myRank = 3
+    if ( dopts(unique)%v ) then
+      call FindUnique( reshape( array, (/ product(shape(array)) /) ), &
+        & elements, nUnique, counts )
+      if ( nUnique < 2 ) then
+        call output( 'Every value is ', advance='no' )
+        call output( elements(1), advance='yes' )
+      else
+        call output( '    value             counts', advance='yes' )
+        do j=1, nUnique
+          call output( j , advance='no' )
+          call blanks( 3 )
+          call output( elements(j) , advance='no' )
+          call blanks( 3 )
+          call output( counts(j), advance='yes' )
+        enddo
+      endif
+      if ( uniqueonly ( options ) ) return
+    endif
+    include 'dumpstats.f9h'
+    nameHasBeenPrinted = .true. ! So we don't double-print
+    myFormat = sdFormatDefault
+    if ( present(format) ) myFormat = format
+    if ( index(myFormat, '*') > 0 ) myFormat = numNeedsFormat( maxval(abs(array)), format )
+
+!    include 'dump3db.f9h'
+! end subroutine DUMP_3D_DOUBLE
+! $Log$
+! Revision 2.12  2018/03/05 19:27:29  pwagner
+! Try harder to avoid double-printing the name
+!
+! Revision 2.11  2017/07/19 22:49:46  pwagner
+! Pass Name to theDumpBegins
+!
+! Revision 2.10  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
+! Revision 2.9  2013/06/19 23:13:44  pwagner
+! Remove more unused stuff
+!
+! Revision 2.8  2012/06/22 20:25:18  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
+! Revision 2.7  2011/07/12 00:11:29  pwagner
+! whoarray dump moved to dump[123]db.f9h
+!
+! Revision 2.6  2011/04/20 22:25:07  pwagner
+! Made all dumpnd.f9h files consistent
+!
+! Revision 2.5  2011/04/07 23:32:07  pwagner
+! More sensible if .. elseif .. structure for rank reduction
+!
+! Revision 2.4  2011/03/08 00:04:00  pwagner
+! Skip printing row of zeros only if multiple
+!
+! Revision 2.3  2011/02/05 00:58:16  pwagner
+! L(aconic) option skips printing array name and size
+!
+! Revision 2.2  2009/11/20 01:11:53  pwagner
+! Added new options to just show array rank, shape
+!
+! Revision 2.1  2009/06/24 22:34:21  pwagner
+! First commit
+!

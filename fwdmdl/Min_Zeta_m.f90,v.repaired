@@ -1,0 +1,380 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module Min_Zeta_m
+
+  implicit NONE
+  private
+  public :: Get_Min_Zeta, Lower_Path_Crossings
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine Get_Min_Zeta ( P_Basis, H_Ref, T_Ref, Zeta_T, P_Grid, Tan_Pt, H_t, &
+    &                       Min_Zeta, Min_Phi, Min_Index )
+
+    use GLNP, only: NGP1
+    use MLSKinds, only: IP, RP
+
+    real(rp), intent(in) :: P_Basis(:) ! Temperature basis phis
+    real(rp), intent(in) :: H_Ref(:)   ! Tangent row of Metrics H_Ref
+    real(rp), intent(in) :: T_Ref(:)   ! Tangent row of Metrics T_Ref
+    real(rp), intent(in) :: Zeta_T     ! Zeta at the tangent
+    real(rp), intent(in) :: P_Grid(:)  ! Phi on the fine path
+    integer, intent(in) :: Tan_Pt      ! Tangent index in P_Grid
+    real(rp), intent(in) :: H_T        ! H at the tangent
+
+    real(rp), intent(out) :: Min_Zeta  ! Minimum zeta
+    real(rp), intent(out) :: Min_Phi   ! Phi where minimum zeta occurs
+    integer(ip), intent(out) :: Min_Index  ! Min_Phi is between
+    !            P_Grid(min_index) and P_Grid(min_index+1) if min_index > 0,
+    !            else there is no local zeta minimum other than within one
+    !            point of the tangent point.
+
+    !{ Get the minimum zeta along the line of sight.
+    !
+    ! Start with $\Delta\zeta = 14.8 \Delta H/T$.  Take a first-order expansion
+    ! around a reference point $\phi_i$, with derivatives along constant-$\zeta$
+    ! surfaces, giving
+    !
+    ! \begin{equation*}
+    ! \Delta\zeta = \zeta - \zeta_i = 
+    !  14.8 \frac{\Delta H + \frac{\partial H}{\partial \phi}{\Delta \phi}}
+    !            {T_i + \frac{\partial T}{\partial \phi}{\Delta \phi}}
+    ! \end{equation*}
+    !
+    ! Substitute $\hat\phi = \phi-\phi_t$, $\tilde\phi = \phi_t-\phi_i$,
+    ! $\Delta \phi = \phi - \phi_i = \hat\phi+\tilde\phi$,
+    ! $\Delta H = H - H_t = H_t(\sec \hat\phi - 1)$,
+    !
+    ! \begin{equation*}
+    ! \frac1{H_t} \frac{\partial H}{\partial\phi} \approx G =
+    ! \frac1{H_t} \frac{H_{i+1}-H_i}{\phi_{i+1}-\phi_i} \text{ and }
+    ! \frac{\partial T}{\partial\phi} \approx \Gamma =
+    ! \frac{T_{i+1}-T_i}{\phi_{i+1}-\phi_i} \text{ giving}
+    ! \end{equation*}
+    !
+    ! \begin{equation*}
+    ! \Delta \zeta \approx \zeta - \zeta_i = 14.8 H_t
+    !  \frac{\sec \hat\phi - 1 + G(\hat\phi+\tilde\phi)}
+    !       {T_i + \Gamma(\hat\phi+\tilde\phi)} \text{ from which}
+    ! \end{equation*}
+    !
+    ! \begin{equation*}
+    ! \frac{\text{d}\zeta}{\text{d}\phi} \approx
+    ! \frac{14.8 H_t}{\left(T_i + \Gamma(\hat\phi+\tilde\phi)\right)^2}
+    ! \left[ \left( \sec \hat\phi \tan \hat\phi + G \right)
+    !             (T_i + \Gamma(\hat\phi+\tilde\phi)) -
+    !        \Gamma\left(\sec \hat\phi - 1 + G(\hat\phi+\tilde\phi)\right)
+    ! \right]\,.
+    ! \end{equation*}
+    !
+    ! Write the second factor in terms of sines and cosines, take only
+    ! the numerator and set it to zero, giving
+    !
+    ! \begin{equation*}
+    ! (\sin\hat\phi + G \cos^2 \hat\phi)
+    !  \left(T_i + \Gamma(\hat\phi+\tilde\phi)\right) -
+    ! \Gamma \left( \cos \hat\phi -\cos^2 \hat\phi
+    !  (1-G(\hat\phi+\tilde\phi))\right) = 0\,.
+    ! \end{equation*}
+    !
+    ! Expand to second order in $\hat\phi$ giving
+    !
+    ! \begin{equation*}
+    ! \left(\frac12 \Gamma - G T_i\right) \hat\phi^2 + 
+    ! ( T_i + \Gamma \tilde\phi ) \hat\phi + G T_i = 0\,.
+    ! \end{equation*}
+    !
+    ! Since we expect $|\frac12\Gamma-G T_i| << |T_i + \Gamma \tilde\phi|$,
+    ! write the solution as
+    !
+    ! \begin{equation*}
+    ! \hat\phi \approx \frac{-2 G T_i}
+    !  {T_i + \Gamma \tilde \phi \pm
+    !   \sqrt{(T_i+\Gamma \tilde \phi)^2 - 2 G T_i(\Gamma-2 G T_i)}}
+    ! \end{equation*}
+    !
+    ! and take the positive sign.
+    !
+    ! See wvs-045.
+
+    real(rp) :: D     ! tgp**2 - gt2*(gamma-gt2)
+    real(rp) :: D_P_Basis ! P_basis(i+1) - P_Basis(i)
+    real(rp) :: G ! Difference approximation to d(log H)/d(phi) for constant zeta
+    real(rp) :: Gamma ! Difference approximation to dT/d(phi) for constant zeta
+    real(rp) :: GT2   ! 2 * G * T_ref(i)
+    integer :: I      ! Subscript and loop inductor
+    real(rp) :: P     ! Phi_T - P_Basis(i), \tilde\phi in the TeXnicalities,
+                      ! then \Delta\phi = \phi - \phi_i = \hat\phi + \tilde\phi.
+    real(rp) :: Phi_T ! Phi at the tangent
+    real(rp) :: Test_P_Min ! Candidate min_phi
+    real(rp) :: Test_Z_Min ! Candidate min_zeta
+    real(rp) :: TGP   ! T_ref(i) + Gamma * P
+
+    logical, parameter :: Throw = .true. ! Throw out min zeta closer to the
+    !                                       tangent than the first GL point
+
+    min_index = -1 ! Assume there are no local zeta minima
+    min_zeta = huge(min_zeta)
+
+    ! Find the interval of P_Basis containing Phi_T
+    phi_t = p_grid(tan_pt)
+    do i = 0, size(p_basis)-1
+      if ( phi_t <= p_basis(i+1) ) exit
+    end do
+    if ( i < 1 .or. i >= size(p_basis) ) return ! Phi_T not within range
+
+    ! P_Basis(i) < Phi_T <= P_Basis(i+1) here.
+    ! Look between either p_basis(i-1) and p_basis(i+1) or between
+    ! p_basis(i) and p_basis(i+2) depending on whether phi_t is closer to
+    ! p_basis(i) or p_basis(i+1), but don't look outside p_basis.
+    if ( phi_t - p_basis(i) > p_basis(i+1) - phi_t ) i = i + 1
+    do i = max(i-1,1), min(i,size(p_basis)-1)
+      d_p_basis = p_basis(i+1) - p_basis(i)
+      g = ( h_ref(i+1) - h_ref(i) ) / ( h_t * d_p_basis )
+      gamma = ( t_ref(i+1) - t_ref(i) ) / d_p_basis
+      p = phi_t - p_basis(i)
+
+      !{ $\frac{\text{d}\zeta}{\text{d}\phi} = 0$ occurs for
+      ! $\hat\phi = \phi-\phi_t \approx
+      !  \frac{-2 G T_i}{T_i + \Gamma \hat\phi +
+      !                  \sqrt{(T_i + \Gamma \tilde\phi)^2 - 
+      !                        2 G T_i ( \Gamma - 2 G T_i)}}$
+      ! where $\tilde\phi = \phi_t - \phi_i$ = {\tt P}.
+      gt2 = g * t_ref(i) * 2.0
+      tgp = t_ref(i) + gamma*p
+      d = tgp**2 - gt2*(gamma-gt2)
+      if ( d < 0.0 ) cycle ! Complex solutions
+
+      test_p_min = -gt2 / ( tgp + sqrt(d) )
+      p = test_p_min + p ! \Delta\phi = \phi - \phi_i = \hat\phi + \tilde\phi
+      if ( p < 0.0 .or. p > d_p_basis ) cycle ! Outside range
+
+      !{ {\tt test\_z\_min} = 
+      ! $\Delta \zeta \approx \zeta - \zeta_i = 
+      !  14.8 H_t \frac{\sec \hat\phi - 1 + G(\hat\phi+\tilde\phi)}
+      !                {T_i + \Gamma(\hat\phi+\tilde\phi)}$
+      test_z_min = 14.8 * h_t * (1.0/cos(test_p_min)-1.0 + G * p ) / &
+        &                     (t_ref(i) + gamma*p )
+
+      if ( test_z_min > 0.0 ) cycle ! zeta not < zeta_t, so no local minimum
+
+      if ( test_z_min < min_zeta ) then
+        min_zeta = test_z_min
+        min_phi = test_p_min
+        min_index = i
+      end if
+
+    end do
+
+    ! Now add phi_t to get min_phi and zeta_t to get the min_zeta, and
+    ! find where min_phi is in p_grid.
+    if ( min_index > 0 ) then
+      min_phi = min_phi + phi_t
+      min_zeta = min_zeta + zeta_t
+      if ( min_phi < phi_t ) then
+        if ( min_phi >= p_grid(tan_pt-1) .and. throw ) then
+          ! Too close to tangent point
+          min_index = 0
+          return
+        end if
+        min_index = tan_pt - 1
+        do
+          min_index = min_index - 1
+          if ( min_index <= 0 ) return ! off the end of the path
+          if ( p_grid(min_index) <= min_phi ) exit
+        end do
+      else
+        if ( min_phi <= p_grid(tan_pt+ngp1+1) .and. throw ) then
+          ! Too close to tangent point.  Remember that the tangent is duplicated
+          min_index = 0
+          return
+        end if
+        min_index = tan_pt + ngp1 + 1
+        do
+          min_index = min_index + 1
+          if ( min_index > size(p_grid)-1 ) then ! off the end of the path
+            min_index = 0
+            return
+          end if
+          if ( min_phi <= p_grid(min_index+1) ) exit
+        end do
+      end if
+    end if
+
+  end subroutine Get_Min_Zeta
+
+  ! ---------------------------------------  Lower_Path_Crossings  -----
+  subroutine Lower_Path_Crossings ( Tan_Ht_s, Tan_Ht, Tan_Phi, Tan_Ind_f, &
+                                  & Phi_Basis, NZ_IF, Z_Coarse, Z_GLGrid, &
+                                  & H_GLGrid, Vert_Inds, Req_S, H_Surf, &
+                                  & Phi_Path, H_Path, NPC, NPF, T_GLGrid, &
+                                  & Do_More_Points, Do_Zmin, Tan_Pt_C, &
+                                  & Tan_Pt_F, More_Z_Path, More_H_Path, &
+                                  & More_Phi_Path, N_More, Print_More_Points, &
+                                  & Ptg_i )
+
+  ! Look for path crossings at zetas below the tangent point.
+  ! These can only happen if the minimum zeta isn't at the tangent,
+  ! and the ray isn't an earth-intersecting ray.
+
+    use Add_Points_M, only: Add_Points
+    use Dump_0, only: Dump
+    use Metrics_M, only: More_Points
+    use MLSKinds, only: RP
+    use MLSStringLists, only: SwitchDetail
+    use Output_m, only: Output
+    use Toggles, only: Switches
+
+    real(rp), intent(in) :: Tan_Ht_S      ! Tangent height above 1 bar reference
+                                          ! surface, km
+    real(rp), intent(in) :: Tan_Ht        ! Geometric tangent height,
+                                          ! km from equivalent Earth center
+    real(rp), intent(in) :: Tan_Phi       ! Orbit angle of tangent, radians
+    integer, intent(in) :: Tan_Ind_F      ! Index of tangent point in fine zeta ref grid
+    real(rp), intent(in) :: Phi_Basis(:)  ! Horizontal grid for temperature, radians
+    integer, intent(in) :: NZ_IF          ! Effective size of Z_GLgrid and cohorts
+    real(rp), intent(inout) :: Z_Coarse(:) ! Z_PSIG & Z_min & surface zeta on path
+    real(rp), intent(in) :: Z_GLGrid(:)   ! Zeta on initial glGrid surfs
+    real(rp), intent(in) :: H_GLGrid(:,:) ! H on glGrid surfs (km)
+    integer, intent(inout) :: Vert_Inds(:) ! Height indices of fine path in
+                                          ! H_Glgrid etc.
+    real(rp), intent(in) :: Req_S         ! Equivalent Earth Radius at
+                                          ! height reference surface
+    real(rp), intent(in) :: H_Surf        ! Height above earth surface of first
+                                          ! (usually zeta=-3) surface
+    real(rp), intent(inout) :: Phi_Path(:) ! Phi's on fine path, Radians
+    real(rp), intent(inout) :: H_Path(:)  ! Heights on path (km)
+    integer, intent(inout) :: NPC         ! Number of points in coarse path
+    integer, intent(inout) :: NPF         ! Number of points in fine path
+    real(rp), intent(in) :: T_GLGrid(:,:) ! Temp on glGrid surfs
+    logical, intent(in) :: Do_More_Points ! Do we want to do this at all?
+    logical, intent(in) :: Do_Zmin        ! "Do minimum Zeta calculation"
+    integer, intent(inout) :: Tan_Pt_C    ! Index of tangent point in coarse path
+    integer, intent(inout) :: Tan_Pt_F    ! Index of tangent point in fine path
+    ! More points
+    real(rp), intent(out) :: More_H_Path(:)   ! Additional heights
+    real(rp), intent(out) :: More_Phi_Path(:) ! Additional phi's
+    real(rp), intent(out) :: More_Z_Path(:)   ! Additional zetas
+    integer, intent(out) :: N_More        ! Effective size of More_*_Path
+    ! For printing
+    logical, intent(in) :: Print_More_Points ! Print if Do_More_Points finds more, from -SZMOR
+    integer, intent(in) :: Ptg_i          ! Pointing index
+
+    integer :: Min_Index      ! If > 0, P_Path(min_index) <= Min_Phi <=
+                              ! P_Path(min_index+1), else min zeta is at
+                              ! or too close to the tangent
+    real(rp) :: Min_Zeta      ! Minimum zeta along the path
+    real(rp) :: Min_Phi       ! Phi at which minimum zeta occurs
+
+    call more_points ( tan_phi, tan_ind_f, phi_basis, z_glgrid, &
+      & h_glgrid, req_s, h_surf, tan_ht_s, phi_path(1:npf), & ! in
+      & more_z_path, more_h_path, more_phi_path, n_more )     ! out
+    if ( n_more > 0 .and. .not. do_more_points ) then
+      if ( print_more_points ) then
+        call output ( n_more, before='Want to add ', after=' more points', advance='yes' )
+        call dump ( more_h_path(:n_more), name='more_h_path', format='(f14.7)' )
+        call dump ( more_phi_path(:n_more), name='more_phi_path', format='(f14.8)' )
+        call dump ( more_z_path(:n_more), name='more_z_path' )
+        call output ( ptg_i, before='tan_phi(' )
+        call output ( tan_phi, before=') = ', format='(f12.6)' )
+        call output ( tan_ind_f, before=', tan_ind_f = ' )
+        call output ( tan_pt_f, before=', tan_pt_f = ' )
+        call output ( req_s, before=', req_s = ', format='(f12.6)', advance='yes' )
+        call output ( h_surf, before='h_surf = ', format='(f12.6)' )
+        call output ( tan_ht_s, before=', tan_ht_s = ', format='(f12.6)', advance='yes' )
+        call dump ( phi_basis, name='phi_basis', format='(f14.8)' )
+        call dump ( h_glgrid, name='h_glgrid', format='(f14.7)' )
+        call dump ( h_path(1:npf), name='h_path', format='(f14.7)' )
+        call dump ( phi_path(1:npf), name='phi_path', format='(f14.8)' )
+      end if
+      n_more = 0 !??? Code appears not to work yet, so turn it off
+    end if
+
+    ! Get minimum zeta on the path
+    call Get_Min_Zeta ( phi_basis, h_glgrid(tan_ind_f,:), &
+                      & t_glgrid(tan_ind_f,:), z_glgrid(tan_ind_f), &
+                      & phi_path, tan_ind_f, tan_ht,                &
+                      & min_zeta, min_phi, min_index )
+
+    ! Add minimum zeta to the path
+    if ( min_index > 0 ) then ! minimum zeta not at or near tangent point
+      if ( do_zmin ) then
+        n_more = n_more + 1
+        more_z_path(n_more) = min_zeta
+        more_phi_path(n_more) = min_phi
+        more_h_path(n_more) = tan_ht/cos(min_phi)
+      else
+        if ( switchDetail(switches,'zdet') > -1 ) then
+          call output ( min_index, before='Want to add minimum zeta at ' )
+          call output ( tan_ind_f, before=' (tan_ind_f = ' )
+          call output ( min_phi, before=') where phi = ' )
+          call output ( min_zeta, before=' and zeta = ', advance='yes' )
+          call dump ( phi_basis, name='phi_basis' )
+          call dump ( h_glgrid(tan_ind_f,:), 'h_glgrid' )
+          call dump ( t_glgrid(tan_ind_f,:), 't_glgrid' )
+          call dump ( phi_path, name='phi_path' )
+          call output ( z_glgrid(tan_ind_f), before='z_glgrid = ' )
+          call output ( tan_ind_f, before=', tan_ind_f =' )
+          call output ( tan_ht, before=', tan_ht = ', advance='yes' )
+        end if
+      end if
+    else
+      min_index = 0
+    end if
+
+    call add_points ( more_h_path(:n_more), more_phi_path(:n_more),     &
+      &               more_z_path(:n_more), min_index, z_glgrid, nz_if, &
+      &               z_coarse, h_path, phi_path, vert_inds,            &
+      &               npc, npf, tan_pt_c, tan_pt_f )
+
+    if ( print_more_points .and. n_more > 0 ) then
+      call dump ( phi_basis, name='phi_basis' )
+      call dump ( h_path(1:npf), name='h_path' )
+      call dump ( phi_path(1:npf), name='phi_path' )
+    end if
+
+  end subroutine Lower_Path_Crossings
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module Min_Zeta_m
+
+! $Log$
+! Revision 2.5  2016/09/30 01:25:59  vsnyder
+! Create Lower_Path_Crossings and move stuff to it from FullForwardModel
+!
+! Revision 2.4  2013/05/21 23:54:17  vsnyder
+! NG fine-grid points between coarse grid tangent points
+!
+! Revision 2.3  2009/06/23 18:26:10  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.2  2007/06/08 22:05:48  vsnyder
+! More work on min zeta
+!
+! Revision 2.1  2006/12/21 01:33:31  vsnyder
+! Initial commit
+!

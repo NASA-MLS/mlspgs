@@ -1,0 +1,6 @@
+  type Matrix_T
+    integer :: Name = 0  ! Not used
+    integer :: Where = 0       ! Not used
+    type(RC_Info) :: Col, Row  ! Column and row info
+    type(matrixElement_T), dimension(:,:), pointer :: BLOCK => NULL()
+  end type Matrix_T

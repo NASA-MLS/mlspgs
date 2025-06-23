@@ -1,0 +1,19 @@
+!divert(-1)
+;; $Id$
+
+;; This l2cf fragment joins the chi^2 diagnostic products dgm
+
+  !define(chisqJoin,{
+   l2auxMAF_$1: l2aux, source=dMMAF.csMAF_$1
+   l2auxMIF_$1: l2aux, source=dMMIF.csMIF_$1
+   l2auxChan_$1: l2aux, source=dChan.csChan_$1
+})
+
+!divert!dnl
+  !chisqJoin(band3)
+  !chisqJoin(band4)
+  !chisqJoin(band6)
+  !define(Alldgm, {l2auxMAF_band3,l2auxMAF_band4,l2auxMAF_band6, $
+  l2auxMIF_band3,l2auxMIF_band4,l2auxMIF_band6, $
+  l2auxChan_band3,l2auxChan_band4,l2auxChan_band6 $
+   } )!dnl

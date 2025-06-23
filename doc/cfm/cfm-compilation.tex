@@ -1,0 +1,127 @@
+\section{Compiling and linking to the CFM}
+\label{app:Compilation}
+
+This appendix describes the steps to be followed in building and using 
+the cfm library.
+
+\subsection{Building the libraries}
+
+In fact, there are two versions of the library, one which is less
+complete because it requires additional libraries to be supplied, and
+another fuller version which gathers all the compiled objects together.
+
+We assume you are able to obtain the mlspgs software and a suitable
+\snippet{.configure} file. You know your mlspgs distribution is complete
+and your \snippet{.configure} file is suitable if you are able to build
+with it. Ensuring that both are up-to-date may require access to the
+\snippet{cvs} utility. We will assume you are able to confirm that both
+are up-to-date, too.
+
+The key to building the cfm libraries is the \snippet{make} utility. If
+you have not done so already, you should use the pseudotarget
+\snippet{update} to build the uniquely-named subdirectories where
+\snippet{make} will store the compiled objects.
+
+The command to do this, issued from the root, mlspgs directory, is
+\begin{quote}
+\snippet{make update}
+\end{quote}
+
+The next step is to build and install the libraries. This is easily done by
+\begin{quote}
+\snippet{make install-cfm}
+\end{quote}
+
+\begin{quote}
+\snippet{make install-fullcfm}
+\end{quote}
+
+In response to these commands \snippet{make} will compile the sources
+and add the resulting objects into two library files, whie also creating
+a unifying \snippet{.mod} file. These files will be moved into a special
+installation directory, normally a subdirectory of your root mlspgs
+directory named \snippet{\$MLSCONFG} where the variable
+\snippet{MLSCONFG} is set in your .configure file.
+
+We now look into use of the two library files and the unifying
+\snippet{.mod} file.
+
+\subsection{Using the unifying \snippet{.mod} file}
+
+When compiling any Fortran module that USEs a second module, the
+compiler requires access to the \snippet{.mod} file created when it
+compiled that second module. Because of this, a user program that USEs
+any of the procedures supplied in the callable forward model can be
+compiled only if a \snippet{.mod} file is supplied that was created by
+the same Fortran compiler for a library module.  This library-wide
+\snippet{.mod} file is our unifying \snippet{.mod}. It is named
+\snippet{cfm.mod}. Using our mockup.f90 file for an example, we can
+illustrate how to compile, assuming \snippet{cfm.mod} is in
+\snippet{\$INSTALLDIR}.
+\begin{quote}
+\snippet{ifort -c -I \$INSTALLDIR mockup.f90}
+\end{quote}
+
+You won't actually have to issue the above command. It's shown for purely for
+illustration.
+
+\subsection{Using the \snippet{libcfm.a} file}
+
+The Makefiles already allow the easy implementation of this library. You
+need only cd to mlspgs/cfm, substitute the existing \snippet{mockup.f90}
+with your own, and then type
+\begin{quote}
+\snippet{make update\\make}
+\end{quote}
+
+in response, you should see Makefile execute the following command (or something close to
+it)
+\begin{verbatim}
+ifort -static -arch ia32 -o mockup mockup.o   \
+                  -L./ -lcfm \
+    -L../../cloudfwdm/IFC.Linux.ifc11 -lcloud \
+    -L../../fwdmdl/IFC.Linux.ifc11 -lfwdmdl \
+     \
+                  -L../../lib/IFC.Linux.ifc11 -lmls \
+    -L../../bin/IFC.Linux.ifc11 -lutctotai \
+            -L/software/toolkit/ifc11/toolkit/lib/linux -lPGSTK \
+    -L/software/toolkit/ifc11/hdfeos/lib/linux -lhdfeos \
+    -L/software/toolkit/ifc11/hdfeos5/lib/linux -lhe5_hdfeos \
+            -L/software/toolkit/ifc11/hdf/lib -lmfhdf \
+    -ldf \
+    -lz \
+    -ljpeg -lsz \
+            -L/software/toolkit/ifc11/hdfeos/lib/linux -lGctp \
+    -L/software/toolkit/ifc11/pvm3/lib/LINUX -lfpvm3 -lgpvm3 -lpvm3 \
+     \
+     \
+    -L../../blas/IFC.Linux.ifc11 -lmlspack \
+    -L/software/toolkit/ifc11/hdf5/lib -lhdf5_fortran -lhdf5  \
+     -lz  \
+\end{verbatim}
+Note the second line where \snippet{-L./ -lcfm} tells the linker to
+include needed objects from the file \snippet{libcfm.a}.
+
+The result will be to put a newly-built executable named
+\snippet{mockup} in the uniquely-named subdirectory
+\snippet{\$MLSCONFG}.
+
+\subsection{Using the \snippet{libcfm_all.a} file}
+
+It might be more convenient to build outside the mlspgs/cfm
+subdirectory, or it may be that some of the the libraries shown in the
+command above conflict with versions needed to build your program. In
+this case, you can use the full version of the library,
+\snippet{libcfm_all.a}.
+
+An example might be once again our mockup program.
+
+\begin{verbatim}
+ ifort -static -arch ia32 -o mockup mockup.o \
+    -L$INSTALLDIR -lcfm_all
+\end{verbatim}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "cfm"
+%%% End: 

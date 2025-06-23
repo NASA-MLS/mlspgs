@@ -1,0 +1,794 @@
+% Making the graphics:
+% tgif -print -color -eps wvs-151-1.obj; epstopdf wvs-151-1.eps
+% tgif -print -color -eps wvs-151-2.obj; epstopdf wvs-151-2.eps
+% tgif -print -color -eps wvs-151-3.obj; epstopdf wvs-151-3.eps
+% tgif -print -color -eps Sparse.obj; epstopdf Sparse.eps
+% tgif -print -color -jpeg wvs-151-1.obj
+% tgif -print -color -jpeg wvs-151-2.obj
+% tgif -print -color -jpeg wvs-151-3.obj
+% tgif -print -color -jpeg Sparse.obj
+
+\makeatletter\let\ifGm@compatii\relax\makeatother
+\documentclass[landscape]{beamer}
+
+\usepackage{alltt}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage[strings]{underscore}
+
+% \ifx\pdfoutput\undefined
+%   \pdfoutput=0
+%   \usepackage{hyperref}
+%   \hypersetup{%
+%     hypertex,%
+%     plainpages,%
+%     hyperindex=true,%
+%     hypertexnames=false%
+%   }
+%   % Specify the driver for the color package
+%   \ExecuteOptions{dvips}
+%   %\ExecuteOptions{xdvi}
+% \else
+%   \ifnum\pdfoutput>0
+%     \usepackage{hyperref}
+%     \hypersetup{%
+%       pdftex,%
+%       plainpages,%
+%       hyperindex=true,%
+%       pdfpagelabels,%
+%       hypertexnames=false,%
+%       colorlinks=true,%
+%       linktocpage=true,%
+%     }
+%     % Specify the driver for the color package
+%     \ExecuteOptions{pdftex}
+%   \else
+%     \usepackage{hyperref}
+%     \hypersetup{%
+%       hypertex,%
+%       plainpages,%
+%       hyperindex=true,%
+%       hypertexnames=false%
+%     }
+%     % Specify the driver for the color package
+%     \ExecuteOptions{dvips}
+%     %\ExecuteOptions{xdvi}
+%   \fi
+% \fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\newcommand{\newframe}[2][]{\begin{frame}\frametitle{\hfill #2 \hfil}}
+\renewcommand{\d}{\text{d}}
+
+\title{Sparse Interpolators in the Forward Models\\
+wvs-151r2}
+
+\author{Van Snyder}
+
+\date{18 September 2019}
+\titlegraphic{\includegraphics[width=1.0in]{pinklogo}}
+
+\begin{document}
+\setlength{\parskip}{\dimexpr(\parskip+4pt)\relax}
+\begin{frame}
+  \Large
+  \titlepage
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Interpolation Coefficients}
+
+Interpolation coefficients in the forward models are usually used for two
+purposes:
+
+\begin{itemize}
+
+\item to interpolate from a state vector's representation basis to a path
+      of integration, and
+
+\item as the chain rule factor during calculation of derivatives.
+
+\end{itemize}
+
+In that context, they can be thought of as a matrix in which each row
+corresponds to a position on the path of integration, and each column
+corresponds to a state-vector basis element, such as temperature or ozone
+at one place in the atmosphere.
+
+The state-vector basis might be one-dimensional ($\phi$ or $\zeta$),
+two-dimensional ($\zeta \times \phi$), three-dimensional ($\zeta \times$
+QTM) or $(\zeta \times$ lat $\times$ lon), or could include frequency as an
+additional first dimension ($\nu \times \zeta \times \phi$) of ($\nu
+\times \zeta \times\, $QTM), or an across-plane dimension for the magnetic
+field, ($\nu \times \zeta \times \phi \times \chi$).
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Interpolation Coefficients (one D)}
+
+Because we use (multi) linear interpolation, the matrix is sparse.
+
+\begin{centering}
+\includegraphics[scale=0.70,clip]{wvs-151-1}\\
+\end{centering}
+
+%\vspace*{-2.1in}
+Interpolating to {\bf X} on the path of integration depends only upon {\bf
+A} and {\bf B} $\Rightarrow$ only two nonzero columns in row {\bf X} for
+the quantity of which {\bf X} is a member.
+
+The datum at {\bf B} in the representation basis affects only values at
+{\bf X}, {\bf Y}, and {\bf Z} on the path $\Rightarrow$ only one nonzero
+row in column {\bf B} per path position between {\bf A} and {\bf C}.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Interpolation Coefficients (two D)}
+
+\begin{centering}
+\includegraphics[scale=0.65,clip]{wvs-151-2}\\
+\end{centering}
+
+Interpolating to {\bf X} on the path of integration depends only upon {\bf
+A}, {\bf B}, {\bf D} and {\bf E} $\Rightarrow$ only four nonzero columns
+in row {\bf X}.
+
+The datum at {\bf E} in the representation basis affects values on the
+path only at points within the rectangle {\bf A-C-I-G} $\Rightarrow$ only
+one nonzero row in column {\bf E} per path position within that rectangle.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Interpolation Coefficients (QTM)}
+
+\begin{centering}
+\includegraphics[scale=0.5,clip]{wvs-151-3}\\
+\end{centering}
+
+If the horizontal basis is QTM, interpolating to a path point {\bf X}
+within one triangle depends only upon values at the vertices $\Rightarrow$
+only three nonzero columns in row {\bf X}.
+
+The datum at a point {\bf A} that is a vertex of a triangle in QTM affects
+only values at path points within the six surrounding triangles
+$\Rightarrow$ only one nonzero row in column {\bf A} per path position
+within those six triangles.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Interpolation Coefficients (QTM)}
+
+If the horizontal basis is QTM and the vertical basis is $\zeta$,
+interpolating to a path point {\bf X} within one layer of a triangular
+prism depends only upon values at the QTM vertices and the adjacent
+$\zeta$ basis points $\Rightarrow$ only six nonzero columns in row {\bf
+X}.
+
+The datum at a point {\bf B} that is at one $\zeta$ level on a profile
+grounded at a vertex of a triangle in QTM affects only values at path
+points within two layers of the six surrounding triangular prisms
+$\Rightarrow$ only one nonzero row in column {\bf B} per path position
+within those six triangular prisms.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Sparse Representation}
+
+The sparse representation is composed of a two-level data structure.  The
+type name is {\tt\bf Sparse_t}, defined in module {\tt\bf Sparse_m}.
+
+In the outer level, the components are:
+
+\begin{itemize}
+
+\item{\bf E}, a one-dimensional array of structures to represent the
+nonzero elements of the matrix.
+
+\item{\bf ROWS}, an array that provides the index in the array {\bf E}, of
+the last nonzero element in each row, or zero if there is none.
+
+\item{\bf COLS}, an array that provides the index in the array {\bf E}, of
+the last nonzero element in each column, or zero if there is none.
+
+\end{itemize}
+
+The ``last'' element in a row or column is the last one inserted.  It
+might not have the largest row or column index.  The row- or
+column-numbers of elements of a column or row are not necessarily in
+order.  It wouldn't be difficult or expensive to put them into order, but
+so far it's not necessary.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Sparse Representation}
+
+Each element of the array {\bf E} of nonzero elements is a structure of
+type  {\tt\bf Sparse_Element_t} that has five components:
+
+\begin{itemize}
+
+\item{\bf V}, the value of the element,
+
+\item{\bf R}, the row number of the element,
+
+\item{\bf C}, the column number of the element,
+
+\item{\bf NR}, the index in the array {\bf E} of the next element in the
+same row, and
+
+\item{\bf NC}, the index in the array {\bf E} of the next element in the
+same column.
+
+\end{itemize}
+
+The elements of each row and column are connected into a circular list. 
+The last element in each row contains the index of the first element in
+the same row. The last element in each column contains the index of the
+first element in the same column.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Sparse Representation}
+
+\begin{centering}
+\includegraphics[scale=0.6,clip]{Sparse}\\
+\end{centering}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Using the Sparse Representation}
+
+The two most common uses of the interpolation-coefficient matrix are:
+
+\begin{itemize}
+
+\item Compute geophysical properties (temperature, mixing ratio) on the
+path of integration, by interpolating from the state vector.  This is a
+matrix-vector inner product $\mathbf{S} \cdot \mathbf{V}$.\\[4pt]
+
+Using the sparse representation is faster than using the dense
+representation, because only the nonzero elements are multiplied by the
+state vector.
+
+\item Compute derivatives for each state-vector element.  This requires to
+traverse columns of the matrix.  For arcane reasons related to indexing
+while derivatives are calculated, it is better to copy a column of the
+matrix to a one-dimensional array that represents zeroes explicitly, than
+to search in a sparse column.
+
+\end{itemize}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Traversing a Row of the Sparse Representation}
+
+Traverse row {\bf R} of a sparse matrix {\bf S}:
+
+\begin{alltt}
+~~nr = s\%rows(r)          !~Last element in the row\\
+~~if ( nr /= 0 ) then      !~Row isn't empty\\
+~~~~do\\
+~~~~~~nr = s\%e(nr)\%nr    !~Next element in the row\\
+~~~~~~!~{\color{red}Do something using s\%e(nr)}\\
+~~~~~~!~Did we just process the last element?\\
+~~~~~~if ( nr == s\%rows(r) exit\\
+~~~~end do\\
+~~end if\\
+\end{alltt}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Dot Product of one Row of the Sparse Representation}
+
+Compute the dot product {\bf D} of row {\bf R} of a sparse matrix {\bf S}
+with the vector {\bf V}:
+
+\begin{alltt}
+~~d = 0.0\\
+~~nr = s\%rows(r)          !~Last element in the row\\
+~~if ( nr /= 0 ) then      !~Row isn't empty\\
+~~~~do\\
+~~~~~~nr = s\%e(nr)\%nr    !~Next element in the row\\
+~~~~~~{\color{red}d = d + s\%e(nr)\%v * v(s\%e(nr)\%c)}\\
+~~~~~~!~Did we just process the last element?\\
+~~~~~~if ( nr == s\%rows(r) exit\\
+~~~~end do\\
+~~end if\\
+\end{alltt}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Dot Product of a Sparse Representation and a Vector}
+
+Compute the matrix-vector product {\bf P} of a sparse matrix {\bf S} with
+the (dense) vector {\bf V}:
+
+\begin{alltt}
+~~p~=~0.0 !~Array broadcast\\
+~~do i = 1, s\%ne    !~Number of elements used \\
+~~~~p(s\%e(i)\%r) = p(s\%e(i)\%r) + \&\\
+~~~~~~~~~~~~~~~~\& s\%e(i)\%v * v(s\%e(i)\%c)\\
+~~end do
+\end{alltt}
+
+Notice that this does not require to traverse a particular row or column
+of {\bf S}.  It simply multiplies each nonzero element of {\bf S} by the
+appropriate element of {\bf V}, and accumulates it into the appropriate
+element of {\bf P}.
+
+This has a cost proportional to the number of nonzeroes in {\bf S}, not
+the product of the path length and state-vector quantity size.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Extract a column of a Sparse Representation}
+
+Extract nonzeroes from column {\bf C} of a sparse matrix {\bf S} and store
+them in a dense vector {\bf V}, assuming {\bf V} is initially zero, not
+undefined:
+
+\begin{alltt}
+~~nc = s\%cols(c)          !~Last element in the column\\
+~~if ( nc /= 0 ) then      !~Column isn't empty\\
+~~~~do\\
+~~~~~~nc = s\%e(nc)\%nc    !~Next element in the column\\
+~~~~~~{\color{red}v(s\%e(nc)\%r) = s\%e(nc)\%v}\\
+~~~~~~!~Did we just process the last element?\\
+~~~~~~if ( nc == s\%cols(c) exit\\
+~~~~end do\\
+~~end if\\
+\end{alltt}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Type-bound procedures}
+
+There are several procedures bound to the type {\tt\bf Sparse_t}:
+
+\begin{itemize}
+
+\item {\tt\bf Create:} Create an empty sparse matrix.
+
+\item {\tt\bf Add_Element:} Add an element (won't add zeroes!).
+
+\item {\tt\bf Empty:} Remove all the element values, but do not deallocate
+any components, to create a new matrix with the same shape.
+
+\item {\tt\bf Destroy:} Destroy a sparse matrix -- deallocate its allocatable
+components.
+
+\item {\tt\bf Row_Dot_Vec:} Compute the dot product of a row with a vector.
+
+\item {\tt\bf Sparse_Dot_Vec:} Compute the matrix-vector product.
+
+\item {\tt\bf Get_Col_Vec:} Get a column as a vector.
+
+\item {\tt\bf Clear_Col:} Replace nonzeroes in a column retrieved by {\tt
+Get_Col_Vec} with zeroes.
+
+\item {\tt\bf Dump:} Row-wise dump of a sparse matrix.
+
+\item and many more.
+
+\end{itemize}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Computing interpolating coefficients $\eta$}
+
+The type {\tt\bf Sparse_Eta_t}, an extension of {\tt\bf Sparse_t}, is
+defined in the module {\tt\bf Sparse_Eta_m}.  It has no new components; it
+provides three additional type-bound procedures:
+
+\begin{itemize}
+
+\item{\tt\bf Eta_0D} computes an $\eta$ matrix having one row and the same
+number of columns as one basis.  Used for quantities that have the same
+value and interpolation coefficient for all path positions, usually
+frequency, to interpolate to a single point, e.g., for frequency-dependent
+extinction.
+
+\item{\tt\bf Eta_1D} computes an $\eta$ matrix having the same number of
+rows as an integration path, and the same number of columns as one basis
+for a quantity, e.g. $\zeta$ or $\phi$, to interpolate from a basis to a
+path.
+
+\item{\bf \dots} (next slide)
+
+\end{itemize}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Computing $\eta$}
+
+\begin{itemize}
+
+\item{\tt\bf Eta_nD} computes a matrix in which each row is the
+outer product of corresponding rows of two given matrices, $\eta^1$
+and $\eta^2$, having shapes $(r_1,c_1)$ and $(r_2,c_2)$, producing a
+result with shape $(r_2, c_1 \times c_2)$. The order of its columns is
+array-element order for a two-dimensional array having shape
+$(c_1,c_2)$.\\[3pt]
+
+If $r_1 = 1$, the effect is as if $r_1 = r_2$, with all rows of $\eta^1$
+having the same value (e.g., for frequency interpolation).  Otherwise,
+$r_1 = r_2$ is required.\\[3pt]
+
+\end{itemize}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Computing $\eta$}
+
+{\bf Example}: Compute $\eta^k_l$ for $\zeta$. {\tt Eta_1D} assumes the
+path positions are sorted. $\zeta$ increases monotonically on each side of
+the tangent.  To avoid sorting {\tt Z_Path}, which would put the
+interpolating coefficients into the wrong rows of the $\eta$ matrix, do it
+for each side of the tangent separately:
+
+{\small
+{\tt~~call eta_z\%eta_1d ( grids_f\%zet_basis(z1:z2), z_path, \& }\\
+{\tt~~~~~~~~~~~~~~~~~~~~\& row1=tan_pt, rowN=1, \&} \\
+{\tt~~~~~~~~~~~~~~~~~~~~\& create=.false. ) }
+ 
+{\tt~~call eta_z\%eta_1d ( grids_f\%zet_basis(z1:z2), z_path, \& }\\
+{\tt~~~~~~~~~~~~~~~~~~~~\& row1=tan_pt+mySkip, rowN=n_path, \&} \\
+{\tt~~~~~~~~~~~~~~~~~~~~\& create=.false.)}
+}
+
+We don't section {\tt z_path(tan_pt:1:-1)} and {\tt
+z_path(tan_pt+mySkip:n_path)} because that would put the interpolation
+coefficients in the wrong rows of the $\eta^k_l$ matrix.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Computing $\eta$}
+
+{\bf Example}: Compute $\eta^k_m$ for $\phi$. We know $\phi$ is sorted.
+
+{\tt~~call eta_phi\%eta_1d ( grids_f\%phi_basis(p1:p2), \&}\\
+{\tt~~~~~~~~~~~~~~~~~~~~~~~\& phi_path, \& }\\
+{\tt~~~~~~~~~~~~~~~~~~~~~~~\& what=what, resize=.true. ) }
+
+{\bf Example}: Compute $\zeta \times \phi$ interpolating coefficients
+$\eta^k_{lm}$ from $\zeta$ and $\phi$ ones $\eta^k_l$ and
+$\eta^k_m$:\\[3pt]
+
+{\tt~~call eta_zp(k)\%eta_nd ( eta_z(k), eta_p(k) )}\\[3pt]
+
+and then compute $f \times \zeta \times \phi$ ones $\eta^k_{\nu l m}$ from
+$\eta^k_\nu$ and $\eta^k_{lm}$:\\[3pt]
+
+{\tt~~call eta_fzp(k)\%eta_nd ( eta_f(k), eta_zp(k)~)}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Computing $\eta$}
+
+In the full forward model, the $\eta$ matrices are computed in the {\tt\bf
+One_Pointing} subroutine.  Two-dimensional state vectors, as for EMLS, are
+handled differently from three-dimensional state vectors ($\zeta \times$
+QTM), as for SMLS.
+
+The computed $\eta$ matrices are passed to the {\tt\bf One_Frequency}
+subroutine, which is completely unaware of the representation of state
+vector quantities -- in particular, whether the horizontal basis is QTM or
+$\phi$.
+
+The {\tt\bf One_Frequency} subroutine integrates the radiative-transfer
+equation, and associated variational equations, to produce radiance for
+one frequency, and derivatives of that radiance with respect to
+state-vector quantities.
+
+For frequency-dependent quantities, it computes {\tt eta_f}, and combines
+that with the input {\tt eta_zp}, to produce {\tt eta_fzp}.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Integrating the radiative-transfer equation}
+
+The radiative-transfer equation is
+
+\begin{equation}\label{zero}
+\frac{\d I(s)}{\d s} + \alpha(s) I(s) = \alpha(s) B( T(s) )
+\end{equation}
+
+where $\alpha(s) = \sum_k f^k(s)\, \beta^k(s)$.
+
+The mixing ratios $f^k(s)$ and temperature $T(s)$ are values on the path.
+
+It is necessary to interpolate them from their state vector values
+$f^k_{lm}$ and $T_{lm}$ to their values $f^k(s)$ and $T(s)$ on the path of
+integration.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Interpolating to the integration path}
+
+Interpolating the $k^{\text{th}}$ geophysical quantity from its state
+vector to the path of integration consists of a matrix-vector product:
+
+{\tt ~~call eta_fzp\%sparse_dot_vec ( grids_f\%c(k)\%v1, \&\\
+     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\& sps_path )}
+
+\begin{itemize}
+
+\item{\tt\bf eta_fzp} is a sparse representation of $\eta^k_{\nu lm}(s)$,
+
+\item{\tt\bf grids_f\%c(k)\%v1} is a one-dimensional representation of the
+$k^{\text{th}}$ geophysical quantity's state vector value, $f^k_{\nu lm}$ or
+$T_{lm}$, in array-element order, i.e., the same order as the columns of
+{\tt\bf eta_fzp}, and
+
+\item{\tt\bf sps_path} is the $k^{\text{th}}$ column of
+the array of geophysical quantities on the integration path.
+
+\end{itemize}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Computing derivatives}
+
+Let $I^\prime(s) = \frac{\partial I(s)}{\partial f^k_{lm}}$.
+Differentiate Equation (\ref{zero}) w.r.t.\ a mixing ratio $f^k_{lm}$,
+exchange the order of differentiation, and rearrange, to produce
+
+\vspace*{-0.1in}
+\begin{equation}\label{one}\begin{split}
+\frac{\d}{\d s} I^\prime(s) +\,&
+\alpha(s) I^\prime(s) = 
+ \frac{\partial \alpha(s)}{\partial f^k_{lm}} \left( B(T(s)) - I(s) \right) \\
+  = \,&
+ {\color{red}\frac{\partial f^k(s)}{\partial f^k_{lm}}}
+  \frac{\partial \alpha(s)}{\partial f^k(s)}
+   \left( B(T(s)) - I(s) \right) \\
+  = \,&
+ {\color{red}\eta^k_{lm}(s)}\,
+  {\color{blue}\frac{\partial \alpha(s)}{\partial f^k(s)}}
+   \left( B(T(s)) - I(s) \right) \\
+ \text{usually} = \,&
+  \eta^k_{lm}(s)\, {\color{blue}\beta^k(s)}\, \left( B(T(s)) - I(s)
+   \right) \,. \\
+\end{split}\end{equation} 
+
+Notice that Equation (\ref{one}) has the same form as Equation
+(\ref{zero}), with $I(s)$ replaced by $I^\prime(s)$ in the l.h.s, and a
+more complicated r.h.s.  Derivative w.r.t. temperature includes
+$\frac{\partial B(s)}{\partial T(s)}$ in the r.h.s.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Computing derivatives}
+
+The solution of Equation (\ref{one}) may be written
+
+\vspace*{-0.1in}
+\begin{equation}\label{two}
+\frac{\partial I(s_\mathcal{M})}{\partial f^k_{lm}} =
+\int_{s_0}^{s_\mathcal{M}} \mathcal{T}(s,s_\mathcal{M})\,
+ {\color{red}\eta^k_{lm}(s)} \,
+ \frac{\partial \alpha(s)}{\partial f^k}
+  \left( B(T(s)) - I(s) \right) \d s \,.
+\end{equation}
+
+where $s_0$ is deep space opposite the instrument, and $s_\mathcal{M}$ is
+the instrument position.
+
+In each column of $\eta^k_{lm}$, most values are zero:  The integral in
+Equation (\ref{two}) only needs to be evaluated for the part of the path
+where $\eta^k_{lm}(s)$ is nonzero.
+
+For arcane reasons having to do with indexing, it is simpler to have a
+dense column representation of $\eta^k_{lm}(s)$, with zeroes explicitly
+represented, which can then be indexed instead of searched for the needed
+elements $\eta^k_{lm}(s)$ in its sparse representation.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Computing derivatives}
+
+$\frac{\partial I(s_\mathcal{M})}{\partial f^k_{lm}}$ is computed
+separately for each column of the $\eta$ matrix.  Rather than producing an
+entire dense representation of $\eta$ in which its zeroes are explicitly
+represented -- which might be a huge matrix -- and then using one column of
+that matrix at a time, columns are extracted as needed.
+
+The obvious way to get column {\bf C} of the $\eta$ matrix is
+
+{\tt
+~~do f = 1, n_sps\\
+~~~~do c = 1, size(eta(f)\%cols) \\
+~~~~~~{\color{blue}sparse_col = 0} \\
+~~~~~~call eta(f)\%get_col ( c, sparse_col )\\
+~~~~~~{\color{red} !~Do something with column c}\\
+~~~~end do\\
+~~end do
+}
+
+The line {\tt\color{blue}sparse_col = 0} is expensive -- the cost is
+proportional to the path length instead of the number of nonzeroes on the
+path in column {\bf C}.  A better solution is \dots
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Computing derivatives}
+
+A better solution than filling all of {\tt sparse_col} with zeroes before
+each column is extracted, is to hoist the line {\tt\color{blue}sparse_col
+= 0} out of the loops:
+
+{\tt
+~~{\color{blue}sparse_col = 0} \\
+~~do k = 1, n_sps\\
+~~~~do c = 1, size(eta(k)\%cols) \\
+~~~~~~call eta(k)\%get_col ( c, sparse_col )\\
+~~~~~~{\color{red} !~Integrate the equation for
+ $\frac{\partial I(s_\mathcal{M})}{\partial f^k_{lm}}$ using the\\
+~~~~~~!~dense representation of column c of $\eta^k_{lm}$}\\
+}
+and then replace only the nonzeroes in {\color{blue}sparse_col}, the dense
+representation of column {\tt\bf C}, with zeroes:\\
+{\tt
+~~~~~~{\color{blue}call eta(k)\%clear_col ( c, sparse_col )} \\
+~~~~end do\\
+~~end do
+}
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Other uses}
+
+There are a few places where an $\eta$ matrix is not used for
+interpolation or derivative calculation -- mostly in the scan forward
+model.  The traversals of the rows or columns, or the use of the nonzero
+elements, are explicit, and depend upon details of the representation of
+the type {\tt\bf Sparse_t}.
+
+These calculations could in principle have been moved into the {\tt\bf
+Sparse_m} module, but each one is unique.
+
+A better solution would be an \emph{iterator}, a kind of procedure
+invented by Barbara Liskov and her MIT students in 1974, incorporated into
+the programming language {\bf CLU}, and described in \emph{Abstraction
+mechanisms in CLU,} {\bf Communications of the ACM. 20}, 8 (August 1977),
+pp 564--576.  An iterator is a ``function version'' of a coroutine,
+introduced in {\bf Simula 67} by Ole-Johan Dahl and Kristen Nygaard.
+
+I have been trying for thirty years to bring iterators (and coroutines)
+into Fortran.  Maybe in the next revision\dots.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Other uses}
+
+This is how I would use the {\bf ITERATE} construct I have proposed for
+Fortran, to implement {\tt\bf Row_Dot_Vec} to compute the dot product of
+row {\bf R} of sparse matrix {\bf S} with vector {\bf V}:\\[-1pt]
+
+{\tt
+~~d = 0 \\
+~~iterate ( type(sparse_element_t) ::~E=>s\%row(r) )\\
+~~~~{\color{red}d = d + e\%v * v(e\%c)} \\
+~~end do
+}\\[-1pt]
+
+This causes {\tt\bf E} to be a construct-local pointer.  When the {\bf
+ITERATE} statement is excuted,  the {\tt\bf Row} iterator (next slide) is
+invoked. When the iterator executes a {\tt\bf return} or {\tt\bf end}
+statement, the construct completes.  When the iterator executes a {\tt\bf
+suspend} statement, {\tt\bf E}, its result, is associated with an element
+of the {\bf E} component of {\bf S}, and control is returned to the body
+of the construct.  When execution of the body completes, control returns
+to the iterator at the statement after the {\tt\bf suspend} statement. 
+The suspend-resume cycle does not require to destroy and re-construct to
+activation record.
+
+\end{frame}
+
+% -----------------------------------------------------------------------------
+
+\newframe{Other uses}
+
+This is how I would write an {\bf Iterator} procedure, as I have proposed
+for Fortran, to traverse row {\bf R} of sparse matrix {\bf S}:
+
+{\tt
+~~iterator Row ( S, R ) result ( E ) \\
+~~~~class ( sparse_t ), intent(in), target :: S \\
+~~~~integer, intent(in) :: R !~Row number\\
+~~~~type ( sparse_element_t ), pointer :: E \\
+~~~~nr = s\%rows(r) !~Last element in the row, if any\\
+~~~~if ( nr == 0 ) return !~Row is empty\\
+~~~~do\\
+~~~~~~nr = s\%e(nr)\%nr !~Next element in the row \\
+~~~~~~e => s\%e(nr) !~Current element\\
+~~~~~~{\color{red}suspend !~Caller processes element} \\
+~~~~~~!~Resume here \\
+~~~~~~if ( nr == s\%rows(r) ) return !~Finished\\
+~~~~end do\\
+~~end iterator Row
+}
+
+\end{frame}
+
+\begin{frame}
+  \Large
+  \titlepage
+\end{frame}
+
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.4  2019/09/19 00:16:08  vsnyder
+% Elaborate on "state vector basis element" and correct some typos on page 2.
+% Add "cross track" dimension for 3-D UMLS magnetic field on page 2. Add
+% examples of zeta and phi 1-D eta calculation, expanding page 17 to three pages.
+%
+% Revision 1.3  2019/09/12 19:27:20  pwagner
+% Builds successfully again with new logo name
+%
+% Revision 1.2  2019/09/11 23:29:37  vsnyder
+% Minor corrections, some cannonball polishing
+%
+% Revision 1.1  2018/11/29 21:34:50  vsnyder
+% Initial commit
+%

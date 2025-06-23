@@ -1,0 +1,81 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+!  subroutine BridgeMissingValues_1dr4(values, MissingValue)
+!     The basic idea is to bridge missing data by interpolating across the
+!     chasm
+!     There will be some cases where that won't work, e.g. longitudes
+!     so we allow the option DONTINTERPOLATE
+!     If set, we just stutter the last non-Fill value
+!     ! Args
+!     real(r4), dimension(:), intent(inout) :: values
+!     real(r4), intent(in), optional        :: missingValue
+!     ! Internal variables
+!     real(r4) :: dx
+!     real(r4) :: myMissingValue
+!     real(r4) :: x1
+!     real(r4) :: x2
+    logical :: bridging
+    integer :: i
+    integer :: i1
+    integer :: i2
+    integer :: ib
+    ! Executable
+    myMissingValue = undefinedValue
+    if ( present(MissingValue) ) myMissingValue = missingValue
+    if ( .not. any(IsFillValue(values, myMissingValue) ) ) return
+    x1 = myMissingValue
+    i1 = 0
+    if ( DONTINTERPOLATE .and. IsFillValue(values(1)) ) then
+      ! If the first value is a Fill, we can't choose the previous value, 
+      ! because there isn't one
+      ! So we'll choose the next non-Fill
+      i1 = FindFirst( .not. IsFillValue(values) )
+      if ( i1 > 0 ) x1 = values(i1)
+    endif
+    bridging = .false.
+    do i=1, size(values)
+      if ( DONTINTERPOLATE ) then
+        if ( IsFillValue(values(i)) ) then
+          if ( i == 1 ) then
+            values(i) = x1
+          else
+            values(i) = values(i-1)
+          endif
+        endif
+      elseif ( bridging ) then
+        if ( IsFillValue(values(i)) ) cycle
+        i2 = i
+        x2 = values(i)
+        dx = (x2 - x1) /max(1, i2-i1)
+        do ib=i1+1, i2-1
+          values(ib) = x1 + (ib-i1)*dx
+        enddo
+        i1 = i2
+        x1 = x2
+        bridging = .false.
+      elseif ( IsFillValue(values(i)) ) then
+        bridging = .true.
+      else
+        i1 = i
+        x1 = values(i)
+      endif
+    enddo
+!  end subroutine BridgeMissingValues_1dr4
+
+! $Log$
+! Revision 1.2  2008/01/07 21:40:10  pwagner
+! Replace DEFAULTUNDEFINEDVALUE with user-settable undefinedValue
+!
+! Revision 1.1  2005/08/05 20:31:22  pwagner
+! First commit
+!

@@ -1,0 +1,78 @@
+% $Id$
+% This ASCII file contains a set of rules for which molecules have to be
+% done line by line in which bands.  It is divided into sections (e.g.,
+% SIDS, RTVL) within which are lines of the format:
+%
+% <band list> : <molecule list>
+%
+% where both lists are comma separated, and can have one or more
+% members. When 'All' is used as the band name, the following molecules
+% are made mandatory LBL in all bands.  If 'Continum' is used in a
+% molecule name, all molecules having continuum information are included.
+%
+%   The section names (SIDS, RTVL etc.) get used in the macro names.
+%
+% -----------------------------------------------------------------------
+%
+% First those we want for retrievals
+%
+RTVL
+% ---------------- R1
+B1L, B21L: O2, O_18_O, O_17_O, O2_V1
+% R2
+B22L, B26L: O2
+B2L, B3L, B23D: H2O
+% ---------------- R3
+B7L, B24D: O3
+B7U: O3, O3_V2
+B8U: O_18_O
+B9L: CO, O3
+B9U: O3
+B33U: O3
+% ---------------- R4
+B11U: O3
+B12L: O3
+B12U: N2O, O3, O3_V2
+B13L: HCL_35, O3
+B14L: HCL_35, HCL_37, O3
+B30L: O3
+% ---------------- R5
+B15L, B18L: OH
+B16L, B19L: OH, O3
+B17L, B20L: O3, O3_V2
+B17U, B20U: O3
+%
+% -----------------------------------------------------------------------
+%
+% Now those for sids
+%
+SIDS
+% ---------------- R1
+B1L, B21L: O2, O_18_O, O_17_O, O2_V1
+% R2
+B22L, B26L: O2
+B2L, B3L, B23D: H2O
+% ---------------- R3
+B7L, B24D: O3
+B7U: O3, O3_V2
+B8L: O_18_O
+B9L: CO, O3
+B9U: O3
+B33U: O3
+% ---------------- R4
+B11U: O3
+B12L: O3
+B12U: N2O, O3, O3_V2
+B13L: HCL_35, O3
+B14L: HCL_35, HCL_37, O3
+B30L: O3
+% ---------------- R5
+B15L, B18L: OH
+B16L, B19L: OH, O3
+B17L, B20L: O3, O3_V2
+B17U, B20U: O3
+%
+% $Log$
+% Revision 1.1  2008/10/14 20:01:01  livesey
+% First version
+%

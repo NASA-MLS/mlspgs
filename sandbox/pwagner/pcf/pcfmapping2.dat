@@ -1,0 +1,305 @@
+; This file describes the mapping of Level 2 PCF numbers to filenames.  This
+; is necessary because the toolkit does not allow PGEs to define
+; their own input/output filenames except through PCFs.
+;
+; So we have a database; this has entries for each type of file used
+; by the software.  These entries define the number range, and
+; construction of the filename, as well as a textual label used in the
+; construction of a f90 PARAMETER in the source code.
+;
+; Reading the file itself should make this clearer.
+;
+; It is used as input for two scripts:
+;
+; makemlspcfmodule2 - a script that produces a f90 module defining the
+;                     file numbers
+;
+; makemlspcfl2* - scripts that create a pcf for a execution of the software
+; 
+; Text on any line following a semi-colon such as this is ignored.
+;
+; parameters with names beginning with the string
+; mobile_
+; (e.g., mobile_l2cf)
+; will not produce PCFids directly
+; instead the final PCFid will be calculated at runtime
+; (so we can use the same code base for both standard production
+; and near-real time)
+; "$Id$"
+; ---------------------------------------------------------------------------
+;
+; USER-DEFINED RUNTIME PARAMETERS
+;
+; These parameters are defined in the PCF and contain input information which
+; may vary for each execution of a PGE.
+;
+; This next line defines the starting number.  The parameters specified below
+; start using numbers from here.  The baseIndex can be redefined at any point.
+;
+baseIndex=2000
+;
+; Now the parameters are defined as follows:
+;  param: <name> 1
+; where 1 is the increment between PCF numbers for each parameter
+;
+l2_param: InputVersion        1
+          PGEVersion          1
+          Cycle               1
+          CCSDSStartId        1
+          CCSDSEndId          1
+          spec_keys           1
+          spec_mcfnames       1
+          switches            1
+          col_spec_keys       1
+          col_spec_mcfnames   1
+          col_spec_doinames   1
+          CrashMsg            1
+;
+; Each entry will create a line in the MLSPCF2.f90 module like this
+;
+; INTEGER, PARAMETER :: mlspcf_l2_param_OutputVersion = 2000
+; INTEGER, PARAMETER :: mlspcf_l2_param_Cycle = 2001
+;
+; When a makemlspcfl2 script was run, we would get lines in the pcf looking
+; like:
+;
+; 2000|OutputVersion|V0-5
+; 2001|Cycle|1
+;
+; -----------------------------------------------------------------------------
+;
+; USER INPUT FILES
+; first the pcf and the configuration file
+;
+baseIndex=900
+;
+; Now the files are defined as follows:
+;  <identifier>: <filename> <number of files needed>
+;
+pcf: l${level}_v${VERSION}-c${CYCLE}_${DATE}.pcf 1
+;
+; The PCF needs to point to itself, in order to be read into an annotation that
+;
+;l2cf: mls_l2_v${VERSION}.cf1   1
+mobile_l2cf: mls_l2_v${VERSION}.cf1   1
+      mls_l2_v${VERSION}.cf2   1
+      mls_l2_v${VERSION}.cf3   1
+      mls_l2_v${VERSION}.cf4   1
+      mls_l2_v${VERSION}.cf5   1
+;
+; next any static inputs
+baseIndex=20000
+;
+nomen: emls-signals.dat   1
+;
+; (This is the signals nomenclature file)
+;
+; Now the forward model input files
+;
+antpats: aaap.emls   1
+;
+; This is the antenna patterns file.
+;
+filtshps: normalized_filter_banks.dat   1
+;
+; This is the filter shapes file.
+;
+dacsfltsh: dacs_filter_banks.dat   1
+;
+; This is the DACS filter shapes file.
+;
+ptggrids: grid_file_mdb.dat   1
+;
+; This is the pointing grids file.
+;
+; -----------------------------------------------------------------------------
+; We never needed the cloud forward model input files
+;
+;clouds: cloud_nnn.dat   30
+;
+; These were to be the various files needed by the cloud forwrad model.
+;
+; -----------------------------------------------------------------------------
+; forward model input (l2pc, etc.)
+;
+pfa: PFAData_R1A_v2-0-5.h5   20
+;
+IGRF: igrf2010.dat   1
+;
+ElevOffset: ElevOffsets_v3-0-5_0000d000.h5   1
+;
+IsoTopeRatio: IsotopeRatios_v3-0-5i.h5   1
+;
+SBFraction: SBFraction_v3-0-2.h5   1
+;
+SysTemperature: SystemTemperatures_v3-0-5_0000d000.h5   1
+;
+NoiseBW: NoiseBandwidths_v3-0-5_0000d000.h5   1
+;
+Misc: Misc_v3-0-2.h5   1
+;
+MieTables: Mie_v3-0-5.h5   1
+;
+spectroscopy: Spectroscopy_v2-x_x.h5   1
+;
+surfaceHeight: SurfaceHeight_v2-x-x.h5   1
+;
+l2pc: MLS-Aura_L2PC_Band_bin   65
+;
+; -----------------------------------------------------------------------------
+; MLS APRIORI FILES
+;
+; I no longer combine all the apriori types into a single range
+; ncep, dao, climatology have been moved (see below)
+; These are just l2gp
+;
+baseIndex=21000
+;
+l2apriori: MLS-Aura_l2_v${VERSION}.apriori   50
+;
+; -----------------------------------------------------------------------------
+; LEVEL 1 INPUT FILES
+;
+; Radiances
+;
+mobile_l1b_rad: MLS-Aura_L1B_RADF_V${VERSION}-C${CYCLE}_${DATE}.dat   30
+         MLS-Aura_L1B_RADD_V${VERSION}-C${CYCLE}_${DATE}.dat   30
+;
+; Orbit/Attitude
+;
+mobile_l1b_oa: MLS-Aura_L1B_OA_V${VERSION}-C${CYCLE}_${DATE}.dat   30
+;
+; ----------------------------------------------------------------------------
+; Polygon file
+; An optional file to input geolocations used by the QTM generator
+baseIndex=21150
+;
+polygon: MLS-Aura_L2POLY_V${VERSION}-C${CYCLE}_${DATE}.txt    1
+;
+; ----------------------------------------------------------------------------
+; NON-MLS APRIORI FILES
+; Here is where I relocated ncep, dao, climatology
+baseIndex=21900
+;
+l2ncep: 6207ea2e-1dd2-11b2-b61e-ae069991db9a.hdfeos   100
+;
+; ggeos5-mao
+;
+l2geos5: DAS.ops.asm.tavg3d_dyn_v.GEOS500.20060320_0000.V01   100
+;
+; dao--older geos4-style
+;
+l2dao: DAS.flk.asm.tsyn3d_mis_p.GEOS401.2003011800.2003011818.V01   100
+;
+; climatology
+;
+l2clim: MLS-Aura_l2_v${VERSION}.clim   50
+;
+;
+; neural net coefficients
+;
+l2neurnet: MLS-Aura_l2_v${VERSION}.neurnet   50
+;
+;
+; ascii
+; miscellaneous ascii-formatted files, e.g. master.ident, whose contents must
+; be written to hdf-formatted product files for accountabililty
+;
+l2ascii: MLS-Aura_l2_v${VERSION}.ascii   100
+;
+; ----------------------------------------------------------------------------
+;
+; LEVEL 2 OUTPUT FILES
+;
+baseIndex=30000
+;
+mobile_l2gp: MLS-Aura_L2GP_ClO_V${VERSION}-C${CYCLE}_${DATE}.dat           30
+      MLS-Aura_L2GP_H2O_V${VERSION}-C${CYCLE}_${DATE}.dat           30
+      MLS-Aura_L2GP_HCl_V${VERSION}-C${CYCLE}_${DATE}.dat           30
+      MLS-Aura_L2GP_HCN_V${VERSION}-C${CYCLE}_${DATE}.dat           30
+      MLS-Aura_L2GP_HNO3_V${VERSION}-C${CYCLE}_${DATE}.dat          30
+      MLS-Aura_L2GP_N2O_V${VERSION}-C${CYCLE}_${DATE}.dat           30
+      MLS-Aura_L2GP_O3_V${VERSION}-C${CYCLE}_${DATE}.dat            30
+      MLS-Aura_L2GP_OH_V${VERSION}-C${CYCLE}_${DATE}.dat            30
+      MLS-Aura_L2GP_T_V${VERSION}-C${CYCLE}_${DATE}.dat             30
+      MLS-Aura_L2GP_Z_V${VERSION}-C${CYCLE}_${DATE}.dat             30
+      MLS-Aura_L2GP_Other_V${VERSION}-C${CYCLE}_${DATE}.dat         30
+      MLS-Aura_L2GP_Diagnostics_V${VERSION}-C${CYCLE}_${DATE}.dat   30
+      MLS-Aura_L2GP_CO_V${VERSION}-C${CYCLE}_${DATE}.dat            30
+      MLS-Aura_L2GP_Ice_V${VERSION}-C${CYCLE}_${DATE}.dat           30
+      MLS-Aura_L2GP_RHI_V${VERSION}-C${CYCLE}_${DATE}.dat           30
+      MLS-Aura_L2GP_BrO_V${VERSION}-C${CYCLE}_${DATE}.dat           30
+      MLS-Aura_L2GP_HO2_V${VERSION}-C${CYCLE}_${DATE}.dat           30
+      MLS-Aura_L2GP_HOCl_V${VERSION}-C${CYCLE}_${DATE}.dat          30
+      MLS-Aura_L2GP_SO2_V${VERSION}-C${CYCLE}_${DATE}.dat           30
+;
+mobile_l2dgg: ML-Aura_L2DGG_v${VERSION}-c${CYCLE}_${DATE}.dat   30
+;
+; miscellaneous grid
+;
+mobile_l2dgm: MLS-Aura_L2AUX_Diagnostics_V${VERSION}-C${CYCLE}_${DATE}.dat   30
+;
+; forward model output
+;
+mobile_l2fwm_full: MLS-Aura_L2AUX_Fwd-Model_V${VERSION}-C${CYCLE}_${DATE}.dat   30
+;
+; staging file for parallel runs
+; (We've removed this--slave tasks must DirectWrite, unable to Join quantities)
+; mobile_l2parsf: MLS-Aura_L2PARSF_V${VERSION}-C${CYCLE}_${DATE}.dat   1
+;
+; ----------------------------------------------------------------------------
+;
+; METADATA CONFIGURATION FILES -- one for each L2 archived file
+;
+; log
+;
+baseIndex=4000
+;
+mobile_mcf_l2log: ML2LOG.001.MCF   1
+;
+mobile_mcf_l2gp: ML2BRO.001.MCF    1
+          ML2CLO.001.MCF    1
+          ML2CO.001.MCF     1
+          ML2H2O.001.MCF    1
+          ML2HCL.001.MCF    1
+          ML2HCN.001.MCF    1
+          ML2HNO3.001.MCF   1
+          ML2HO2.001.MCF    1
+          ML2HOCL.001.MCF   1
+          ML2ICE.001.MCF    1
+          ML2N2O.001.MCF    1
+          ML2O3.001.MCF     1
+          ML2OTH.001.MCF    1
+          ML2OH.001.MCF     1
+          ML2RHI.001.MCF    1
+          ML2SO2.001.MCF    1
+          ML2T.001.MCF      1
+          ML2Z.001.MCF      1
+          ML2CNN.001.MCF    1
+          ML2TNN.001.MCF    1
+          ML2ZNN.001.MCF    1
+;
+; diagnostic
+;
+mobile_mcf_l2dgg: ML2DGG.001.MCF   1
+;
+mobile_mcf_l2dgm: ML2DGM.001.MCF   1
+;
+l3: eof   1
+;
+; $Log$
+; Revision 1.5  2021/08/06 17:17:05  pwagner
+; Added l2neurnet PCFids
+;
+; Revision 1.4  2017/08/07 23:05:57  pwagner
+; Added PCFid for ascii-formatted files, e.g. master.ident
+;
+; Revision 1.3  2016/01/29 00:51:19  pwagner
+; Added doinames and polygon file
+;
+; Revision 1.2  2012/04/05 18:35:49  pwagner
+; Added ids for magnetic field and other params
+;
+; Revision 1.1  2008/05/09 00:38:24  pwagner
+; First commit
+;

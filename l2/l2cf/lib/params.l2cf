@@ -1,0 +1,78 @@
+;    U s e r   a s s i g n e d   p a r a m e t e r s
+; It is possible that some of these might be better placed
+; in l2cf.configure. Or split among several files. Or ...
+; Anyway, for now, they go here.
+; Dont edit this file as src/params.pm4--instead edit its object
+;
+; If a parameter name is not descriptive enough to understand
+; how and where it is used, try "grep -i PARAMETERNAME rsc/*.pm4"
+;
+; The general pattern to use is bang define(PARAMETER,{value})
+;
+#These are the input files for the run including names and paths
+#All paths default to INPATH as contained in l2cf.configure
+#and the names as they were found during sw development
+#
+#Adjust file names and paths as necessary
+# First the paths ...
+# define any of the special paths like this:
+#  define(pcfpath,{/path/to/my/pcf/file})
+# where the special paths are
+#  pcfpath,l2cfpath,l1bradpath,l1boapath,fwmpath,climpath,MCFPATH,l2pcpath
+!define(MCFPATH,{/software/mlsdev/files/v0.5/MCF/l2})
+!define(l2pcpath,{/bigdata/livesey/auraintercomparison})
+!define(aprioripath,{/nas/data/emls/l2gp/truth/1996})
+#
+# then any of the following file names
+!define(SIGNALSNOMEN,{emls-signals.dat})
+!define(ANTENNAPATS,{aaap_emls_sids_v03.dat})
+!define(FILTERSHAPES,{all_filter_banks.dat})
+!define(POINTINGGRIDS,{grid_file_mdb.dat})
+!define(CLIMATOLOGY,{emls_clim_v0-1.dat})
+!define(NCEPFILE,{a_llk_01.tsyn3d_mis_p.t19991006})
+!define(DAOFILE,{GDASOZFH_Aug97.hdfeos})
+!define(UNUSEDENGDATA,{mls_l1b_eng})
+# 
+!define(CLOUDNAME,{clouds_01})
+!define(L1BRADFNAME,{mls_l1b_radf_v0-01.2000-001})
+!define(L1BRADDNAME,{mls_l1b_radd_v0-01.2000-001})
+!define(L1BOANAME,{mls_l1b_oa.2000-001})
+!define(UNUSEDENGDATA,{mls_l1b_eng})
+# and file name fragments
+# ( used unless corresponding file name defined )
+!define(CLOUDBASE,{clouds})
+!define(L1BRADFBASE,{mls_l1b_radf})
+!define(L1BRADDBASE,{mls_l1b_radd})
+!define(L1BOABASE,{mls_l1b_oa})
+!define(L2PCBASE,{MLS-Aura_L2PC_})
+!define(APRIORIBASE,{MLS-Aura_L2GP_})
+;
+; pcf-specific parameters
+!define(TKVERSIONSTRING,{SCF B.0 TK5.2.6-MLS.})
+!define(INPUTVERSION,{V1-0})
+!define(PGEVERSION,{V1-0})
+!define(CYCLE,{1})
+;
+; ChunkDivide parameters
+!define(MAXLENGTH,{0.125 orbits})
+!define(OVERLAP,{5 MAFs})
+!define(MAXGAP,{2 MAFs})
+!define(NUMBERCHUNKS,{2 MAFs})
+!define(outputVersion,{V1.0})
+!define(signal,{!sigBand$1})
+!define(molecules,{!mol$1})
+;
+; l2pc parameters
+;
+; VGrid parameters
+;
+; HGrid parameters
+;
+; Forward Model parameters
+;
+; empiricalGeometry parameters
+!define(empGeoTerms,{$
+    -1.06863, 43.0943, -16.2062, 8.12730, -4.58416, 2.75786, -1.72880, $
+    1.11523, -0.733464, 0.489792, -0.331852, 0.227522, -0.156428, $
+    0.108031, -0.0757825, 0.0536980, -0.0375161, 0.0260555, $
+    -0.0188811, 0.0138453, -0.00959350})

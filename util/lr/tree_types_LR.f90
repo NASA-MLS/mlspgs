@@ -1,0 +1,90 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module TREE_TYPES
+  use STRING_TABLE, only: ADD_CHAR
+  use SYMBOL_TYPES, only: MIN_PSEUDO, MAX_PSEUDO
+  public
+
+  ! Parameters giving tree node indices.  The first two are required.
+  integer, parameter :: FIRST_TREE_NODE = 1
+  integer, parameter :: N_NULL = FIRST_TREE_NODE ! Used in InitTree and Parser.
+    ! Pseudo-terminals must be contiguous
+  integer, parameter :: N_IDENTIFIER = n_null + 1
+  integer, parameter :: N_NUMBER =     n_identifier + 1
+  integer, parameter :: N_STRING =     n_number + 1
+
+  integer, parameter :: N_EQUAL =      n_string + 1     ! = in vocab = name
+  integer, parameter :: N_PRODUCTION = n_equal + 1      ! name -> RHS
+  integer, parameter :: N_RHS =        n_production + 1 ! after ->
+  integer, parameter :: N_GENERATES =  n_RHS + 1        ! =>
+  integer, parameter :: N_QUESTION =   n_generates + 1  ! ?
+  integer, parameter :: N_CFS =        n_question + 1   ! Glue
+
+  integer, parameter :: LAST_TREE_NODE = N_CFS
+
+  ! mapping from pseudo-terminal indices to corresponding tree nodes.
+  integer, parameter :: tree_map ( min_pseudo: max_pseudo ) = &
+  !    t_identifier, t_number, t_string
+    (/ n_identifier, n_number, n_string /)
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+contains
+
+  subroutine TREE_INIT ( TREE_NODE )
+  ! Put the name of a tree node into the character table.  Everything
+  ! else is handled in TREE % INIT_TREE
+
+    integer, intent(in) :: TREE_NODE    ! One of the parameters above
+
+    select case ( tree_node )
+    case ( n_Null );            call add_char ( '<null>' )
+    case ( n_Identifier );      call add_char ( '<identifier>' )
+    case ( n_Number );          call add_char ( '<number>' )
+    case ( n_String );          call add_char ( '<string>' )
+    case ( n_Equal );           call add_char ( '<equal>' )
+    case ( n_Production );      call add_char ( '<production>' )
+    case ( n_RHS );             call add_char ( '<rhs>' )
+    case ( n_Generates );       call add_char ( '<generates>' )
+    case ( n_Question );        call add_char ( '<question>' )
+    case ( n_CFS );             call add_char ( '<cfs>' )
+    case default
+      write ( *,* ) 'TREE_TYPES%TREE_INIT-E- No initializer for &
+                    &tree node with index ', tree_node
+      stop
+    end select
+
+  end subroutine TREE_INIT
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module TREE_TYPES
+
+! $Log$
+! Revision 1.1  2014/01/14 01:36:18  vsnyder
+! Renamed with _LR suffix
+!
+! Revision 1.1  2014/01/14 00:15:13  vsnyder
+! Initial commit of new module for new LR
+!

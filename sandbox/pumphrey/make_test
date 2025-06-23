@@ -1,0 +1,130 @@
+# FMKMF_F90 set to lf95 -O -I/usr/local/TOOLKIT/include
+# FMKMF_SFTAG not set: using f90
+# FMKMF_SPATH set to ../../lib:../../l2:.
+# FMKMF_LINKOPTS set to -L. -lSDPToolkitSubstitute -L/usr/local/TOOLKIT/hdfeos/lib/linux -lhdfeos -lmfhdf
+# Main program is test_l2gp.f90 
+# process_fsource called with arg test_l2gp.f90 
+# test_l2gp.f90 Uses Module L2GPData
+# test_l2gp.f90 Uses Module HDFEOS
+# Full list of modules in test_l2gp.f90: L2GPData HDFEOS 
+# Uses L2GPData which is in ../../lib/L2GPData.f90
+# process_fsource called with arg ../../lib/L2GPData.f90 
+# ../../lib/L2GPData.f90 Uses Module Allocate_Deallocate
+# ../../lib/L2GPData.f90 Uses Module MLSMessageModule
+# ../../lib/L2GPData.f90 Uses Module MLSCommon
+# ../../lib/L2GPData.f90 Uses Module Hdf
+# ../../lib/L2GPData.f90 Uses Module HDFEOS
+# ../../lib/L2GPData.f90 Uses Module SWAPI
+# Full list of modules in ../../lib/L2GPData.f90: Allocate_Deallocate MLSMessageModule MLSCommon Hdf HDFEOS SWAPI 
+# Uses Allocate_Deallocate which is in ../../lib/Allocate_Deallocate.f90
+# process_fsource called with arg ../../lib/Allocate_Deallocate.f90 
+# ../../lib/Allocate_Deallocate.f90 Uses Module MLSMessageModule
+# Full list of modules in ../../lib/Allocate_Deallocate.f90: MLSMessageModule 
+# Uses MLSMessageModule which is in ../../lib/MLSMessageModule.f90
+# process_fsource called with arg ../../lib/MLSMessageModule.f90 
+# ../../lib/MLSMessageModule.f90 Uses Module SDPToolkit
+# Full list of modules in ../../lib/MLSMessageModule.f90: SDPToolkit 
+# Uses SDPToolkit which is in ../../lib/SDPToolkit.f90
+# process_fsource called with arg ../../lib/SDPToolkit.f90 
+# ../../lib/SDPToolkit.f90 Uses Module MLSCommon
+# Full list of modules in ../../lib/SDPToolkit.f90: MLSCommon 
+# Uses MLSCommon which is in ../../lib/MLSCommon.f90
+# process_fsource called with arg ../../lib/MLSCommon.f90 
+# Full list of modules in ../../lib/MLSCommon.f90:  
+# Uses MLSMessageModule which is in ../../lib/MLSMessageModule.f90
+# ../../lib/MLSMessageModule.f90 already in list
+# Uses MLSCommon which is in ../../lib/MLSCommon.f90
+# ../../lib/MLSCommon.f90 already in list
+# Uses Hdf which is in ../../lib/Hdf.f90
+# process_fsource called with arg ../../lib/Hdf.f90 
+# ../../lib/Hdf.f90 Uses Module MLSCommon
+# Full list of modules in ../../lib/Hdf.f90: MLSCommon 
+# Uses MLSCommon which is in ../../lib/MLSCommon.f90
+# ../../lib/MLSCommon.f90 already in list
+# Uses HDFEOS which is in ../../lib/HDF-EOS.f90
+# process_fsource called with arg ../../lib/HDF-EOS.f90 
+# Full list of modules in ../../lib/HDF-EOS.f90:  
+# Uses SWAPI which is in ../../lib/swapi.f90
+# process_fsource called with arg ../../lib/swapi.f90 
+# ../../lib/swapi.f90 Uses Module SWAPI_CHARACTER_SCALAR
+# ../../lib/swapi.f90 Uses Module SWAPI_CHARACTER_ARRAY
+# ../../lib/swapi.f90 Uses Module SWAPI_DOUBLE
+# ../../lib/swapi.f90 Uses Module SWAPI_INTEGER
+# ../../lib/swapi.f90 Uses Module SWAPI_REAL
+# Full list of modules in ../../lib/swapi.f90: SWAPI_CHARACTER_SCALAR SWAPI_CHARACTER_ARRAY SWAPI_DOUBLE SWAPI_INTEGER SWAPI_REAL 
+# Uses SWAPI_CHARACTER_SCALAR which is in ../../lib/swapi_character_scalar.f90
+# process_fsource called with arg ../../lib/swapi_character_scalar.f90 
+# Full list of modules in ../../lib/swapi_character_scalar.f90:  
+# Uses SWAPI_CHARACTER_ARRAY which is in ../../lib/swapi_character_array.f90
+# process_fsource called with arg ../../lib/swapi_character_array.f90 
+# Full list of modules in ../../lib/swapi_character_array.f90:  
+# Uses SWAPI_DOUBLE which is in ../../lib/swapi_double.f90
+# process_fsource called with arg ../../lib/swapi_double.f90 
+# Full list of modules in ../../lib/swapi_double.f90:  
+# Uses SWAPI_INTEGER which is in ../../lib/swapi_integer.f90
+# process_fsource called with arg ../../lib/swapi_integer.f90 
+# Full list of modules in ../../lib/swapi_integer.f90:  
+# Uses SWAPI_REAL which is in ../../lib/swapi_real.f90
+# process_fsource called with arg ../../lib/swapi_real.f90 
+# Full list of modules in ../../lib/swapi_real.f90:  
+# Uses HDFEOS which is in ../../lib/HDF-EOS.f90
+# ../../lib/HDF-EOS.f90 already in list
+
+# ------------------Macro-Defs---------------------
+F90=lf95 -O -I/usr/local/TOOLKIT/include 
+
+# -------------------End-macro-Defs---------------------------
+
+# Here is the link step 
+test_l2gp:MLSCommon.o SDPToolkit.o MLSMessageModule.o Allocate_Deallocate.o Hdf.o HDF-EOS.o swapi_character_scalar.o swapi_character_array.o swapi_double.o swapi_integer.o swapi_real.o swapi.o L2GPData.o test_l2gp.o 
+	 $(F90) -o test_l2gp MLSCommon.o SDPToolkit.o MLSMessageModule.o Allocate_Deallocate.o Hdf.o HDF-EOS.o swapi_character_scalar.o swapi_character_array.o swapi_double.o swapi_integer.o swapi_real.o swapi.o L2GPData.o test_l2gp.o -L. -lSDPToolkitSubstitute -L/usr/local/TOOLKIT/hdfeos/lib/linux -lhdfeos -lmfhdf 
+
+# Here are the compile steps
+ 
+MLSCommon.o:../../lib/MLSCommon.f90  
+	 $(F90) -c ../../lib/MLSCommon.f90 
+
+SDPToolkit.o:../../lib/SDPToolkit.f90 MLSCommon.o 
+	 $(F90) -c ../../lib/SDPToolkit.f90 
+
+MLSMessageModule.o:../../lib/MLSMessageModule.f90 SDPToolkit.o 
+	 $(F90) -c ../../lib/MLSMessageModule.f90 
+
+Allocate_Deallocate.o:../../lib/Allocate_Deallocate.f90 MLSMessageModule.o 
+	 $(F90) -c ../../lib/Allocate_Deallocate.f90 
+
+Hdf.o:../../lib/Hdf.f90 MLSCommon.o 
+	 $(F90) -c ../../lib/Hdf.f90 
+
+HDF-EOS.o:../../lib/HDF-EOS.f90  
+	 $(F90) -c ../../lib/HDF-EOS.f90 
+
+swapi_character_scalar.o:../../lib/swapi_character_scalar.f90  
+	 $(F90) -c ../../lib/swapi_character_scalar.f90 
+
+swapi_character_array.o:../../lib/swapi_character_array.f90  
+	 $(F90) -c ../../lib/swapi_character_array.f90 
+
+swapi_double.o:../../lib/swapi_double.f90  
+	 $(F90) -c ../../lib/swapi_double.f90 
+
+swapi_integer.o:../../lib/swapi_integer.f90  
+	 $(F90) -c ../../lib/swapi_integer.f90 
+
+swapi_real.o:../../lib/swapi_real.f90  
+	 $(F90) -c ../../lib/swapi_real.f90 
+
+swapi.o:../../lib/swapi.f90 swapi_character_scalar.o swapi_character_array.o swapi_double.o swapi_integer.o swapi_real.o 
+	 $(F90) -c ../../lib/swapi.f90 
+
+L2GPData.o:../../lib/L2GPData.f90 Allocate_Deallocate.o MLSMessageModule.o MLSCommon.o Hdf.o HDF-EOS.o swapi.o 
+	 $(F90) -c ../../lib/L2GPData.f90 
+
+test_l2gp.o:test_l2gp.f90 L2GPData.o HDF-EOS.o 
+	 $(F90) -c test_l2gp.f90 
+# This entry allows you to type " make clean " to get rid of
+# all object and module files 
+clean:
+	rm -f -r f_{files,modd}* *.o *.mod *.M *.d V*.inc *.vo \
+	V*.f *.dbg album F.err
+  

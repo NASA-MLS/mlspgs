@@ -1,0 +1,243 @@
+# "$Id$"
+SHELL = /bin/sh
+
+# Path to source files:
+S = ..
+
+CONFDIR=../../..
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = ../../../lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = ../../../srclib
+
+# This is the directory name from which we will get init_tables_module
+# (either l1, l2, or l3)
+init_m_dir = l1
+
+itmdir=../../../$(init_m_dir)/$(MLSCONFG)
+
+dir2 = $(itmdir)/
+
+# Do the load options include garbage collection?
+# The answer  will determine what we do to the machine.f90 file from
+MACH_DIR=../../../lib/machines/$(MLSCONFG)
+
+MODPATHS =
+
+UTILDIR=../../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.o ./
+vpath %.f90 ../ $(MACH_DIR)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../ $(PGSINC)
+vpath %.c ../
+
+include $(srclib)/$(MLSF95).$(MLSPLAT)
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS := $(EXTRA_PATHS) \
+  $(shell ${REECHO} ${PATH_OPTS} \
+  $(UNPREFXDPTHS) $(MODPATHS) $S $(PGSINC))
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+include ../Makefile.dep
+
+# ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) common     -- a file of macros specific for this directory, e.g. paths
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   srclib/$(MLSF95).$(MLSPLAT) -- macros specific for the 
+#         compiler.platform combo; e.g., NAG.Sun
+#   Makefile.dep -- dependencies among the primary Fortran modules
+#   srclib/Makefile.dep -- dependencies among the shared Fortran modules
+#   srclib/targets.h -- linker lines whenever building an executable
+
+# ========================================================================
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+# ========================================================================
+ifndef NO_MACHINE
+${OBJS}: machine.o
+ALLOBJS = $(OBJS) machine.o
+else
+ALLOBJS = $(OBJS)
+endif
+
+ifndef LDMISC
+LDMISC=$(FC)
+endif
+
+ifndef DONT_LINK_TOOLKIT
+TOOLKIT_LIBS=$(tk_linker_line) \
+        -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
+        $(hdf5_linker_line) \
+		-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg -lsz \
+		-L${GCTP} -lGctp \
+        $(pvm_linker_line)
+endif
+
+PROG_NAME=test
+
+STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
+
+include $(srclib)/targets.h
+
+# ========================================================================
+$(PROG_NAME): $(ALLOBJS) $(CONFDIR)/$(MLSCFILE)
+		@echo "$(pvm_message)"
+		@echo "$(blas_message)"
+		@echo "$(lapack_message)"
+		@echo "$(hdf5_message)"
+		$(LDMISC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS)  \
+		$(TOOLKIT_LIBS) \
+        $(blas_linker_line) \
+        $(lapack_linker_line) \
+        $(l_specials) $(LAFTER) \
+
+libmisc.a: $(ALLOBJS)
+	ar ru $@ $?
+	ar d $@ $(PROG_NAME).o
+# ========================================================================
+
+# Custom build commands for some modules
+
+machine.o: $(MACH_DIR)/machine.f90
+	rm -f machine.f90 ; \
+	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+     > machine.f90
+	$(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+	rm -f machine.f90
+
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod $(PROG_NAME)
+
+tar:
+	rm -f misctest.tgz
+	tar hcvzf misctest.tgz * --exclude \*.o --exclude \*.mod --exclude $(PROG_NAME)
+
+# ========================================================================
+# $Log$
+# Revision 1.21  2009/07/17 20:27:32  pwagner
+# Added COPTS as cc options
+#
+# Revision 1.20  2007/05/29 17:42:19  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
+# Revision 1.19  2006/06/15 19:31:05  pwagner
+# Now links szlib; comtaible with toolkit 5.2.14.A
+#
+# Revision 1.18  2005/03/04 19:13:31  pwagner
+# Utilizes targets.h from srclib
+#
+# Revision 1.17  2004/03/17 19:06:45  pwagner
+# Extra static object to fix building static Lahey executables when Red Hat>8
+#
+# Revision 1.16  2003/02/28 18:56:09  pwagner
+# May need at some point to define INSTALLDIR
+#
+# Revision 1.15  2002/11/25 21:21:02  pwagner
+# gcc_version to allow building with Lahey on gcc post 2.96
+#
+# Revision 1.14  2002/09/06 00:09:08  pwagner
+# BLAS can now bring in more than a single
+#
+# Revision 1.13  2002/08/05 18:07:46  pwagner
+# turns main to MAIN__ if MLSF95 is Lahey
+#
+# Revision 1.12  2002/07/16 18:46:34  pwagner
+# Works with latest Lahey and lf95-toolkit (hopefully)
+#
+# Revision 1.11  2002/06/06 22:02:50  pwagner
+# Attempts to link w/o toolkit if PGSTK not defined
+#
+# Revision 1.10  2002/04/26 23:37:47  pwagner
+# Changes to allow building libs, too
+#
+# Revision 1.9  2002/04/18 20:55:28  pwagner
+# .configure now a prerequisite for executable
+#
+# Revision 1.8  2002/02/08 18:34:52  pwagner
+# Custom build for machine.o depends on whether collecting garbage
+#
+# Revision 1.7  2001/11/21 00:25:34  pwagner
+# Added hdfeos5_linker_line
+#
+# Revision 1.6  2001/11/07 01:14:30  pwagner
+# lapack message refers to this case, not mlsl2
+#
+# Revision 1.5  2001/11/07 00:31:44  pwagner
+# Added lapack linker line and msg
+#
+# Revision 1.4  2001/10/11 18:15:29  pwagner
+# Allows PROG_NAME variable to specify name of executable built
+#
+# Revision 1.3  2001/07/16 18:00:21  pwagner
+# Builds correctly with hdf5 on new and older Linux
+#
+# Revision 1.2  2001/06/14 23:04:16  pwagner
+# Now builds f90tex from util successfully
+#
+# Revision 1.1  2001/06/14 22:36:31  pwagner
+# First commit
+#

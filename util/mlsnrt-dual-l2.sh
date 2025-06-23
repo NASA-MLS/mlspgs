@@ -1,0 +1,618 @@
+#!/bin/sh
+# mlsnrt-dual-l2.sh
+# wrapper script that combines the tasks of running 3 pges:
+# (1) mls level 1
+# (2) 2 master tasks run in parallel for mlsl2:
+#     (a) the first with the PCF modified and copied to JOBDIR/a
+#     (b) the first with the PCF modified and copied to JOBDIR/b
+# (a) and (b) have their own l2cf files supplied as
+# environment variables
+#
+# It does so in a pvm-mediated parallel environment, communicating
+# with the l2q queue manager
+#
+# Assumes that:
+
+# (0) It has been called as
+#  (pge) 0111 (PCF_file) 25 -v
+# (1) $LEVEL1_BINARY_DIR contains mlsl0sn, mlsl1log, and mlsl1g
+# (2) $LEVEL2_BINARY_DIR contains mlsl2
+# (3) JOBDIR is defined as an environment variable
+#     It should be the path where the job is run
+# (4) PGE_ROOT is defined as an environment variable
+#     It should be the path where the pgs-env.ksh script is kept
+# (5) OTHEROPTS is defined as an environment variable
+#     It would contain other meaningful runtimeoptions, 
+#       e.g. OTHEROPTS="--skipRetrieval"
+# (6) l2q and pvm are both running
+# (7) MLSTOOLS is defined and oontains the following binary executables
+#     and scripts
+#     Spartacus
+#     ronin.sh
+#     set_read_env.sh
+#     split_path.sh
+#     l2gpdump
+#     resetl2gpstatus
+#     checknrtgranuleforbreaks.py
+#     checknrtgranuleforbreaks.sav
+# (8) $PGE_SCRIPT_DIR contains
+#       slavetmplt.sh and jobstat-sips.sh
+#     (or else define an enviromental variable (PVM_EP) and put them there)
+# (9) PVM_HOSTS_INFO is defined as an environment variable
+#     It should be the path and name of the host file,
+#     a text file containing the hosts available
+#     for running the slave tasks, one host per line
+# (10) The toolkit environment is correctly set and that PGS_PC_Shell.sh
+#     is in your PATH and can be used to run each binary executable correctly
+# (11) Two environment variables are defined, locating the two l2cf files
+#      (a) L2CF_A: the first l2cf
+#      (b) L2CF_B: the second l2cf
+# (12) If POSTL2SCRIPT is defined, it will be executed after the two
+#      master tasks are complete
+#
+# Copyright 2017, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+
+# Now if the tool h5repack in LEVEL1_BINARY_DIR
+# and if the current working directory houses the product files,
+# then as a final step repack them
+
+# usage: see (1) above
+
+#------------------------------- extant_files ------------
+#
+# Function to return only those files among the args
+# that actually exist
+# Useful when passed something like *.f which may 
+# (1) expand to list of files, returned as extant_files_result, or
+# (2) stay *.f, in which case a blank is returned as extant_files_result 
+#     (unless you have perversely named a file '*.f')
+# usage: extant_files arg1 [arg2] ..
+
+extant_files()
+{
+   extant_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               extant_files_result="$extant_files_result $file"
+         fi
+      done
+   fi
+   echo $extant_files_result
+}
+
+#------------------------------- hide_files ------------
+#
+# Hide files when something goes awry
+# usage: hide_files arg1 [arg2] ..
+
+hide_files()
+{
+   hide_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               hide_files_result="$hide_files_result $file"
+         fi
+      done
+   fi
+   echo $hide_files_result
+   if [ ! -d hidden ]
+   then
+     mkdir hidden
+   fi
+   mv $hide_files_result hidden
+}
+
+#------------------------------- create_and_run_Level_1 ------------
+#
+# (1) Create and launch all level 1 tasks
+# usage: create_and_run_Level_1 new_JOBDIR PCF_Template l2cf temp_file
+
+create_and_run_Level_1()
+{
+# (1) Create a single level 1 job and run it
+JOB1SCRIPT="job1script.sh"
+JOB1STDERR="job1script.stderr"
+echo "#!/bin/sh" > $JOB1SCRIPT
+if [ "$CAPTURE_MT" = "yes" ]
+then
+  echo "$RONIN `pwd` . $JOBDIR/$JOBENV; env; /usr/bin/time -f 'M: %M t: %e' PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/mlsl1.sh $EXTRA_OPTIONS $@ 2> $JOB1STDERR" >> $JOB1SCRIPT
+else
+  echo "$RONIN `pwd` . $JOBDIR/$JOBENV; env; PGS_PC_Shell.sh $LEVEL1_BINARY_DIR/mlsl1.sh $EXTRA_OPTIONS $@" >> $JOB1SCRIPT
+fi
+chmod a+x $JOB1SCRIPT
+echo $SPARTACUS $JOB1SCRIPT
+$SPARTACUS $JOB1SCRIPT
+
+# (2) repack level 1 files to speed things up
+if [ -x "$H5REPACK" ]
+then
+  files=`echo *L1*.h5`
+  for file in $files
+  do
+    if [ -w "$file" ]
+    then
+      packed="$file".p
+      if [ "$GZIPLEVEL" != "" ] 
+      then
+        filter="-f GZIP=$GZIPLEVEL"
+      else
+        filter=""
+      fi
+      echo "Packing $file into $packed"
+      echo $H5REPACK -i "$file" -o "$packed" $filter
+      $H5REPACK -i "$file" -o "$packed" $filter
+      # Here we could insert some check involving l1bdiff if we were dubious
+      mv "$packed" "$file"
+    fi
+  done
+fi
+
+/bin/rm -fr job1logs
+mv pvmlog job1logs
+
+}
+
+#------------------------------- create_and_run_Level_2 ------------
+#
+# Create and launch a level 2 master task
+# usage: create_and_run_Level_2 new_JOBDIR PCF_Template l2cf temp_file
+
+create_and_run_Level_2()
+{
+mkdir $1
+mkdir $1/outputs
+cp $L1JOBENV $1/job.env
+JOBENV=$1/job.env
+# Must edit JOBDIR
+echo "export JOBDIR=$1" >> $JOBENV
+echo 'export OTHEROPTS="'$otheropts'"' >> $JOBENV
+myPCF=$1/job.PCF
+echo "export PGS_PC_INFO_FILE=$myPCF" >> $JOBENV
+cp $L1PCF $myPCF.temp
+# Must edit the PCF
+# 1st: protect the L1B entries from being modified
+sed  "/MLS-Aura_L1B/ s:$L1JOBDIR:/zonk:" $myPCF.temp > $myPCF
+# Change all other instances to the new JOBDIR
+sed  "s:$L1JOBDIR:$1:" $myPCF > $myPCF.temp
+# Revert the L1B entries
+sed  "/MLS-Aura_L1B/ s:/zonk:$L1JOBDIR:" $myPCF.temp > $myPCF
+# Replace the l2cf name and path
+n=951
+name=`$SPLIT_PATH -f $3`
+path=`$SPLIT_PATH -p $3`
+b=`echo "$n|$name|$path||||1"`
+sed  "/^951|/ c $b" $myPCF > $myPCF.temp
+
+# Do the same with the PCF (why does the PCF refer to itself, anyway?)
+n=900
+name=job.PCF
+path=$1
+b=`echo "$n|$name|$path||||1"`
+sed  "/^900|/ c $b" $myPCF.temp > $myPCF
+
+cd $1
+JOBDIR=$1
+JOBLOG=job.log
+# Now proceed as if we're the only l2 master
+MASTERSCRIPT="masterscript.sh"
+echo "#!/bin/sh" > $MASTERSCRIPT
+echo ". $JOBENV" >> $MASTERSCRIPT
+echo "env" >> $MASTERSCRIPT
+echo "$LEVEL2_BINARY" >> $MASTERSCRIPT
+export JOBDIR="`pwd`"
+# Now we launch the master task itself to set everything in motion
+chmod a+x $MASTERSCRIPT
+#MASTERSCRIPT="$LEVEL2_BINARY"
+echo PGS_PC_Shell.sh $MASTERSCRIPT 0111 $myPCF 50 -v > $JOBLOG
+which PGS_PC_Shell.sh >> $JOBLOG
+
+# However, run in the background
+(PGS_PC_Shell.sh $MASTERSCRIPT  0111 $myPCF 50 -v >> $JOBLOG ; sleep 20; echo "DDone" > $4) &
+cd $L1JOBDIR
+}
+
+#------------------------------- defined_or_exit ------------
+#
+# Check that a variable has been defined;
+# if not, then print an error message and quit
+
+defined_or_exit()
+{
+  if [ "$2" = "" ]
+  then
+    echo "Sorry, $1 not defined"
+    exit 1
+  fi
+}
+
+#------------------------------- executable_or_exit ------------
+#
+# Check that a named file is executable;
+# if not, then print an error message and quit
+
+executable_or_exit()
+{
+  a=`which $2`
+  if [ ! -x "$a"  ]
+  then
+    echo "Sorry, $1 not executable or not in your PATH"
+    exit 1
+  fi
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
+#
+GZIPLEVEL="1"
+#          ^^^---- compression level ("" means none)
+
+# In addition to whatever options and switches may be set by the environment
+# variable OTHEROPTS, the following are set:
+# -g       trace path of execution through code sections
+# --wall   show timing in wall clock times
+# chu      show chunk divisions
+# opt1     show command line options
+# log      copy any log file messages to stdout
+# pro      announce input files at opening, output files at creation
+# time     summarize time consumed by each code  section, phase, etc.
+#EXTRA_OPTIONS="$@"
+echo "Launching mlsnrt-dual-l2 with args $@"
+PCF=$2
+otheropts="$OTHEROPTS --sharedPCF -g --wall --submit l2q --delay 20000 -S'l2q,glob,mas,chu,opt1,log,pro,time'"
+
+# Define the tools we will need
+SPARTACUS=$MLSTOOLS/Spartacus
+RONIN=$MLSTOOLS/ronin.sh
+SETREADENV=$MLSTOOLS/set_read_env.sh
+SPLIT_PATH=$MLSTOOLS/split_path.sh
+H5REPACK=$LEVEL1_BINARY_DIR/h5repack
+NETCDFAUGMENT=$LEVEL1_BINARY_DIR/aug_hdfeos5
+L2GPDUMP=$LEVEL1_BINARY_DIR/l2gpdump
+RESETSTATUS=$LEVEL1_BINARY_DIR/resetl2gpstatus
+BREAKER_PY=checknrtgranuleforbreaks.py
+BREAKER_SAV=checknrtgranuleforbreaks.sav
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$MLSTOOLS/H5REPACK
+fi
+if [ ! -x "$NETCDFAUGMENT" ]
+then
+  NETCDFAUGMENT=$MLSTOOLS/aug_hdfeos5
+fi
+# Last chance to find h5repack
+if [ ! -x "$H5REPACK" ]
+then
+  H5REPACK=$HDFTOOLS/h5repack
+fi
+
+# We are going to insist that both H5REPACK and NETCDFAUGMENT
+# be defined before going any further. To override this, set
+# the environment variable OKTONOTAUGMENT to "yes"
+if [ "$OKTONOTAUGMENT" = "" ]
+then
+  if [ ! -x "$NETCDFAUGMENT" ]
+  then
+    echo "NETCDFAUGMENT not defined"
+    exit 1
+  elif [ ! -x "$H5REPACK" ]
+  then
+    echo "H5REPACK not defined"
+    exit 1
+  fi
+fi
+
+if [ ! -x "$L2GPDUMP" ]
+then
+  L2GPDUMP=$MLSTOOLS/l2gpdump
+fi
+if [ ! -x "$RESETSTATUS" ]
+then
+  RESETSTATUS=$MLSTOOLS/resetstatus
+fi
+
+defined_or_exit JOBDIR "$JOBDIR"
+defined_or_exit PGE_ROOT "$PGE_ROOT"
+defined_or_exit MLSTOOLS "$MLSTOOLS"
+executable_or_exit Spartacus "$SPARTACUS"
+executable_or_exit ronin.sh "$RONIN"
+executable_or_exit split_path.sh "$SPLIT_PATH"
+defined_or_exit L2CF_A "$L2CF_A"
+defined_or_exit L2CF_B "$L2CF_B"
+
+# In case you used the ep=(LEVEL2_BINARY_DIR)
+# in the host file
+if [ "$LEVEL2_BINARY_DIR" = "" ]
+then
+  LEVEL2_BINARY_DIR=$HOME/pvm3/bin/LINUX
+fi
+LEVEL2_BINARY=$LEVEL2_BINARY_DIR/mlsl2p.sh
+
+if [ ! -x "$LEVEL2_BINARY"  ]
+then
+  echo "$LEVEL2_BINARY doesn't exist!"
+  exit 1
+fi
+
+masterlog="${JOBDIR}/exec_log/process.stdout"
+if [ "$MASTERLOG" != "" ]
+then
+  masterlog="$MASTERLOG"
+fi
+
+# The following environmental variable may already have been set
+if [ "$PGSMEM_USESHM" = "" ]
+then
+  PGSMEM_USESHM=NO
+fi
+if [ "$LOCOUNT" = "" ]
+then
+  LOCOUNT=0
+fi
+if [ "$HICOUNT" = "" ]
+then
+  HICOUNT=4000
+fi
+
+export FLIB_DVT_BUFFER=0
+
+# Unlike most mls wrapper scripts, ours must use 0 for normal status
+# because Spartacus will never return "2"
+NORMAL_STATUS=0
+
+# We print the file license.txt to stdout
+if [ -f $LEVEL2_BINARY_DIR/license.txt ]
+then
+  cat $LEVEL2_BINARY_DIR/license.txt
+fi
+
+#env
+ulimit -s unlimited
+ulimit -a
+
+
+GZIPLEVEL="1"
+#          ^^^---- compression level ("" means none)
+
+MLSPROG_0=mlsl0sn
+#MLSPROG_0=showme.sh
+MLSPROG_1=mlsl1log
+MLSPROG_2=mlsl1g
+MLSPROG_3=mlsl1t
+
+# Here's how we'll use the l2q queue manager:
+
+# We'll start by creating an environment script
+# so that each job can inherit our settings
+# But don't clobber if it exists already
+JOBENV=job.env
+if [ ! -f "$JOBENV" ]
+then
+  echo "Must build $JOBENV"
+  echo "#!/bin/sh" > $JOBENV
+  echo "export JOBDIR=$JOBDIR" >> $JOBENV
+  echo "export MLSTOOLS=$MLSTOOLS" >> $JOBENV
+  echo "export PGE_BINARY_DIR=$PGE_BINARY_DIR" >> $JOBENV
+  echo "export PGE_ROOT=$PGE_ROOT" >> $JOBENV
+  echo "export PVM_HOSTS_INFO=$PVM_HOSTS_INFO" >> $JOBENV
+else
+  echo "Will reuse $JOBENV"
+fi
+if [ -f "$MLSTOOLS/tkreset.sh" ]
+then
+  echo ". $MLSTOOLS/tkreset.sh" >> $JOBENV
+fi
+echo ". $PGE_ROOT/pgs-env.ksh" >> $JOBENV
+echo "export PGSMEM_USESHM=$PGSMEM_USESHM" >> $JOBENV
+echo "export FLIB_DVT_BUFFER=$FLIB_DVT_BUFFER" >> $JOBENV
+echo "export PGS_PC_INFO_FILE=$2" >> $JOBENV
+
+# For the level 1 jobs, we'll have Spartacus request a host
+# from l2q
+# For level 2, we'll imitate the mlsl2p.sh script
+
+. $JOBDIR/$JOBENV
+
+# Do we have an outputs subdirectory of JOBDIR for std prods?
+if [ -d "$JOBDIR/outputs" ]
+then
+  STDPRODDIR="$JOBDIR/outputs"
+  OUTPUTS_A=a/outputs
+  OUTPUTS_B=b/outputs
+  OUTPUTS_C=outputs
+else
+  STDPRODDIR="$JOBDIR"
+  OUTPUTS_A=a
+  OUTPUTS_B=b
+  OUTPUTS_C=./
+fi
+
+if [ "$MUSTHAVEBREAKER" = "yes" ]
+then
+  cp $MLSTOOLS/$BREAKER_PY $MLSTOOLS/$BREAKER_SAV $STDPRODDIR
+  echo cp $MLSTOOLS/$BREAKER_PY $MLSTOOLS/$BREAKER_SAV $STDPRODDIR
+  if [ ! -x "$STDPRODDIR/$BREAKER_PY" ]
+  then
+    echo "$BREAKER_PY not found"
+    echo "It should have been in $MLSTOOLS"
+    exit 1
+  fi
+fi
+
+if [ "$LEVEL2ONLY" != "yes" ]
+then
+  # (2) Create the level 1 job and run it
+  create_and_run_Level_1 $@
+fi
+
+# (3) Create the 2 level 2 job and run them
+# We try to reuse the already existing mlsl2p.sh script, presumably in 
+#    $LEVEL2_BINARY_DIR
+#. $PGE_ROOT/pgs-env.ksh
+#. $JOBDIR/$JOBENV
+# Each level 2 master will be run in a subdirectory of the current working one
+#
+L1JOBDIR=$JOBDIR
+L1PCF=$PCF
+L1JOBENV=$JOBENV
+JOBDIR_A=$L1JOBDIR/a
+JOBDIR_B=$L1JOBDIR/b
+export OTHEROPTS="$otheropts"
+/bin/rm -f $L1JOBDIR/temp_a $L1JOBDIR/temp_b
+
+create_and_run_Level_2 $JOBDIR_A $L1PCF $L2CF_A $L1JOBDIR/temp_a
+PCF_A=$myPCF
+create_and_run_Level_2 $JOBDIR_B $L1PCF $L2CF_B $L1JOBDIR/temp_b
+PCF_B=$myPCF
+
+# Wait for both masters to finish
+done="no"
+while [ "$done" != "yes" ]
+do
+  sleep 60
+  if [ -f $L1JOBDIR/temp_a -a -f $L1JOBDIR/temp_b ]
+  then
+    done=yes
+    echo "Finished job1 and job2"
+  fi
+done
+
+# Did we define a script to run after (a) and (b)?
+# Perhaps to combine their std prods?
+if [ "$POSTL2SCRIPT" != "" ]
+then
+  # If so, then pass it the args
+  $POSTL2SCRIPT $OUTPUTS_C $OUTPUTS_A $OUTPUTS_B $PCF_A $PCF_B
+else
+  echo "POSTL2SCRIPT was not defined, so no post l2 script to run"
+fi
+
+echo "Check that the number of profiles is within range"
+cd $STDPRODDIR
+$L2GPDUMP -status *L2GP-O3*.he5
+files=`extant_files *L2GP-O3*.he5`
+echo "$files"
+if [ -f "$files" ]
+then
+  echo "Checking $L2GPDUMP -status $files"
+  count=`$L2GPDUMP -status "$files" \
+    | grep 'valid data co' | awk '{print $4}' | sed -n '1 p'`
+  if [ "$count" -lt "$LOCOUNT" -o "$count" -gt "$HICOUNT" ]
+  then
+    echo "Too few or too many profiles; number was $count"
+    echo hide_files *.he5 *.met *.xml *.h5
+    hide_files *.he5 *.met *.xml *.h5
+    exit 1
+  fi
+  # Also check for chunk breaks, i.e. anomalously large
+  # derivatives [ds / dt] where 
+  # ds   distance between successive profiles
+  # dt   time between successive profiles
+  if [ "$MUSTHAVEBREAKER" = "yes" ]
+  then
+    echo "Check for anomalously large gaps between profiles"
+    file=*L2GP-O3*.he5
+    # Unfortunately, BREAKER_PY expects the file to have a string like
+    # _yyyydDoythhmm.he5 in its name. If it dosn't the script treats
+    # the name as if it were a directory and gets sore when it
+    # turns out not to be a directory.
+    # So we'll check if the file name instead looks like _yyyydDoy.he5
+    # and if it does, we'll copy it to a file with a more complaisant name
+    file2=`echo $file | sed '/_20[0-9][0-9]d[0-9][0-9][0-9]\.he5/ s/\.he5/t0000.he5/'`
+    if [ "$file2" != "$file" ]
+    then
+      cp $file $file2
+    fi
+    echo ./$BREAKER_PY --verbose $file2
+    echo ./$BREAKER_PY --verbose $file2 > $BREAKER_PY.out
+    ./$BREAKER_PY --verbose $file2 >> $BREAKER_PY.out
+    return_status=`expr $?`
+    cat $BREAKER_PY.out
+    if [ "$return_status" != 0 ]
+    then
+      echo "Break detected in $file, status $return_status"
+      hide_files *.he5 *.met *.xml *.h5
+      exit 1
+    fi
+    # A separate check on the Temperature file
+    # It is needed because the Temperature results from a separate l2cf
+    # whose ChunkDiivide section can permit bogus geolocations squelched by the CO
+    # We'll do this check only if we can find the RESETSTATUS tool
+    if [ -x "$RESETSTATUS" ]
+    then
+      file=*L2GP-Temperature*.he5
+      file2=`echo $file | sed '/_20[0-9][0-9]d[0-9][0-9][0-9]\.he5/ s/\.he5/t0000.he5/'`
+      if [ "$file2" != "$file" ]
+      then
+        cp $file $file2
+      fi
+      echo ./$BREAKER_PY --verbose $file2
+      echo ./$BREAKER_PY --verbose $file2 > $BREAKER_PY.out
+      ./$BREAKER_PY --verbose $file2 >> $BREAKER_PY.out
+      return_status=`expr $?`
+      cat $BREAKER_PY.out
+      if [ "$return_status" != 0 ]
+      then
+        echo "Break detected in $file, status $return_status"
+        $RESETSTATUS $file
+      fi
+    fi
+  fi
+fi
+
+# $Log$
+# Revision 1.10  2018/02/15 00:19:01  pwagner
+# Somehow munged name of resetting status bit tool; fixed
+#
+# Revision 1.9  2018/02/10 00:25:21  pwagner
+# Sense of test for executability of RESETSTATUSRESETSTATUS was reversed; fixed
+#
+# Revision 1.8  2018/02/09 17:40:31  pwagner
+# Add feature to reset Status of Temperature file if it fails checknrt..
+#
+# Revision 1.7  2018/01/26 18:42:12  pwagner
+# Tried to solve problem of lower yields due to breaks in mesospheric T
+#
+# Revision 1.6  2017/09/22 17:27:50  pwagner
+# Corrected two bugs; split_path and create_and_run_Level_1
+#
+# Revision 1.5  2017/07/13 17:40:19  pwagner
+# If JOBDIR lacks an outputs subdirectory, so will a and b
+#
+# Revision 1.4  2017/05/19 20:49:13  pwagner
+# Repaired errors in operating BREAKER_PY
+#
+# Revision 1.3  2017/05/19 19:08:01  pwagner
+# Correct names of BREAKER_PY and _SAV
+#
+# Revision 1.2  2017/05/17 22:25:02  pwagner
+# Uses POSTL2SCRIPT to cat product files of the 2 masters
+#
+# Revision 1.1  2017/05/13 00:03:23  pwagner
+# First commit
+#

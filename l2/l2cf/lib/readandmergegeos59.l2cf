@@ -1,0 +1,458 @@
+!divert(-1)
+;; $Id$
+
+;; This l2cf fragment is for setting up meteorology as gridded quantities
+;; In general we could have any of 4 types:
+;;    geos 5 Classic (prior to 5.7)
+;;    Merra
+;;    geos 5.7 or 5.9
+;;    none (when we'll make do with climatology alone)
+;; This l2cf fragment works with 5.9 and later, but not 5.7
+
+!ifdef(flagUsingPCF,
+  {!define(geos5TFile1,{})!define(geos5TFile2,{})!define(geos5TFile3,{})!define(geos5TFile4,{})
+   !define(geos5TFile5,{})!define(geos5TFile6,{})!define(geos5TFile7,{})!define(geos5TFile8,{})
+   !define(geos5PFile1,{})!define(geos5PFile2,{})!define(geos5PFile3,{})!define(geos5PFile4,{})
+   !define(geos5PFile5,{})!define(geos5PFile6,{})!define(geos5PFile7,{})!define(geos5PFile8,{})
+   !define(geos5TFileN,{})!define(geos5PFileN,{})
+   !define(getgeos59dateStrings,{})
+   },{
+    !define(geos5Day1,{!TrimLastChar(!esyscmd(dateconverter -o yyyymmdd "!day"))})
+    !define(geos5Day2,{!TrimLastChar(!esyscmd(dateconverter +1 -o yyyymmdd "!day"))})
+    !ifdef(geos5Head,{},{!define(geos5Head,{DFPITI3NVASMMLS.fpit.asm.inst3_3d_asm_Nv.GEOS5124})})
+    !define(setgeos59dateStrings,{!dnl
+    !ProcessParVal(g59dateString,$@)!dnl
+    !define(getgeos59dateStrings,{, file=!g59dateString$1})
+    })
+    !setgeos59dateStrings(1='!inpathgeos5pd/!geos5Head.!geos5Day1_0000.V01.nc4')
+    !setgeos59dateStrings(2='!inpathgeos5pd/!geos5Head.!geos5Day1_0300.V01.nc4')
+    !setgeos59dateStrings(3='!inpathgeos5pd/!geos5Head.!geos5Day1_0600.V01.nc4')
+    !setgeos59dateStrings(4='!inpathgeos5pd/!geos5Head.!geos5Day1_0900.V01.nc4')
+    !setgeos59dateStrings(5='!inpathgeos5pd/!geos5Head.!geos5Day1_1200.V01.nc4')
+    !setgeos59dateStrings(6='!inpathgeos5pd/!geos5Head.!geos5Day1_1500.V01.nc4')
+    !setgeos59dateStrings(7='!inpathgeos5pd/!geos5Head.!geos5Day1_1800.V01.nc4')
+    !setgeos59dateStrings(8='!inpathgeos5pd/!geos5Head.!geos5Day1_2100.V01.nc4')
+    !setgeos59dateStrings(Next='!inpathgeos5pn/!geos5Head.!geos5Day2_0000.V01.nc4')
+    !define(g59dateStringNext,{'!inpathgeos5pn/!geos5Head.!geos5Day2_0000.V01.nc4'})
+    !define(getgeos59dateStrings,{, file=!g59dateString$1})
+    !ifdef(flagUsingMERRA,
+    {!dnl
+      !define(geos5TFile1,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5TFile2,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5TFile3,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5TFile4,{, file='!inpathmerradd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5TFileN,{, file='!inpathmerradn/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day2.hdf'})
+      !define(geos5PFile1,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5PFile2,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5PFile3,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5PFile4,{, file='!inpathmerrapd/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day1.hdf'})
+      !define(geos5PFileN,{, file='!inpathmerrapn/MERRA300.prod.assim.inst6_3d_ana_Nv.!geos5Day2.hdf'})
+      !define(geos5TFile5,{})!define(geos5TFile6,{})!define(geos5TFile7,{})!define(geos5TFile8,{})
+      !define(geos5PFile5,{})!define(geos5PFile6,{})!define(geos5PFile7,{})!define(geos5PFile8,{})
+    },{!ifelse(!gmaovsn,{DFPITI},{!dnl
+      !define(geos5TFile1,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0000.V01.nc4'})
+      !define(geos5TFile2,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0300.V01.nc4'})
+      !define(geos5TFile3,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0600.V01.nc4'})
+      !define(geos5TFile4,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0900.V01.nc4'})
+      !define(geos5TFile5,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1200.V01.nc4'})
+      !define(geos5TFile6,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1500.V01.nc4'})
+      !define(geos5TFile7,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1800.V01.nc4'})
+      !define(geos5TFile8,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_2100.V01.nc4'})
+      !define(geos5TFileN,{, file='!inpathgeos5pn/!geos5Head.!geos5Day2_0000.V01.nc4'})
+      !define(geos5PFile1,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0000.V01.nc4'})
+      !define(geos5PFile2,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0300.V01.nc4'})
+      !define(geos5PFile3,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0600.V01.nc4'})
+      !define(geos5PFile4,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_0900.V01.nc4'})
+      !define(geos5PFile5,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1200.V01.nc4'})
+      !define(geos5PFile6,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1500.V01.nc4'})
+      !define(geos5PFile7,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_1800.V01.nc4'})
+      !define(geos5PFile8,{, file='!inpathgeos5pd/!geos5Head.!geos5Day1_2100.V01.nc4'})
+      !define(geos5PFileN,{, file='!inpathgeos5pn/!geos5Head.!geos5Day2_0000.V01.nc4'})
+    },{!dnl
+      !ifdef(geos5Head,{},{!define(geos5Head,{DAS.ops.asm.tavg3d})})
+      !define(geos5TFile1,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!gmaovsn.!geos5Day1_0000.V01.hdf'})
+      !define(geos5TFile2,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!gmaovsn.!geos5Day1_0600.V01.hdf'})
+      !define(geos5TFile3,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!gmaovsn.!geos5Day1_1200.V01.hdf'})
+      !define(geos5TFile4,{, file='!inpathgeos5dd/!geos5Head_dyn_v.!gmaovsn.!geos5Day1_1800.V01.hdf'})
+      !define(geos5TFileN,{, file='!inpathgeos5dn/!geos5Head_dyn_v.!gmaovsn.!geos5Day2_0000.V01.hdf'})
+      !define(geos5PFile1,{, file='!inpathgeos5pd/!geos5Head_prs_v.!gmaovsn.!geos5Day1_0000.V01.hdf'})
+      !define(geos5PFile2,{, file='!inpathgeos5pd/!geos5Head_prs_v.!gmaovsn.!geos5Day1_0600.V01.hdf'})
+      !define(geos5PFile3,{, file='!inpathgeos5pd/!geos5Head_prs_v.!gmaovsn.!geos5Day1_1200.V01.hdf'})
+      !define(geos5PFile4,{, file='!inpathgeos5pd/!geos5Head_prs_v.!gmaovsn.!geos5Day1_1800.V01.hdf'})
+      !define(geos5PFileN,{, file='!inpathgeos5pn/!geos5Head_prs_v.!gmaovsn.!geos5Day2_0000.V01.hdf'})
+      !define(geos5TFile5,{})!define(geos5TFile6,{})!define(geos5TFile7,{})!define(geos5TFile8,{})
+      !define(geos5PFile5,{})!define(geos5PFile6,{})!define(geos5PFile7,{})!define(geos5PFile8,{})
+      })
+  })
+})
+!divert!dnl
+; ----------------------------------------------- Read / merge geos5
+
+; Assume the geos5 filenames obey the following format:
+; {something}_{typ}_v.{vers}.{yyyy}{mm}{dd}_{hhhh}.V01.hdf
+; where
+;   typ   is one of "dyn" or "prs"
+;   yyyy  is the year; e.g. 2009
+;   mm    is the month; e.g. 06
+;   dd    is the day; e.g. 09
+;   hhhh  is the time starting from 0000 and ending at 2359
+
+; -------------------- a priori sections ----------------
+;; Now let's try out our general scheme:
+;; We want a single l2cf that can respond appropriately to 3 different
+;; apriori case
+;; (i) classic geos 5.0 or 5.1 early look
+;; (2) merra 5.2 reanalysis
+;; (3) geos 5.7.2 netcdf4/hdf5 formats
+;; What we will do is to try in succession each of these
+;; after a read section we will test whether the resulting grids are
+;; empty--an empty grid means the files were not that format
+
+;   D e c l a r a t i o n s
+; Just declare the grids that will hold our inputs
+; We will try to read them later in each of their possible
+; formats
+begin ReadApriori
+  mergedTemperature: gridded, origin=none
+  ;; wmo p trop (using the values from mid-day)
+  geos5EtaWMOPTrop: gridded, origin=none
+end ReadApriori
+
+begin ReadApriori
+  gmaoTemperatureInput1: gridded, origin=none
+  gmaoTemperatureInput2: gridded, origin=none
+  gmaoTemperatureInput3: gridded, origin=none
+  gmaoTemperatureInput4: gridded, origin=none
+  gmaoTemperatureInput5: gridded, origin=none
+  gmaoTemperatureInput6: gridded, origin=none
+  gmaoTemperatureInput7: gridded, origin=none
+  gmaoTemperatureInput8: gridded, origin=none
+  gmaoTemperatureInputNext: gridded, origin=none
+  gmaoPressureInput1: gridded, origin=none
+  gmaoPressureInput2: gridded, origin=none
+  gmaoPressureInput3: gridded, origin=none
+  gmaoPressureInput4: gridded, origin=none
+  gmaoPressureInput5: gridded, origin=none
+  gmaoPressureInput6: gridded, origin=none
+  gmaoPressureInput7: gridded, origin=none
+  gmaoPressureInput8: gridded, origin=none
+  gmaoPressureInputNext: gridded, origin=none
+end ReadApriori
+
+; Initialize the run-time Booleans and flags
+begin MergeGrids
+  meteorologyType: Boolean, label="none"     ;; The kind of meteorology used
+  merraMeteorology: Boolean, formula="false"
+  geos59Meteorology: Boolean, formula="false"
+  geos5Meteorology: Boolean, formula="false"
+end MergeGrids
+
+!ifdef(flagSkipReadingGeos5Classic,{},{
+; (1) Try to read them as geos5 classic; will return "empty" if unsuccessful
+begin ReadApriori
+  ChangeSettings, /silent
+  readGriddedData, grid=gmaoPressureInput1, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5PFile1
+  ChangeSettings, silent=false
+end ReadApriori
+
+; test
+begin MergeGrids
+  isGridEmpty, grid=gmaoPressureInput1, Boolean=geos5Meteorology
+  Reevaluate, Boolean=geos5Meteorology, formula="not geos5Meteorology"
+  Skip, formula="not geos5Meteorology"
+  Reevaluate, Boolean=meteorologyType, label="geos5-classic"
+  Delete, grid=gmaoPressureInput1
+end MergeGrids
+})
+!ifdef(flagSkipReadingMerra,{},{
+; (2) Try to read them as merra reanalysis; will return "empty" if unsuccessful
+begin ReadApriori
+  ChangeSettings, /silent
+  readGriddedData, grid=gmaoPressureInput1, origin=merra, field='DELP', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', /sum !geos5PFile1
+  ChangeSettings, silent=false
+end ReadApriori
+
+; test
+begin MergeGrids
+  isGridEmpty, grid=gmaoPressureInput1, Boolean=merraMeteorology
+  Reevaluate, Boolean=merraMeteorology, formula="not merraMeteorology"
+  Skip, formula="not merraMeteorology"
+  Reevaluate, Boolean=meteorologyType, label="merra"
+  Delete, grid=gmaoPressureInput1
+end MergeGrids
+})
+!ifdef(flagSkipReadingGeos5,{},{
+; (3) Try to read them as geos5_9 netcdf4/hdf5; will return "empty" if unsuccessful
+begin ReadApriori
+  ChangeSettings, /silent
+  readGriddedData, grid=gmaoPressureInput1, origin=geos5_7, field='PL', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5PFile1
+  ChangeSettings, silent=false
+end ReadApriori
+
+; test
+begin MergeGrids
+  isGridEmpty, grid=gmaoPressureInput1, Boolean=geos59Meteorology
+  Reevaluate, Boolean=geos59Meteorology, formula="not geos59Meteorology"
+  Skip, formula="not geos59Meteorology"
+  Reevaluate, Boolean=meteorologyType, label="geos5_9-nc4"
+  Delete, grid=gmaoPressureInput1
+end MergeGrids
+})
+begin ReadApriori
+  Select, Boolean=meteorologyType ;;; ------------ start of Select ----------
+end ReadApriori
+
+!ifdef(flagSkipReadingGeos5Classic,{},{
+begin ReadApriori
+  Case, label="geos5-classic" ;;; ------------- "geos5-classic" -----------
+  readGriddedData, grid=gmaoTemperatureInput1, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5TFile1
+  readGriddedData, grid=gmaoTemperatureInput2, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='06:00:00' !geos5TFile2
+  readGriddedData, grid=gmaoTemperatureInput3, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='12:00:00' !geos5TFile3
+  readGriddedData, grid=gmaoTemperatureInput4, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='18:00:00' !geos5TFile4
+  readGriddedData, grid=gmaoTemperatureInputNext, origin=geos5, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5TFileN
+  readGriddedData, grid=gmaoPressureInput1, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5PFile1
+  readGriddedData, grid=gmaoPressureInput2, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' , date='06:00:00' !geos5PFile2
+  readGriddedData, grid=gmaoPressureInput3, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' , date='12:00:00' !geos5PFile3
+  readGriddedData, grid=gmaoPressureInput4, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' , date='18:00:00' !geos5PFile4
+  readGriddedData, grid=gmaoPressureInputNext, origin=geos5, field='PL', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5PFileN
+  ;;dump, text='after attempt to read as geos5 formats'
+  ;;dump, Details=0, grid=gmaoTemperatureInput1
+end ReadApriori
+
+; Try to use these
+begin MergeGrids
+  wmoTropFromGrids, grid=geos5EtaWMOPTrop, $
+    a=gmaoTemperatureInput3, b=gmaoPressureInput3
+  
+  ;; to save memory convert before catenating, not after
+  geos5Converted1: ConvertEtaToP, $
+    a=gmaoTemperatureInput1, b=gmaoPressureInput1, Grid=gridTemperature
+    delete, grid=gmaoTemperatureInput1
+    delete, grid=gmaoPressureInput1
+  geos5Converted2: ConvertEtaToP, $
+    a=gmaoTemperatureInput2, b=gmaoPressureInput2, Grid=gridTemperature
+    delete, grid=gmaoTemperatureInput2
+    delete, grid=gmaoPressureInput2
+  geos5Converted3: ConvertEtaToP, $
+    a=gmaoTemperatureInput3, b=gmaoPressureInput3, Grid=gridTemperature
+    delete, grid=gmaoTemperatureInput3
+    delete, grid=gmaoPressureInput3
+  geos5Converted4: ConvertEtaToP, $
+    a=gmaoTemperatureInput4, b=gmaoPressureInput4, Grid=gridTemperature
+    delete, grid=gmaoTemperatureInput4
+    delete, grid=gmaoPressureInput4
+  geos5ConvertedNext: ConvertEtaToP, $
+    a=gmaoTemperatureInputNext, b=gmaoPressureInputNext, Grid=gridTemperature
+    delete, grid=gmaoTemperatureInputNext
+    delete, grid=gmaoPressureInputNext
+
+  geos5Concatenate: Concatenate, $
+    sourceGrid=[geos5Converted1, geos5Converted2, $
+    geos5Converted3, geos5Converted4, geos5ConvertedNext]
+  delete, grid=geos5Converted1
+  delete, grid=geos5Converted2
+  delete, grid=geos5Converted3
+  delete, grid=geos5Converted4
+  delete, grid=geos5ConvertedNext
+
+  MergeGrids, grid=mergedTemperature, operational=geos5Concatenate, $
+    climatology=gridTemperature, height=1mb, scale=5km
+  delete, grid=geos5Concatenate
+end MergeGrids
+})
+!ifdef(flagSkipReadingMerra,{},{
+begin ReadApriori
+  Case, label="merra" ;;; ------------------- "merra" -----------------
+  readGriddedData, grid=gmaoTemperatureInput1, origin=merra, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5TFile1
+  readGriddedData, grid=gmaoTemperatureInput2, origin=merra, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='06:00:00' !geos5TFile2
+  readGriddedData, grid=gmaoTemperatureInput3, origin=merra, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='12:00:00' !geos5TFile3
+  readGriddedData, grid=gmaoTemperatureInput4, origin=merra, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='18:00:00' !geos5TFile4
+  readGriddedData, grid=gmaoTemperatureInputNext, origin=merra, field='T', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00' !geos5TFileN
+  readGriddedData, grid=gmaoPressureInput1, origin=merra, field='DELP', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', /sum !geos5PFile1
+  readGriddedData, grid=gmaoPressureInput2, origin=merra, field='DELP', $
+    dimList='XDim,YDim,Height,Time' , date='06:00:00', /sum !geos5PFile2
+  readGriddedData, grid=gmaoPressureInput3, origin=merra, field='DELP', $
+    dimList='XDim,YDim,Height,Time' , date='12:00:00', /sum !geos5PFile3
+  readGriddedData, grid=gmaoPressureInput4, origin=merra, field='DELP', $
+    dimList='XDim,YDim,Height,Time' , date='18:00:00', /sum !geos5PFile4
+  readGriddedData, grid=gmaoPressureInputNext, origin=merra, field='DELP', $
+    dimList='XDim,YDim,Height,Time' , date='00:00:00', /sum !geos5PFileN
+  ;;dump, text='after attempt to read as merra formats'
+  ;;dump, Details=0, grid=gmaoTemperatureInput1
+end ReadApriori
+
+; Try to use these
+begin MergeGrids
+  wmoTropFromGrids, grid=geos5EtaWMOPTrop, $
+    a=gmaoTemperatureInput3, b=gmaoPressureInput3
+  
+  ;; to save memory convert before catenating, not after
+  merraConverted1: ConvertEtaToP, $
+    a=gmaoTemperatureInput1, b=gmaoPressureInput1, Grid=gridTemperature
+    delete, grid=gmaoTemperatureInput1
+    delete, grid=gmaoPressureInput1
+  merraConverted2: ConvertEtaToP, $
+    a=gmaoTemperatureInput2, b=gmaoPressureInput2, Grid=gridTemperature
+    delete, grid=gmaoTemperatureInput2
+    delete, grid=gmaoPressureInput2
+  merraConverted3: ConvertEtaToP, $
+    a=gmaoTemperatureInput3, b=gmaoPressureInput3, Grid=gridTemperature
+    delete, grid=gmaoTemperatureInput3
+    delete, grid=gmaoPressureInput3
+  merraConverted4: ConvertEtaToP, $
+    a=gmaoTemperatureInput4, b=gmaoPressureInput4, Grid=gridTemperature
+    delete, grid=gmaoTemperatureInput4
+    delete, grid=gmaoPressureInput4
+  merraConvertedNext: ConvertEtaToP, $
+    a=gmaoTemperatureInputNext, b=gmaoPressureInputNext, Grid=gridTemperature
+    delete, grid=gmaoTemperatureInputNext
+    delete, grid=gmaoPressureInputNext
+
+  merraConcatenate: Concatenate, $
+    sourceGrid=[merraConverted1, merraConverted2, $
+    merraConverted3, merraConverted4, merraConvertedNext]
+  delete, grid=merraConverted1
+  delete, grid=merraConverted2
+  delete, grid=merraConverted3
+  delete, grid=merraConverted4
+  delete, grid=merraConvertedNext
+
+  MergeGrids, grid=mergedTemperature, operational=merraConcatenate, $
+    climatology=gridTemperature, height=1mb, scale=5km
+  delete, grid=merraConcatenate
+end MergeGrids
+})
+!define(setgeos59dates,{!dnl
+!ProcessParVal(g59date,$@)!dnl
+})
+!setgeos59dates(1='00:00:00',2='03:00:00',3='06:00:00',4='09:00:00')
+!setgeos59dates(5='12:00:00',6='15:00:00',7='18:00:00',8='21:00:00',Next='00:00:00')
+
+!define(g59dateNext,{'00:00:00'})
+!define(geos5TFileNext,{!geos5TFileN})
+!define(geos5PFileNext,{!geos5PFileN})
+!define(getgeos59dates,{!g59date$1})
+
+!define(readgeos59TPAndConvert,{
+
+begin ReadApriori
+  readGriddedData, grid=gmaoTemperatureInput$1, origin=geos5_7, field='T', $
+    dimList='XDim,YDim,Height,Time' , date=!getgeos59dates($1) !getgeos59dateStrings($1)
+end ReadApriori
+begin ReadApriori
+  readGriddedData, grid=gmaoPressureInput$1, origin=geos5_7, field='PL', $
+    dimList='XDim,YDim,Height,Time' , date=!getgeos59dates($1) !getgeos59dateStrings($1)
+end ReadApriori
+begin MergeGrids
+!ifelse($1,{5}, {!dnl
+  wmoTropFromGrids, grid=geos5EtaWMOPTrop, $
+    a=gmaoTemperatureInput5, b=gmaoPressureInput5
+})  
+  ;; to save memory Convert, then Merge right after reading
+  geos59Converted$1: ConvertEtaToP, $
+    a=gmaoTemperatureInput$1, b=gmaoPressureInput$1, Grid=gridTemperature
+  Delete, grid=gmaoTemperatureInput$1
+  Delete, grid=gmaoPressureInput$1
+  MergeGrids, grid=geos59Merged$1, operational=geos59Converted$1, $
+    climatology=gridTemperature, height=1mb, scale=5km
+  Delete, grid=geos59Converted$1
+end MergeGrids
+})
+!ifdef(flagSkipReadingGeos5,{},{
+begin ReadApriori
+  Case, label="geos5_9-nc4" ;;; --------------- "geos5_9-nc4" -----------------
+  carryover: Boolean, formula="true"
+  geos59Merged1: gridded, origin=none
+  geos59Merged2: gridded, origin=none
+  geos59Merged3: gridded, origin=none
+  geos59Merged4: gridded, origin=none
+  geos59Merged5: gridded, origin=none
+  geos59Merged6: gridded, origin=none
+  geos59Merged7: gridded, origin=none
+  geos59Merged8: gridded, origin=none
+  geos59Mergednext: gridded, origin=none
+end ReadApriori
+  !forall( readgeos59TPAndConvert,1,2,3,4,5,6,7,8,Next)
+
+begin MergeGrids
+  ConcatenateGrids, grid=mergedTemperature, $
+    sourceGrid=[geos59Merged1, geos59Merged2, $
+    geos59Merged3, geos59Merged4, geos59Merged5, geos59Merged6, $
+    geos59Merged7, geos59Merged8, $
+    geos59MergedNext], /deleteGrids
+  Delete, grid=geos59Merged1
+  Delete, grid=geos59Merged2
+  Delete, grid=geos59Merged3
+  Delete, grid=geos59Merged4
+  Delete, grid=geos59Merged5
+  Delete, grid=geos59Merged6
+  Delete, grid=geos59Merged7
+  Delete, grid=geos59Merged8
+  Delete, grid=geos59MergedNext
+end MergeGrids
+})
+; Don't ignore possibility that meteorology files are missing
+begin MergeGrids
+  Case, label="none" ;;; ------------------- "none" -----------------
+  ; If we don't have meterology, the next effectively copies the climatology
+  MergeGrids, grid=mergedTemperature, operational=gmaoTemperatureInput1, $
+    climatology=gridTemperature, height=1mb, scale=5km
+!ifdef(flagMustHaveMeteorology,{
+  Dump, text="No meteorology found; so must quit"
+  Dump, /CrashBurn
+}, {})
+end MergeGrids
+
+begin ReadApriori
+  EndSelect, label="meteorologyType" ;;; ---- "end of select -- case" -------
+end ReadApriori
+
+; Did we succeed?
+begin MergeGrids
+  Dump, text='Now check what kinds of apriori files we actually believe we had'
+  Dump, Boolean=geos5Meteorology
+  Dump, Boolean=merraMeteorology
+  Dump, Boolean=geos59Meteorology
+  Dump, Boolean=meteorologyType
+  ;;Dump, Details=0, grid=geos5EtaWMOPTrop
+  ;;Dump, Details=0, grid=mergedTemperature
+end MergeGrids
+
+;$Log$
+;Revision 1.6  2018/03/13 23:22:31  pwagner
+;Silence hdf/hdfeos warnings when checking for meteorology file type
+;
+;Revision 1.5  2016/10/06 20:27:23  pwagner
+;May use flagSkipReading'Type' to shorten and simplify l2cf
+;
+;Revision 1.4  2015/05/27 22:59:58  pwagner
+;Needed to fix to work with MERRA again
+;
+;Revision 1.3  2015/05/27 00:10:24  pwagner
+;Tried to correct how we use when no PCF to supply filenames
+;
+;Revision 1.2  2014/06/11 20:10:26  pwagner
+;To reduce memory footprint with geos59, Merge first, then Concatenate
+;
+;Revision 1.1  2014/06/04 19:02:04  pwagner
+;First commit
+;

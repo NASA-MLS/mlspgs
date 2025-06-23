@@ -1,0 +1,218 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+module UARS_dumps
+
+  use, intrinsic :: ISO_Fortran_Env, only: Output_Unit
+
+  implicit NONE
+  public
+
+  integer :: U = Output_Unit ! I/O unit where the dumps go
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+  !---------------------------------------------------------------------------
+
+contains ! ============= Public procedures ===================================
+
+  subroutine Dump_Lvl1_Hdr ( Lvl1_Hdr, Swap )
+
+    use Rad_File_Contents, only: Lvl1_Hdr_t
+    use Swap_OA_Rec_m, only: Swap_Lvl1_Hdr_Rec
+    
+    type(lvl1_hdr_t), intent(inout) :: Lvl1_Hdr
+    logical, intent(in) :: Swap ! Swap bytes in numeric components
+
+    if ( swap ) call swap_lvl1_hdr_rec ( lvl1_hdr )
+
+    write ( u, '(4a,o3.3)' ) 'Lvl1_Hdr type "', lvl1_hdr%rec_type, '"', &
+      & '" Qualifier ', lvl1_hdr%qualifier
+    write ( u, '(a,i0,a,2(1x,i0),1x,a)' ) 'RecNo ', lvl1_hdr%recordno, &
+      & ' Write_Time', lvl1_hdr%write_time, show_time ( lvl1_hdr%write_time )
+    if ( lvl1_hdr%rec_type /= 'H' ) return
+    write ( u, '(3a)' ) 'Lvl1_VersionNo "', lvl1_hdr%lvl1_versionno, '"'
+    write ( u, '(2(a,i0))' ) 'NumMAF ', lvl1_hdr%nummmaf, &
+      & ' UARS_Day ', lvl1_hdr%uars_day
+    write ( u, '(a,2(1x,i0),1x,a)' ) 'Start_Time', lvl1_hdr%start_time, &
+      & show_time ( lvl1_hdr%start_time )
+    write ( u, '(a,2(1x,i0),1x,a)' ) 'Stop_Time', lvl1_hdr%stop_time, &
+      & show_time ( lvl1_hdr%stop_time )
+    write ( u, '(a,i0)' ) 'MLS_Status_Day ', lvl1_hdr%mls_status_day
+
+  end subroutine Dump_Lvl1_Hdr
+
+  subroutine Dump_Limb_Hdr ( Limb_Hdr, Swap )
+
+    use Rad_File_Contents, only: Limb_Hdr_t
+    use Swap_OA_Rec_m, only: Swap_Limb_Hdr_Rec
+    
+    type(limb_hdr_t), intent(inout) :: Limb_Hdr
+    logical, intent(in) :: Swap ! Swap bytes in numeric components
+
+    if ( swap ) call swap_limb_hdr_rec ( limb_hdr )
+
+    write ( u, '(5a)' ) 'Limb_Hdr type "', limb_hdr%rec_type, &
+               & '" Band_Bank = "', limb_hdr%band_bank, '"'
+    write ( u, '(a,i0,2a,a,i0)' ) 'RecNo ', limb_hdr%recordno, &
+               & ' MMAF_time ', show_time(limb_hdr%mmaf_time), &
+               & ' MMAFno ', limb_hdr%mmafno
+
+  end subroutine Dump_Limb_Hdr
+
+  subroutine Dump_Limb_Stat ( Limb_Stat, Swap, Details )
+
+    use Rad_File_Contents, only: Limb_Stat_t
+    use Swap_OA_Rec_m, only: Swap_Limb_Stat_Rec
+    
+    type(limb_stat_t), intent(inout) :: Limb_Stat
+    logical, intent(in) :: Swap ! Swap bytes in numeric components
+    integer, intent(in) :: Details ! 0 => nothing, 1 => stat, 2 => everything
+
+    if ( details == 0 ) return
+
+    if ( swap ) call swap_limb_stat_rec ( limb_stat )
+
+    write ( u, '(3(a,i0),2a,a,l1)' ) 'Dgap_MMAF ', limb_stat%dgap_mmaf, &
+      & ' Maneuver_Stat ', limb_stat%maneuver_stat, &
+      & ' MLS_Status ', limb_stat%MLS_status, &
+      & ' MMAF_Stat ', limb_stat%MMAF_stat, &
+      & ' HGA_Interferer ', limb_stat%hga_interfer
+    write ( u, '(33a)' ) 'MMIF Stat ', limb_stat%MMIF_stat, &
+                           '          1...5...10...15...20...25...30..'
+
+    if ( details > 1 ) then
+      write ( u, '(a/9(10i6:/))' ) 'Wall_MMAF', limb_stat%wall_mmaf
+      write ( u, '(a/9(10i6:/))' ) 'Window_Red_Refs', limb_stat%window_red_refs
+      write ( u, '(a/9(10i6:/))' ) 'Window_Red_Sz', limb_stat%window_red_sz
+    end if
+
+  end subroutine Dump_Limb_Stat
+
+  subroutine Dump_Limb_Rad ( Limb_Rad, Swap )
+
+    use Rad_File_Contents, only: Limb_Rad_t
+    use Swap_OA_Rec_m, only: Swap_Rad_Rec
+    
+    type(limb_rad_t), intent(inout) :: limb_rad
+    logical, intent(in) :: Swap ! Swap bytes in numeric components
+
+    integer :: I, J, K
+
+    if ( swap ) call swap_rad_rec ( limb_rad )
+
+    do k = 1, 32
+      do j = 1, 2
+        do i = 1, 90, 10
+          write ( u, '(3i3,":",10i6)' ) i,j,k,limb_Rad%rad_l1(i:i+9,j,k)
+        end do
+      end do
+    end do
+
+  end subroutine Dump_Limb_Rad
+
+  subroutine Dump_Limb_OA ( Limb_OA, Swap )
+
+    use Rad_File_Contents, only: Limb_OA_t
+    use Swap_OA_Rec_m, only: Swap_OA_Rec
+    
+    type(limb_OA_t), intent(inout) :: limb_OA
+    logical, intent(in) :: Swap ! Swap bytes in numeric components
+
+    if ( swap ) call swap_OA_rec ( limb_OA )
+
+    write ( u, '(a,7l1,4a)' ) 'Ptg_FOV_bo_diag_map ', limb_oa%ptg_fov_bo_diag_map, &
+      & ' OA_Att_Retrn ', trim(limb_oa%oa_att_retrn), &
+      & ' OA_Orb_Retrn ', trim(limb_oa%oa_orb_retrn)
+    write ( u, '(a,i0,a/(10i6))' ) 'OA_Ephem_Status ', limb_oa%oa_ephem_status, &
+      & ' OA_limb_calc_status', limb_oa%oa_limb_calc_status
+    write ( u, '(a/(10i6))' ) 'OA_Sat_Att_Status', limb_oa%oa_sat_att_status
+    write ( u, '(a/(10i6))' ) 'OA_Sat_Orb_Status', limb_oa%oa_sat_orb_status
+    write ( u, '(3(a,i0))' ) 'Ptg_FOV_bo_diag_MMIF_Fst ', limb_oa%ptg_fov_bo_diag_mmif_fst, &
+      & ' Ptg_FOV_bo_diag_MMIF_Lst ', limb_oa%ptg_fov_bo_diag_mmif_lst, &
+      & ' Ptg_FOV_bo_diag_MMIF_Num ', limb_oa%ptg_fov_bo_diag_mmif_num
+    write ( u, '(2(a,i0),2a,a,i0)' ) 'Ref_MMIF ', limb_oa%ref_mmif, &
+      & ' Ref_Solar_Illum ', limb_oa%ref_solar_illum, &
+      & ' Ref_Time ', show_time ( limb_oa%ref_time ), &
+      & ' Sat_Geod_Status ', limb_oa%sat_geod_status
+    write ( u, '(a/(8f9.2))' ) 'Earth_Geod_Rad (km)', limb_oa%earth_geod_rad
+    write ( u, '(a,1p,g15.6)' ) 'Grnw_SID_Time ', limb_oa%grnw_sid_time
+    write ( u, '(a/(8f9.2))' ) 'Ptg_FOV_Asim_Offset (deg)', limb_oa%ptg_fov_azim_offset
+    write ( u, '(a,1p,2g15.6/2(a,g15.6))' ) &
+      & 'Ptg_FOV_Asim_Thm', limb_oa%ptg_fov_azim_thm, &
+      & 'Ptg_FOV_bo_Diag_AzimDif', limb_oa%ptg_fov_bo_diag_azimdif, &
+      & ' Ptg_FOV_bo_Diag_ElevDif', limb_oa%ptg_fov_bo_diag_elevdif
+    write ( u, '(a/7f9.2)' ) &
+      & 'Ptg_FOV_bo_Diag_MMAF', limb_oa%ptg_fov_bo_diag_mmaf
+    write ( u, '(a/1p,(5g15.6))' ) &
+      & 'Ptg_FOV_Elev_Offset', limb_oa%ptg_fov_elev_offset
+    write ( u, '(a,1p,2g15.6)' ) &
+      & 'Ptg_FOV_Elev_Thm', limb_oa%ptg_fov_elev_thm
+    write ( u, '(a,1p,2g15.6)' ) &
+      & 'Ptg_Inst2mac_Elev', limb_oa%ptg_inst2mac_elev
+    write ( u, '(a,3f10.3)' ) &
+      & 'Ptg_Limb_Pt (ECR km)', limb_oa%ptg_limb_pt
+    write ( u, '(a,f10.3,2(a,f9.4))' ) &
+      & 'Ref_Earth_Radius (km)', limb_oa%ref_earth_radius, &
+      & ' Ref_Lat (deg)', limb_oa%ref_lat, ' Ref_Long (deg)', limb_oa%ref_long
+    write ( u, '(a,1p,g15.6,a,0p,f9.4)' ) 'Ref_Solar_Time', limb_oa%ref_solar_time, &
+      & ' Ref_Solar_Zen (deg)', limb_oa%ref_solar_zen
+    write ( u, '(a/1p,(5g15.6))' ) &
+      & 'RollRate_UARS', limb_oa%rollrate_uars
+    write ( u, '(a/1p,(5g15.6))' ) &
+      & 'Roll_UARS', limb_oa%roll_uars
+    write ( u, '(a/(8f9.2))' ) 'Sat_GCRad (km)', limb_oa%sat_gcrad
+    write ( u, '(a,f9.2,2(a,f9.4))' ) 'Sat_Geod_Alt (km)', limb_oa%sat_geod_alt, &
+      & ' Sat_Geod_Lat (deg)', limb_oa%sat_geod_lat, &
+      & ' Sat_Long (deg)', limb_oa%sat_long
+    write ( u, '(a,3f9.4)' ) 'Sat_Vel (ECI km/s)', limb_oa%sat_vel
+    write ( u, '(a/(8f9.2))' ) 'Tngt_Geod_Alt (km)', limb_oa%tngt_geod_alt
+    write ( u, '(a/(8f9.4))' ) 'Tngt_Geod_lat (deg)', limb_oa%tngt_geod_lat
+    write ( u, '(a/(8f9.4))' ) 'Tngt_Long (deg)', limb_oa%tngt_long
+    write ( u, '(a/1p,(3g15.6))' ) 'Trans_Inst2ECI', limb_oa%trans_inst2eci
+    write ( u, '(a,1p,3g15.6)' ) 'YPR', limb_oa%ypr
+    write ( u, '(a,1p,3g15.6)' ) 'YPR_Rate', limb_oa%ypr_rate
+  end subroutine Dump_Limb_OA
+
+  function Show_Time ( Time )
+    ! Edit a time provided as two integers, the first having 1000*year + day,
+    ! and the second having milliseconds in the day.
+    integer, intent(in) :: Time(2)
+    character(19) :: Show_Time
+    integer :: Yr, Doy, HH, MM, SS, MS, T
+
+    yr = time(1) / 1000
+    doy = mod(time(1), 1000)
+    hh = time(2) / (3600*1000)
+    t = mod(time(2),3600*1000)
+    mm = t/(60*1000)
+    t = mod(t,60*1000)
+    ss = t/1000
+    ms = mod(t,1000)
+    write ( show_time, '(i2,i4.3,i3.2,2(":",i2.2),".",i3.3)' ) Yr, Doy, HH, MM, SS, MS
+
+  end function Show_Time
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module UARS_dumps
+
+! $Log$

@@ -1,0 +1,307 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+!   subroutine DIFF_&D_* ( ARRAY1, NAME1, ARRAY2, NAME2, &
+!     & WIDTH, FORMAT, LBOUND, OPTIONS )
+!     integer, parameter :: RK = kind(1.0d0) ! or kind(1.0e0)
+!     real(rk), intent(in) :: ARRAY1(:)
+!     character(len=*), intent(in), optional :: NAME1
+!     real(rk), intent(in) :: ARRAY2(:)
+!     character(len=*), intent(in), optional :: NAME2
+!     integer, intent(in), optional :: WIDTH
+!     character(len=*), intent(in), optional :: FORMAT
+!     integer, intent(in), optional :: LBOUND ! Low bound for Array
+!     character(len=*), iptional, intent(in) :: OPTIONS
+! 
+    integer, parameter                       :: MAXPCTS = 10
+    logical                                  :: NaNsIn1, NaNsIn2
+    character(len=64)                        :: DiffName
+    logical                                  :: alreadySbtrcted = .false.
+    real(rk), dimension(3, MAXPCTS)          :: array1AtNAbs
+    real(rk), dimension(3, MAXPCTS)          :: array2AtNAbs
+    real(rk), dimension(3, MAXPCTS)          :: array1AtNRel
+    real(rk), dimension(3, MAXPCTS)          :: array2AtNRel
+    real(rk), dimension(2)                   :: exvalues
+    real(rk), dimension(2)                   :: exratios
+    real(rk)                                 :: fillvalue
+    real(rk), dimension(MAXPCTS)             :: gaps
+    type(Stat_T), dimension(MAXPCTS)         :: gapStat
+    real(rk), dimension(MAXPCTS)             :: gapratios
+    type(Stat_T), dimension(MAXPCTS)         :: gapRatioStat
+    real(rk)                                 :: minratio
+    real(rk)                                 :: maxratio
+    real(rk)                                 :: medianratio
+    real(rk)                                 :: meanratio
+    real(rk)                                 :: minvalue
+    real(rk)                                 :: maxvalue
+    real(rk)                                 :: medianvalue
+    real(rk)                                 :: meanvalue
+    real(rk)                                 :: rmsvalue
+    integer                                  :: numTot
+    integer                                  :: numEqual
+    real(rk)                                 :: pctDiff
+    real(rk)                                 :: pctEqual
+    real(rk), dimension(MAXPCTS)             :: pcts
+    real(rk), dimension(MAXPCTS)             :: pctratios
+    real(rk), dimension(MAXPCTS)             :: pctMaxGaps
+    real(rk), dimension(MAXPCTS)             :: pctMaxGapAsRatios
+    real(rk), dimension(MAXPCTS)             :: pctMeanGaps
+    real(rk), dimension(MAXPCTS)             :: pctMaxRatios
+    real(rk), dimension(MAXPCTS)             :: pctMaxRatioAsGaps
+    real(rk), dimension(MAXPCTS)             :: pctMeanRatios
+    real(rk)                                 :: refmin, refmax, refrms
+    real(rk)                                 :: rmsratio
+    real(rk)                                 :: stddev
+    real(rk)                                 :: stddevratio
+    real                                     :: sTime
+    real                                     :: t1
+    real                                     :: t2
+    real(rk), dimension(MAXPCTS,7)           :: TheTable
+    logical, parameter                       :: PrintReferenceValues = .false.
+    logical, parameter                       :: PrintExtraDump = .false.
+    logical, parameter                       :: DEBUG = .false.
+    real(rk), dimension(MAXPCTS), parameter  :: PCTAges = &
+      & (/ 99.9, 99.8, 99.7, 99.5, 99., 98., 97., 95., 90., 80. /)
+    real, dimension(MAXPCTS), parameter      :: PCTFactors = &
+      & (/ .01, .02, .05, .1, .2, .5, 1., 2., 5., 10. /)
+    logical, parameter                       :: unique = .true. 
+    ! Executable
+    t1 = 0.
+    t2 = 0.
+    sTime = 0.
+    thisIsADiff = .true.  ! For special dumps
+    myPCTFormat  = DefaultPCTFormat
+    if ( PCTFormat /= '*' ) myPCTFormat = PCTFormat
+
+    if ( len_trim(name1) < 1 ) then
+      DiffName = ' '
+    else if ( len_trim(name2) < 1 ) then
+      DiffName = trim(name1)
+    else
+      DiffName = trim(name1) // ' - ' // trim(name2)
+    end if
+    fillValue = NaNFunction( 1._rk )
+
+    if ( DEBUG ) then
+      call output( '(in unfiltered diff)', advance='yes' )
+      call outputNamedValue( 'name1', trim(name1 ) )
+      call outputNamedValue( 'name2', trim(name2 ) )
+      call outputNamedValue( 'options', trim(options ) )
+      call outputNamedValue( 'Stats', dopts(stats)%v )
+      call outputNamedValue( 'Ratios', dopts(myRatios)%v )
+      call outputNamedValue( 'RMS', dopts(RMS)%v )
+      call outputNamedValue( 'Table', dopts(table)%v )
+      call outputNamedValue( 'goldbrick', dopts(AuBrick)%v )
+      call outputNamedValue( 'WholeArray', dopts(wholeArray)%v )
+      call outputNamedValue( 'nameHasbeenPrinted', nameHasbeenPrinted )
+    end if
+    call theDumpBegins ( options, thisIsADiff, DiffName )
+    if ( dopts(wholeArray)%v ) then
+      call dump(array1-array2, trim(DiffName), &
+      & real(0.,rk), WIDTH, FORMAT, &
+      & LBOUND, OPTIONS )
+      return
+    end if
+
+    NaNsIn1 = any(.not. ieee_is_finite(array1))
+    if ( NaNsIn1 .and. dopts(direct)%v ) then
+      call output( '*** skipping: non-finite values found', advance='no' )
+      if ( len_trim(name1) > 0 ) then
+        call output( ' in ' // trim(name1), advance='yes')
+      else
+        call output( ' in first array', advance='yes')
+      end if
+      return
+    end if
+    if ( NaNsIn1 ) then
+      if ( .not. any(ieee_is_finite(array1)) ) then
+        call output( '*** skipping: no finite values found', advance='no' )
+        if ( len_trim(name1) > 0 ) then
+          call output( ' in ' // trim(name1), advance='yes')
+        else
+          call output( ' in first array', advance='yes')
+        end if
+        return
+      end if
+      call output( '*** non-finite values found', advance='no' )
+      if ( len_trim(name1) > 0 ) then
+        call output( ' in ' // trim(name1), advance='yes')
+      else
+        call output( ' in first array', advance='yes')
+      end if
+      if ( dopts(NaNs)%v ) then
+        call WhereAreTheInfs ( array1, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(Infs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        end if
+        call WhereAreTheNaNs ( array1, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(NaNs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        end if
+      end if
+    end if
+
+    NaNsIn2 = any(.not. ieee_is_finite(array2))
+    if ( NaNsIn1 .and. dopts(direct)%v ) then
+      call output( &
+        & '*** skipping: non-finite values found in ' // trim(name2), advance='yes')
+      return
+    end if
+    if ( NaNsIn2 ) then
+      if ( .not. any(ieee_is_finite(array2)) ) then
+        call output( '*** skipping: no finite values found', advance='no' )
+        if ( len_trim(name2) > 0 ) then
+          call output( ' in ' // trim(name2), advance='yes')
+        else
+          call output( ' in second array', advance='yes')
+        end if
+        return
+      end if
+      call output( '*** non-finite values found', advance='no' )
+      if ( len_trim(name2) > 0 ) then
+        call output( ' in ' // trim(name2), advance='yes')
+      else
+        call output( ' in second array', advance='yes')
+      end if
+      if ( dopts(NaNs)%v ) then
+        call WhereAreTheInfs ( array2, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(Infs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        end if
+        call WhereAreTheNaNs ( array2, which, how_many )
+        if ( how_many > 0 ) then
+          call outputNamedValue( 'num(NaNs)', how_many )
+          if ( how_many < 50 ) call outputNamedValue( 'which', which(1:how_many) )
+        end if
+      end if
+    end if
+
+    if ( DEBUG ) call SayTime( 'Checking for NaNs and Infs', stime )
+    stime = t2
+    if ( all(array1 == array2) ) then
+      call output( '(The two arrays are exactly equal)', advance='yes' )
+      return
+    end if
+    numTot = size( Array1  )
+    numEqual = count( (/ Array1 == Array2 /) )
+    if ( dopts(RMS)%v .or. dopts(myRatios)%v .or. dopts(AuBrick)%v ) then
+      call allstats(array1, &
+        & addedData=.false., min=refmin, max=refmax, rms=refrms)
+      call allstats(array2, &
+        & addedData=.true., min=refmin, max=refmax, rms=refrms)
+      if ( PRINTREFERENCEVALUES ) &
+        & call printRMSetc ( 'Reference values', refmin, refmax, refrms )
+    end if
+    if ( DEBUG ) call SayTime( 'statistics', stime )
+    stime = t2
+    if ( product(shape(array1)) > TOOMANYELEMENTS ) then
+      call outputNamedValue( 'Array size excessive for pcts', product(shape(array1)) )
+      call dump(array1-array2, trim(DiffName), &
+        & real(0.,rk), WIDTH, FORMAT, &
+        & LBOUND, OPTIONS )
+      return
+    else
+      call fillPcts
+    end if
+    if ( DEBUG ) call SayTime( 'percentages', stime )
+    stime = t2
+    call usePcts
+    if ( DEBUG ) call SayTime( 'ratios', stime )
+    stime = t2
+    if ( PRINTEXTRADUMP ) call dump(array1-array2, trim(DiffName), &
+      & real(0.,rk), WIDTH, FORMAT, &
+      & LBOUND, OPTIONS )
+    if ( DEBUG ) call SayTime( 'dump', stime )
+    stime = t2
+    call doneWithDiff
+    if ( DEBUG ) call output( 'DoneWithDiff', advance='yes' )
+    nameHasBeenPrinted = .false. ! So next name will be printed
+  contains
+    include "donewithdiff.f9h"
+!   end subroutine DIFF_1D_DOUBLE
+! $Log$
+! Revision 2.24  2018/02/28 19:14:16  pwagner
+! Fixed error that prevented print namee of next item diffed
+!
+! Revision 2.23  2017/07/31 23:00:05  pwagner
+! Remove unneeded param
+!
+! Revision 2.22  2017/07/19 22:40:05  pwagner
+! May print Name during theDumpBegins
+!
+! Revision 2.21  2017/07/10 18:20:38  pwagner
+! Must not neglect to compute numTot, numEqual even if all equal
+!
+! Revision 2.20  2016/10/06 20:20:49  pwagner
+! parts commom to unfiltered and filtered diffs moved to donewithdiff.f9h
+!
+! Revision 2.19  2016/10/05 20:13:39  pwagner
+! Implemented Au (Gold) option
+!
+! Revision 2.18  2016/07/28 01:42:27  vsnyder
+! Refactoring dump and diff
+!
+! Revision 2.17  2016/03/23 00:22:48  pwagner
+! Diff now able to print name on each line
+!
+! Revision 2.16  2013/01/10 00:17:31  pwagner
+! Dumps with -N just show where NaNs are
+!
+! Revision 2.15  2012/09/11 21:11:25  pwagner
+! Requires 'N' option to show where NaNs, Infs are located
+!
+! Revision 2.14  2012/06/22 20:26:49  pwagner
+! Specify advance arg because we may now set default to 'yes'
+!
+! Revision 2.13  2012/01/09 22:25:33  pwagner
+! Distinguish 'r' option to print rms of ratios and 'R' option for rms of values
+!
+! Revision 2.12  2011/12/07 01:13:38  pwagner
+! Added option to show bandwidth of banded arrays
+!
+! Revision 2.11  2011/07/26 20:52:19  pwagner
+! Clearer, less redundant
+!
+! Revision 2.10  2011/02/05 01:00:01  pwagner
+! Consistent with new dopt_ dump options
+!
+! Revision 2.9  2010/02/04 23:04:29  vsnyder
+! Use kind=rk instead of double precision
+!
+! Revision 2.8  2009/11/20 01:16:17  pwagner
+! More protection against running out of memory diffing DACS datasets
+!
+! Revision 2.7  2009/10/30 23:02:19  pwagner
+! Should not double-print name if only whole array diff
+!
+! Revision 2.6  2009/10/19 17:32:51  pwagner
+! Trying to prevent double-printing of name
+!
+! Revision 2.5  2009/10/13 00:05:03  pwagner
+! Should print rms figures only when requested to
+!
+! Revision 2.4  2009/09/10 20:59:12  pwagner
+! 3 ways to summarize diffs: 'b' (table), 'r' (rms), 's' (number of differences)
+!
+! Revision 2.3  2009/08/17 18:05:14  pwagner
+! direct option skips diffing if non-finite values found
+!
+! Revision 2.2  2009/06/16 17:12:55  pwagner
+! Changed api for dump, diff routines; now rely on options for most optional behavior
+!
+! Revision 2.1  2008/11/24 19:38:08  pwagner
+! First commit
+!

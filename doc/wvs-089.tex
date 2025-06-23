@@ -1,0 +1,170 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-089r4}
+\newcommand{\docdate}{28 April 2015}
+
+\usepackage{graphicx}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Van\\
+Subject: \>TScat derivatives w.r.t. T and IWC\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-066}, \h{wvs-076}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Denote a reference orbit geodetic angle $\phi$ by $\phi_i$.  If the atmosphere
+is not horizontally homogeneous along the orbit path, it might be desirable to
+compute TScat tables for different values of $\phi$, for example, to accomodate
+tables for different latitudes.
+
+The scattering points in the set $\{S_{jk}\}$, in the orbit plane, are on a
+grid specified by $\{\phi_j\} \times \{\zeta_k\}$, where $\{\phi_j\}$ are orbit
+geodetic angles.
+
+The reference horizon is the line in the orbit plane from the scattering point
+$S_{jk}$ and perpendicular to the line in the orbit plane from the center of
+the Earth at $\phi_i$.  The angle $\xi$ is measured anticlockwise in the orbit
+plane from that line.
+
+The points in the set $\{A_{mn}\}$, also in the orbit plane, include points in
+addition to $\{S_{jk}\}$, on a grid specified by $\{\phi_m\} \times
+\{\zeta_n\}$.
+
+{\includegraphics[scale=0.85]{./wvs-089-pic}}
+
+$P_{jk}(\xi)$ is the Mie phase function, evaluated for IWC and T at $S_{jk}$;
+$\xi = 0$ at the reference horizon.
+
+The radiance arriving at $S_{jk}$ from direction $\xi$ in the orbit plane is
+$I_{ijk}(\xi)$.
+
+The radiance arriving at $S_{jk}$ from all directions in the orbit plane,
+convolved with the Mie phase function, is
+
+\begin{equation}
+\TSs{ijk} =
+\overline{I}_{ijk} = \int_{-\pi}^\pi I_{ijk}(\xi) P_{jk}(\xi)\, \text{d} \xi
+\,.
+\end{equation}
+
+The derivative of phase-convolved radiance at $S_{jk}$ with respect to some
+quantity $x_{mn}$ at $A_{mn}$ is
+
+\begin{equation}\label{two}
+\frac{\partial\overline{I}_{ijk}}{\partial x_{mn}} =
+ \int_{-\pi}^\pi
+  \left[ \frac{\partial I_{ijk}(\xi)}{\partial x_{mn}} P_{jk}(\xi) +
+         I_{ijk}(\xi) \frac{\partial P_{jk}(\xi)}{\partial x_{mn}}
+          \right] \, \text{d} \xi \,.
+\end{equation}
+
+$I_{ijk}(\xi)$ depends upon whatever quantities are specified at $A_{mn}$
+when $\TS$ is computed, i.e., throughout the entire atmosphere through
+which rays scattered at $S_{jk}$ propagate; $P_{jk}(\xi)$ depends only
+upon temperature and IWC at $S_{jk}$.
+
+If $S_{jk}$ and $A_{mn}$ are the same point, both terms are necessary.
+Otherwise $\frac{\partial P_{jk}(\xi)}{\partial x_{mn}} = 0$, and Equation
+(\ref{two}) can be simplified to
+
+\begin{equation}
+\frac{\partial\overline{I}_{ijk}}{\partial x_{mn}} =
+ \int_{-\pi}^\pi
+  \frac{\partial I_{ijk}(\xi)}{\partial x_{mn}} P_{jk}(\xi)\, \text{d} \xi \,.
+\end{equation}
+
+In comments within the {\tt TScatSupport} module, terms of the form
+$\frac{\partial}{\partial f^k_i}$ and $\frac{\partial}{\partial f^k_{lm}}$
+appear.  The superscript $k$ refers to a species.  The subscript $i$
+refers to a position on the path (black circles in the figure).  The
+subscripts $lm$ refer to positions in the solution field ($A_{mn}$ in the
+figure).
+
+\label{lastpage}
+\end{document}
+% $Id$
+
+% $Log$
+% Revision 1.5  2015/04/28 23:39:03  vsnyder
+% Explain subscripts in comments in TScatSupport
+%
+% Revision 1.4  2010/05/28 23:09:11  vsnyder
+% Remove graphics extension so latex or pdflatex can select it
+%
+% Revision 1.3  2010/05/25 03:00:29  vsnyder
+% Added description of dependence of derivatives upon atmospheric properties
+%
+% Revision 1.2  2010/05/25 02:20:45  vsnyder
+% Added the picture
+%
+% Revision 1.1  2010/01/26 02:08:29  vsnyder
+% Initial commit
+%

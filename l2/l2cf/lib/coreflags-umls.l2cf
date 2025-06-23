@@ -1,0 +1,50 @@
+!divert(-1)
+; $Id$
+
+!define(retrophase,{InitPtan})
+
+!divert!dnl
+
+; This l2cf fragment does all the quality flagging for the InitPtan phase
+; products of the umls instrument
+
+begin Fill
+  !define(flaggingBands,{1})
+  !define(flaggingRadiometers,{R1})!dnl
+
+  ; Before setting Status, preFill it with 0
+  ; Even though we actually have merra2 we don't use it
+  ; as apriori, relying solely on climatology
+  ; Zero out Status 
+  Fill, quantity=otherDiagnostics.statusTemperature_hr, method=explicit, $
+    explicitValues=0, /spread
+  Fill, quantity=otherDiagnostics.statusGPH_hr, method=explicit, $
+    explicitValues=0, /spread
+
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  Dump, text='In coreflags-umls.l2cf'
+  Dump, boolean=GHzScanHeightInvalid
+  Skip, formula="not GHzScanHeightInvalid"
+  Fill, quantity=otherDiagnostics.statusTemperature_hr, method=status, $
+    sourcequantity=otherDiagnostics.statusTemperature_hr, maxvalue=-1,$
+    status=!statusBadScan+!statusDoNotUse, /additional
+  Fill, quantity=otherDiagnostics.statusGPH_hr, method=status, $
+    sourcequantity=otherDiagnostics.statusTemperature_hr, maxvalue=-1,$
+    status=!statusBadScan+!statusDoNotUse, /additional
+ Dump, text='GHzScanHeightInvalid, so ORing status with 1025.'
+
+end Fill
+
+; $Log$
+; Revision 1.3  2017/06/16 16:54:17  pwagner
+; Similar to how emls version works now
+;
+; Revision 1.2  2017/03/09 01:50:19  mjschwar
+; *** empty log message ***
+;
+; Revision 1.1  2017/02/24 23:49:19  mjschwar
+; Adding umls specific code to standard parts
+;

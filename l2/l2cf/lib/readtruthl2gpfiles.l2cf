@@ -1,0 +1,35 @@
+!divert(-1)
+; $Id$
+; This section of the l2cf is for reading the 'latest' truth l2gp data
+; and in its current hdfeos format.
+; We snipped all the older cruft--if you want it, check it
+; out from the repository.
+
+  ;; ------------------------------------------------------------------
+  ;; The default values of the following two macros may be overridden 
+  ;; by your .macros file. E.g.,
+  ;;           hdfeosTrVsn=nc
+  ;;           TruthVsn=t4
+  !defunlessdef(hdfeosTrVsn,he5)
+  !defunlessdef(TruthVsn,s8)
+  ;; ------------------------------------------------------------------
+  ;; --------------------- Simulation series s8 and later ---
+  !define(readTruthL2GP,{l2gpTruth$1Input: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-$1_!TruthVsn{}!simulationVersion--t_!day.!hdfeosTrVsn'!nl})
+
+  !define(mostL2GPSpecies,{BrO,CH3Cl,CH3CN,CH3COCH3,CH3OH,CO,ClO,GPH,HCN,HCl,HNO3,HO2,HOCl,IWC,N2O,O3,OH,PSD,RHI,SO2,Temperature})
+  !define(l2gpInputSpecies,{!mostL2GPSpecies,H2O})
+  ;; ------------------------------------------------------------------
+  
+!divert!dnl
+begin ReadApriori
+  !forall(readTruthL2GP,!mostL2GPSpecies)
+
+  !ifdef(flagUseCloudH2O,{!dnl
+  l2gpTruthH2OInput: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O-cld_!TruthVsn{}!simulationVersion--t_!day.!hdfeosTrVsn'!nl},{!dnl
+  l2gpTruthH2OInput: l2gp, $
+    file='!inpathtruthl2gp/MLS-Aura_L2GP-H2O_!TruthVsn{}!simulationVersion--t_!day.!hdfeosTrVsn'!nl})
+
+end ReadApriori
+; $Log$

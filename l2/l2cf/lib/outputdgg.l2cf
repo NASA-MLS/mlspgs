@@ -1,0 +1,27 @@
+!divert(-1)
+;; $Id$
+
+;; This l2cf fragment outputs the species joined by joindiagnostics.l2cf
+
+
+;; Only do the output if the output version has been defined
+!divert!dnl
+!ifdef(outputVersion,{
+
+;  Notice also that I have commented-out stuff and inserted
+;  replacements below also to run with the toolkit panoply
+
+  Output, type=l2dgg, quantities=[ $
+    joined_BaselineR1A, joined_BaselineR1B, $
+    joined_BaselineR2, joined_BaselineR3, joined_BaselineR4, $
+    joined_BaselineR5H, joined_BaselineR5V, joined_ch3cn, $
+    !Alldgg], $
+    file='!fileDGG'
+  
+;  Output, type=l2gp, quantities=[ $
+;    joined_BaselineR1A, joined_BaselineR1B, $
+;    joined_BaselineR2, joined_BaselineR3, joined_BaselineR4, $
+;    joined_BaselineR5H, joined_BaselineR5V ], $
+;    file='!outpath/MLS-Aura_L2GP_DGG_!outputVersion_!day.dat'
+  
+})

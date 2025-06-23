@@ -1,0 +1,26 @@
+begin GlobalSettings
+
+  vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[2:6,12:12,41:6]
+
+  ;; Setup the particular forward model we're going to use
+  ;; in computing analytical second derivatives
+  analyticalL2pcFwm: forwardModel, type=full,  $
+    signals = 'R3:240.B7F:O3', $
+    molecules = [ EXTINCTIONV2, $                         
+  [ HNO3, HNO3, HNO3_V7, HNO3_V9 ], [ O2, O_18_O ], [ O3, O3, $
+    O3_V1_3, O3_V2, O3_ASYM_O_18, O3_SYM_O_18 ], [ SO2, S_32_O2 ] ], $
+    LSBlblMolecules = [EXTINCTIONV2,O3,O3_V2],$      
+    USBlblMolecules = [EXTINCTIONV2,O3,O3_V2],$
+  moleculederivatives = [ EXTINCTIONV2, O3 ], $
+   ;;specificQuantities=[temperature_HR, h2o_HR], $
+    phiWindow=0 degrees, $
+    /skipOverlaps, $
+     integrationGrid=vGridTangent, tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, $
+    ;;/temp_der, $
+    /atmos_der, $
+    ;;tolerance= -1K, $
+        /allLinesForRadiometer
+
+end GlobalSettings

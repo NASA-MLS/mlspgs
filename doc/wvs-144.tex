@@ -1,0 +1,178 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-144r1}
+\newcommand{\docdate}{29 September 2017}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+   
+\usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Sparse-matrix representation of interpolation coefficients\\
+From: \>Van Snyder\\
+%Reference: \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+Interpolation coefficients in the full forward model are represented by a
+sparse matrix, in which each row provides the coefficients to interpolate
+from all coordinates or state-vector quantity elements to one point on the
+path of integration, and each column provides the coefficients to
+interpolate from one coordinate or state-vector element onto all points on
+the path of integration.
+
+\vspace*{0.1in}
+
+\includegraphics{Sparse}
+
+The number of rows is equal to the number of points along the path of
+integration.  The number of columns is equal to the size of the basis,
+which could be one-dimensional ($\phi$) or ($\zeta$), two-dimensional
+($\zeta \times \phi$), three-dimensional ($\zeta\, \times$ QTM or $\zeta\,
+\times$ lat $\times$ lon), or could include frequency as an additional
+first dimension.
+
+Each element contains its value ({\tt V}), row index ({\tt R}), and column
+index ({\tt C}).  The value is never zero.
+
+For interpolation from a one-dimensional horizontal ($\phi$) or vertical
+($\zeta$) basis, there are at most two nonzeros per row.  For
+interpolation from a rectangular two-dimensional ($\zeta \times \phi$ or
+lat $\times$ lon) basis, there are at most four nonzeros per row.  For
+interpolation from a QTM two-dimensional horizontal basis, there are at
+most three nonzeros per row.  For a three-dimensional quantity with a QTM
+horizontal basis, there are at most six nonzeros per row.  For a
+three-dimensional quantity with a lat $\times$ lon horizontal basis,
+there are at most eight nonzeros per row.  If the basis includes
+frequency, the number of nonzeroes is doubled.  For higher-dimensional
+bases, especially for ones with QTM or lat $\times$ lon horizontal bases,
+the size of a non-sparse representation would be very much larger than
+the sparse representation, and consist mostly of elements with zero
+values.
+
+To traverse a row, one starts with the value in the {\tt Rows} array,
+which gives the index within the {\tt E} (for ``element'') array of the
+last element in the row.  The {\tt NR} component of the last {\tt E}
+element provides the index of the first element in the row, and the index
+of the next element in the row of each other element.
+
+To traverse a column, one starts with the value in the {\tt Cols} array,
+which gives the index within the {\tt E} array of the last element in the
+column.  The {\tt NC} component of the last {\tt E} element provides the
+index of the first element of the column, and the index of the next
+element in the column of each other element.
+
+Each row or column list is circular, which allows both to append at the
+end of the list, and traverse from the beginning, by representing only the
+position of the last element in each row or column in the {\tt Rows} or
+{\tt Cols} array.  If the first element were represent in the {\tt Rows}
+or {\tt Cols} array, it would be necessary to traverse the list to find
+the last element.
+
+To interpolate a quantity from a state vector to a point on the path of
+integration, compute the inner product of the row corresponding to the
+point on the path, and the state vector quantity.
+
+To compute derivatives for integration of variational equations along the
+path of integration, traverse the column of the representation
+corresponding to the state-vector element.  The row index in each element
+indicates the path position where a nonzero interpolating coefficient
+exists.
+
+Higher-dimensional matrices of interpolation coefficients are constructed
+by composing lower-dim\-en\-sion\-al matrices of coefficients, by
+computing the outer products of corresponding rows.  The number of rows of
+the constructed matrix is the same as the numbers of rows of the factors
+(which must be the same).  The number of columns is the product of the
+numbers of columns of the factors.  The element order of the array from
+which values are to be interpolated is assumed to correspond to the first
+factor followed by the second factor.  For example, temperatures and
+mixing ratios are stored in arrays that have $\zeta \times \phi$ bases. 
+Therefore, when a $\zeta \times \phi$ interpolator is formed it is
+constructed as the product of a $\zeta$ interpolator and a $\phi$
+interpolator, not vice-versa.  The extents of the dimensions of the bases
+corresponding to the columns are preserved in the representation, so that
+one can compute, e.g., separate $\zeta$ and $\phi$ subscripts from the
+column index of an element, which is assumed to correspond to the
+array-element order of a one-dimensional representation of the state
+vector quantity.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.1  2017/09/22 23:59:59  vsnyder
+% Initial commit
+%

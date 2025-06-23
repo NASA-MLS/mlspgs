@@ -1,0 +1,177 @@
+\documentclass[12pt]{article}
+
+\usepackage[fleqn]{amsmath}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.1in
+
+\newcommand{\docname}{wvs-015r1}
+\newcommand{\docdate}{28 January 2021}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Michael, Bill, Paul, William Daffer\\
+Subject: \>Exponential of a $2\times2$ matrix, and derivative thereof\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+This memo describes how to compute the exponential function of a $2 \times 2$
+matrix, and the derivative thereof, without encountering problems as the
+eigenvalues approach each other.
+
+The original version of this note had some needless complication.
+
+One can apply the Hamilton-Cayley theorem (``A matrix satisfies its
+characteristic equation'') to the series representation of any function of a
+matrix to develop a formula known as ``Sylvester's Identity.''  In the case of
+a $2 \times 2$ matrix {\bf A}, having eigenvalues $\lambda_1$ and $\lambda_2$,
+we have
+
+\begin{equation}
+F(\mathbf{A}) = \frac{F(\lambda_1)(\mathbf{A}-\lambda_2\mathbf{I})}
+                        {\lambda_1-\lambda_2} +
+                   \frac{F(\lambda_2)(\mathbf{A}-\lambda_1\mathbf{I})}
+                        {\lambda_2-\lambda_1} \;.
+\end{equation}
+
+When written in this form, there is clearly a computational problem as
+$\lambda_1 \rightarrow \lambda_2$.
+
+In our case $F = \exp$.  Using
+ $s = \frac12 ( \lambda_1 + \lambda_2 ) = \frac12 \text{tr}(\mathbf{A})$
+and
+ $d = \frac12 ( \lambda_1 - \lambda_2 ) = \sqrt { s^2 - \det(\mathbf{A})}$,
+this can be rewritten as
+
+\begin{equation}
+\exp(\mathbf{A}) =
+  e^s \left [ 
+    \frac{\sinh d}d ( \mathbf{A} - s\, \mathbf{I} ) + \cosh d\, \mathbf{I}
+      \right ] \;.
+\end{equation}
+
+Noticing that $\lim_{d\rightarrow 0} \frac{\sinh\,d}d = 1$, one can conclude
+that there must be a way to compute $\frac{\sinh\,d}d$ without computational
+difficulty, even as $d \rightarrow 0$. The easiest way is to use 1 if $|d| <
+\sqrt{\rho}$, where $\rho$ is the unit round-off of the arithmetic in use, a
+Taylor series
+
+\begin{equation}\label{three}
+\frac{\sinh\,d}d = \sum_{i=0}^\infty \frac{d^{2 i}}{(2 i+1)!}
+=
+1 + \frac{d^2}6 + \frac{d^4}{24} + \frac{d^6}{5040} + O(d^8)
+\end{equation}
+
+for larger but still small $|d|$, and the Fortran intrinsic SINH function
+otherwise. For complex $d$ with $|d|<0.12$, this series converges to 16-digit
+accuracy with seven or fewer terms.
+
+Derivatives of $\exp(\mathbf{A})$ with respect to a parameter $P$, say
+temperature, are needed. The derivative of a matrix is just the matrix of the
+derivatives of its elements. For $\exp(\mathbf{A})$, one might write this as 
+
+\renewcommand{\d}{\text{d}}
+\begin{equation}\begin{split}
+\frac{\d \exp(\mathbf{A})}{\d P}
+ = \,& \exp(\mathbf{A}) \frac{\d \mathbf{A}}{\d P} \text{, or is it }
+\frac{\d \exp(\mathbf{A})}{\d P}
+ = \,& \frac{\d \mathbf{A}}{\d P} \exp(\mathbf{A}) \,?
+\end{split}\end{equation}
+
+In general
+
+\begin{equation}
+\exp(\mathbf{A}) \text{ and }
+\frac{\d \mathbf{A}}{\d P}
+\end{equation}
+
+do not commute. Therefore, compute
+
+\begin{equation}
+\frac{\d \exp(\mathbf{A})}{\d P}
+\end{equation}
+
+by computing the derivatives of its elements. Denote $\frac{\d s}{\d P}$ by
+$s^\prime$ and $\frac{\d d}{\d P}$ by $d^\prime$. Then
+
+\begin{equation}
+\frac{\d\exp(\mathbf{A})}{\d P} =
+s^\prime \exp(\mathbf{A}) +
+  e^s \left [ 
+    d^\prime \frac{\d}{\d P} \left(\frac{\sinh d}d \right)
+        ( \mathbf{A} - s\, \mathbf{I} )
+    + \left( d^\prime\,  \sinh d - s^\prime\, \frac{\sinh d}d \, \right) \mathbf{I}
+      \right ] \;.
+\end{equation}
+
+Using the usual method,
+
+\begin{equation}
+\frac{\d}{\d P} \frac{\sinh d}d = \frac{\cosh d}d - \frac{\sinh d}{d^2} \,,
+\end{equation}
+
+which is clearly problematic as $d \rightarrow 0$. But a Taylor series, the
+derivative of Equation (\ref{three})
+
+\begin{equation}
+\frac{\d}{\d P} \frac{\sinh d}d
+ = \sum_{i=1}^\infty \frac{2 i}{(2 i + 1)!} x^{2 i - 1}
+\end{equation}
+
+converges rapidly.
+
+\label{lastpage}
+\end{document}

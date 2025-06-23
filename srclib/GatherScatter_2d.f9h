@@ -1,0 +1,54 @@
+! Copyright 2008, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+    ! Dummy args
+    real(rk), dimension(:,:), pointer :: bloc
+    real(rk), dimension(:,:), pointer :: array ! The larger array
+    integer, dimension(:), intent(in)     :: which1
+    integer, dimension(:), intent(in)     :: which2
+    character(len=*), intent(in), optional :: options
+    ! Local variables
+    integer :: i, j
+    character(len=4) :: myOptions
+    integer :: status
+    ! Executable
+    myOptions = ''
+    if ( present(options) ) myOptions = options
+    
+    select case(direction)
+    case('s') ! scattering
+      do j=1,size(which2)
+        do i=1,size(which1)
+          array(which1(i), which2(j)) = bloc( i , j  )
+        enddo
+      enddo
+    case('g') ! gathering
+      ! Do we need to allocate bloc first?
+      if ( index(myOptions, 'a') > 0 ) then
+        allocate(bloc(size(which1), size(which2)), stat=status)
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, &
+          & ModuleName, "unable to allocate 2-d bloc before extracting" )
+      endif
+      do j=1,size(which2)
+        do i=1,size(which1)
+         bloc( i , j ) = array( which1(i), which2(j) )
+        enddo
+      enddo
+    case default
+      call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "direction neither gathering nor extracting" )
+    end select
+! $Log$
+! Revision 1.1  2008/09/03 20:08:46  pwagner
+! First commit
+!

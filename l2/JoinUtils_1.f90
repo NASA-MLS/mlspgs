@@ -1,0 +1,772 @@
+  ! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module JoinUtils_1                     ! Direct write chunk by chunk
+!=============================================================================
+
+   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+   use Chunks_M, only: MLSChunk_T
+   use DirectWrite_M, only: DirectData_T, &
+      & DirectWrite, Dump, &
+      & ExpandSDNames
+   use ForwardModelConfig, only: ForwardModelConfig_T
+   use HDF, only: Dfacc_Create, Dfacc_Rdwr
+   use HighOutput, only: BeVerbose, LetsDebug, OutputNamedValue
+   use Init_Tables_Module, only: L_HDF, L_Swath
+   use L2ParInfo, only: Parallel, FinishedDirectwrite
+   use ManipulateVectorQuantities, only: DoHGridsMatch
+   use MLSCommon, only: MLSFile_T, L2MetaData_T
+   use MLSFiles, only: MLS_CloseFile
+   use MLSFinds, only: FindFirst
+   use MLSHDFeos, only: MLS_Swath_In_File
+   use MLSL2Options, only: MaxChunkSize, MLSL2Message, &
+     & Toolkit
+   use MLSMessageModule, only: MLSMSG_Error, MLSMSG_Warning
+   use MLSStringLists, only: SwitchDetail
+   use Output_M, only: Output
+   use OutputAndClose, only: Add_MetaData
+   use String_Table, only: Display_String, Get_String
+   use Time_M, only: Time_Now
+   use Toggles, only: Switches
+   use VectorsModule, only: Vector_T, VectorValue_T, &
+     & GetVectorQtyByTemplateIndex
+
+  ! This module mediates between the DirectWriteCommand and
+  ! the 'join' task in the MLS level 2 software.
+
+  implicit none
+  private
+  public :: Announce_Error, DWSwath, DWHDF, DWQty
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+    integer, public, save  :: error = 0
+    logical :: DEEBUG
+    logical :: dummy
+    logical :: verbose
+    logical, dimension(:), pointer :: CREATETHISSOURCE
+    character(len=256), dimension(:), pointer :: NAMEBUFFER
+    type(VectorValue_T), pointer :: CONVERGQTY ! The quantities convergence ratio
+    type(VectorValue_T), pointer :: QTY ! The quantity
+    type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
+    type(VectorValue_T), pointer :: QUALITYQTY ! The quantities quality
+    type(VectorValue_T), pointer :: STATUSQTY ! The quantities status
+    type(Vector_T), pointer      :: Vector ! => null()
+  real, parameter             :: timeReasonable = 500.
+  integer, parameter :: NO_ERROR_CODE   = 0
+  integer, parameter :: NotAllowed      = 1
+
+contains ! =====     Public Procedures     =============================
+
+  ! --------------------------------------------------  DWSwath  -----
+  ! Direct write a chunk's worth of swath-like data
+  subroutine DWSwath ( Son, Node, noSources, distributingSources, TimeIn, &
+    & Rank, Options, GroupName, Ticket, InputFile, PermittedFile,  &
+    & chunkNo, chunks, &
+    & createFileFlag, createthisswath, lowerOverlap, upperOverlap, &
+    & NoCreatedFiles, &
+    & sourceVectors, sourceQuantities, &
+    & precisionVectors, precisionQuantities, &
+    & qualityVectors, qualityQuantities, &
+    & statusVectors, statusQuantities, &
+    & convergVectors, convergQuantities, &
+    & vectors, DirectDatabase, directfiles, &
+    & directfile, thisDirect )
+    ! Args
+    integer, intent(in)            :: Son
+    integer, intent(in)            :: Node
+    integer, intent(in)            :: noSources
+    integer, intent(in)            :: Rank
+    character(len=*), intent(in)   :: GroupName
+    character(len=*), intent(in)   :: options
+    integer, intent(in)            :: ticket
+    character(len=*), intent(in)   :: inputFile    ! Input full filename
+    character(len=*), intent(in)   :: PermittedFile    ! Output full filename
+    integer, intent(in)            :: chunkNo
+    type (MLSChunk_T), dimension(:), intent(in) :: Chunks
+    logical, intent(in)            :: lowerOverlap
+    logical, intent(in)            :: upperOverlap
+    logical, intent(in)            :: distributingSources
+    logical, intent(in)            :: createFileFlag
+    logical, intent(inout)         :: createthisswath
+    integer, intent(inout)         :: NoCreatedFiles
+    real, intent(inout)            :: timeIn
+    type (Vector_T), dimension(:), pointer :: vectors
+    integer, dimension(:), pointer :: sourceVectors ! Indices
+    integer, dimension(:), pointer :: sourceQuantities ! Indices
+    integer, dimension(:), pointer :: precisionVectors ! Indices
+    integer, dimension(:), pointer :: precisionQuantities ! Indices
+    integer, dimension(:), pointer :: qualityVectors ! Indices
+    integer, dimension(:), pointer :: qualityQuantities ! Indices
+    integer, dimension(:), pointer :: statusVectors ! Indices
+    integer, dimension(:), pointer :: statusQuantities ! Indices
+    integer, dimension(:), pointer :: convergVectors ! Indices
+    integer, dimension(:), pointer :: convergQuantities ! Indices
+    type (DirectData_T), dimension(:), pointer :: DirectDatabase
+    integer, dimension(:), pointer :: DIRECTFILES ! Indices
+    type(MLSFile_T), pointer :: directFile
+    type(DirectData_T), pointer  :: thisDirect ! => null()
+    
+    ! Local variables
+    integer                       :: ErrorType
+    character(len=1024)           :: HDFNAME      ! Output swath/sd name
+    integer                       :: Handle
+    integer                       :: HDFNameIndex
+    integer                       :: NumOutput
+    integer                       :: NumPermitted
+    integer                       :: ReturnStatus
+    integer                       :: Source
+    real :: TimeSetUp, TimeWriting
+    type(VectorValue_T), pointer  :: AscDescModeQTY => null() ! The shared quantity AscDescMode
+    type(L2Metadata_T)            :: l2metaData
+    ! Executable  
+    ! Before opening file, see which swaths are already there
+    ! and which ones need to be created
+    DEEBUG = LetsDebug ( 'direct', 0 )
+    verbose = BeVerbose( 'direct', -1 )
+    call time_now ( timeSetup ) ! In case there were no datasets to write out
+    if ( DeeBUG ) print *, 'Allocating ', noSources
+    nullify(createThisSource, nameBuffer)
+    call Allocate_test ( createThisSource, noSources, 'createThisSource', &
+      & ModuleName )
+    call Allocate_test ( nameBuffer, noSources, 'nameBuffer', &
+      & ModuleName )
+    if (DEEBUG) print *, 'Must we create this file?', createFileFlag
+    if ( .not. createFileFlag ) then
+      do source = 1, noSources
+        if(DEEBUG)print*,'Source:', source
+        if ( sourceQuantities(source) > 0 ) then
+          qty => GetVectorQtyByTemplateIndex ( &
+            & vectors(sourceVectors(source)), sourceQuantities(source) )
+        else
+          qty => GetVectorQtyByTemplateIndex ( &
+            & vectors(sourceVectors(source)), 1 )
+        end if
+        hdfNameIndex = qty%label
+        if(DEEBUG) &
+          & call display_string ( hdfNameIndex, strip=.true., advance='yes' )
+        call get_string ( hdfNameIndex, nameBuffer(source), strip=.true. )
+        if(DEEBUG)print*,'Done'
+      end do
+      if(DEEBUG)print *, '************** Checking for swaths in file ***************'
+      if(DEEBUG)call dump(directFile)
+      dummy = MLS_SWATH_IN_FILE(directFile%Name, nameBuffer, DirectFile%HdfVersion, &
+        & createThisSource, returnStatus )
+      if(DEEBUG)print*,'Got out of MLS_SWATH_IN_FILE'
+      if ( returnStatus /= 0 ) then
+        call MLSL2Message ( MLSMSG_Warning, ModuleName, &
+          & 'Unable to check on swath in ' // trim(thisDirect%FileNameBase) )
+      end if
+      if(DEEBUG) call dump( createThisSource, 'createThisSource' )
+      source = findFirst( createThisSource )
+      if(DEEBUG) call outputNamedValue ( 'source number of T', source )
+    else
+      createThisSource = .false.
+    end if
+      ! Loop over the quantities to output
+      NumPermitted = 0
+      NumOutput = 0
+      if(DEEBUG)print *, '************** Loop over quantities to output ***************'
+      do source = 1, noSources
+        ! At this point we're ready to write the data
+        ! Make certain that the sources match the permitted file
+        ! if the sources are being distributed, however
+        if ( distributingSources ) then
+          if ( DirectDataBase(directfiles(source))%filename /= PermittedFile &
+            & .and. &
+            & DirectDataBase(directfiles(source))%filenameBase /= PermittedFile &
+            & ) cycle
+        end if
+        NumPermitted = NumPermitted + 1
+        if ( sourceQuantities(source) < 1 ) then
+          ! This is the case where we write an entire vector
+          vector => vectors(sourceVectors(source))
+            call DirectWrite ( directFile, vector, &
+            & chunkNo, chunks, &
+            & createSwath=createthisswath, &
+            & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+            & maxChunkSize=maxChunkSize )
+          cycle
+        end if
+        qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
+          & sourceQuantities(source) )
+        hdfNameIndex = qty%label
+        call get_string ( hdfNameIndex, hdfName, strip=.true. )
+        call ExpandSDNames(thisDirect, trim(hdfName))
+        if ( DEEBUG ) call dump(directFile)
+        if ( precisionVectors(source) /= 0 ) then
+          precQty => GetVectorQtyByTemplateIndex &
+            & ( vectors(precisionVectors(source)), precisionQuantities(source) )
+          ! Check that this is compatible with its value quantitiy
+          if ( qty%template%name /= precQty%template%name ) &
+            & call Announce_Error ( son, no_error_code, &
+            & "Precision and quantity do not match" )
+        else
+          precQty => NULL()
+        end if
+        if ( qualityVectors(source) /= 0 ) then
+          qualityQty => &
+            & GetVectorQtyByTemplateIndex ( vectors(qualityVectors(source)), &
+            & qualityQuantities(source) )
+          ! Check that value and quality share same HGrid
+          if ( .not. DoHgridsMatch( qty, qualityQty ) ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Source and quality not on matching HGrids" )
+        else
+          qualityQty => NULL()
+        end if
+        if ( statusVectors(source) /= 0 ) then
+          statusQty => &
+            & GetVectorQtyByTemplateIndex ( vectors(statusVectors(source)), &
+            & statusQuantities(source) )
+          ! Check that value and quality share same HGrid
+          if ( .not. DoHgridsMatch( qty, statusQty ) ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Source and status not on matching HGrids" )
+        else
+          statusQty => NULL()
+        end if
+        if ( convergVectors(source) /= 0 ) then
+          convergQty => &
+            & GetVectorQtyByTemplateIndex ( vectors(convergVectors(source)), &
+            & convergQuantities(source) )
+          ! Check that value and convergence share same HGrid
+          if ( .not. DoHgridsMatch( qty, convergQty ) ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Source and convergence not on matching HGrids" )
+        else
+          convergQty => NULL()
+        end if
+        
+        if ( DeeBUG ) then
+          call output('CreateFileFlag: ', advance='no')
+          call output(createFileFlag, advance='yes')
+          call output('file access: ', advance='no')
+          call output(DirectFile%access, advance='yes')
+          call output('file handle: ', advance='no')
+          call output(handle, advance='yes')
+          call output('outputType: ', advance='no')
+          call output('swath', advance='yes')
+          call output('sd name: ', advance='no')
+          call output(trim(hdfname), advance='yes')
+        end if
+        call time_now ( timeSetup )
+        if ( timeSetup-timeIn > timeReasonable .and. &
+          & switchDetail(switches,'dwreq') > -1 ) then
+          call output('Unreasonable set up time for ' // trim(hdfname), &
+            & advance='yes')
+        end if
+
+        ! Do the actual DirectWrite
+        ! (Why do we need to redefine fileType? Is add_metadata so stupid?)
+          ! Call the l2gp swath write routine.  This should write the 
+          ! non-overlapped portion of qty (with possibly precision in precQty)
+          ! into the l2gp swath named 'hdfName' starting at profile 
+          ! qty%template%instanceOffset + 1
+          ! May optionally supply first, last profiles
+          if ( DEEBUG ) then
+            call dump(directFile, details=1)
+            call output('createSwath: ', advance='no')
+            call output(.not. createThisSource(source), advance='yes')
+            call outputNamedValue ( 'source number of DW', source )
+          end if
+          createthisswath = (.not. createThisSource(source))
+          ! We had a bug somewhere in hdfeos
+          ! When we created the first swath in an hdfeos file
+          ! mls_swath_in_file didn't find it
+          ! What we'll try is to create the swath, then close the file
+          ! and reset its access to read/write--could be that it was confused 
+          ! by the DFACC_CREATE
+          call DirectWrite ( directFile, &
+            & qty, precQty, qualityQty, statusQty, convergQty, AscDescModeQty, &
+            & hdfName, chunkNo, chunks, &
+            & createSwath=createthisswath, &
+            & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+            & maxChunkSize=maxChunkSize )
+          if ( createthisswath ) then
+            if ( directFile%stillOpen ) &
+              & call mls_closeFile(directFile, errorType)
+            directFile%access = DFACC_RDWR
+          end if
+          if ( directfile%access == DFACC_CREATE ) then
+            ! OK, because the bug is still there (!), we'll repeat
+            call DirectWrite ( directFile, &
+              & qty, precQty, qualityQty, statusQty, convergQty, AscDescModeQty, &
+              & hdfName, chunkNo, chunks, &
+              & createSwath=createthisswath, &
+              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+              & maxChunkSize=maxChunkSize )
+          end if
+          NumOutput= NumOutput + 1
+
+      end do ! End loop over swaths/sds
+      call time_now ( timeWriting )
+      if ( timeWriting-timeSetup > timeReasonable .and. &
+        & switchDetail(switches,'dwreq') > -1 ) then
+        call output('Unreasonable writing time for ' //trim(hdfname), advance='yes')
+      end if
+      
+      if ( DEEBUG ) then
+        print *, 'Num permitted to ', trim(thisDirect%FileNameBase), ' ', NumPermitted
+        print *, 'Num actually output ', NumOutput
+      end if
+      if ( NumPermitted < 1 ) then
+        if ( parallel%slave) then
+          call Announce_Error ( son, no_error_code, &
+            & "NumPermitted=0", penalty=0 )
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
+            & 'No sources permitted for writing to  ' // trim(thisDirect%FileNameBase) )
+          call FinishedDirectWrite ( ticket )
+        else
+          ! But did we claim we were created this file? If so, decrement
+          if ( createFileFlag ) noCreatedFiles = noCreatedFiles - 1
+          if ( DEEBUG ) then
+            print *, 'No sources written to ', trim(thisDirect%FileNameBase)
+            print *, 'FileAccess ', DirectFile%Access
+            print *, 'hdfVersion ', DirectFile%hdfVersion
+            print *, 'createFileFlag ', createFileFlag
+            print *, 'noCreatedFiles ', noCreatedFiles
+          end if
+        end if
+        call Deallocate_test ( createThisSource, 'createThisSource', ModuleName )
+        call Deallocate_test ( nameBuffer, 'nameBuffer', ModuleName )
+      end if
+
+      ! Don't forget the metadata
+      if ( createFileFlag .and. TOOLKIT .and. &
+        & .not. distributingSources ) then
+        call add_metadata ( node, thisDirect%fileNameBase, L2MetaData, &
+          & DirectFile%hdfVersion, l_swath, errortype, NumPermitted, &
+          & thisDirect%sdNames )
+        if ( errortype /= 0 ) call MLSL2Message ( MLSMSG_Error, ModuleName, &
+          & 'DirectWriteCommand unable to addmetadata to ' // trim(thisDirect%FileNameBase), &
+          & MLSFile=directFile )
+      end if
+  end subroutine DWSwath
+
+  ! --------------------------------------------------  DWHDF  -----
+  ! Direct write a chunk's worth of HDF data
+  subroutine DWHDF ( Son, Node, noSources, distributingSources, TimeIn, &
+    & Rank, Options, GroupName, Ticket, InputFile, PermittedFile,  &
+    & chunkNo, createFileFlag, createthisswath, lowerOverlap, upperOverlap, &
+    & NoCreatedFiles, &
+    & sourceVectors, sourceQuantities, &
+    & precisionVectors, precisionQuantities, &
+    & vectors, DirectDatabase, directfiles, &
+    & directfile, thisDirect, chunks, FWModelConfig, single, &
+    & L2Aux )
+    ! Args
+    integer, intent(in)            :: Son
+    integer, intent(in)            :: Node
+    integer, intent(in)            :: noSources
+    integer, intent(in)            :: Rank
+    character(len=*), intent(in)   :: GroupName
+    character(len=*), intent(in)   :: options
+    integer, intent(in)            :: ticket
+    character(len=*), intent(in)   :: inputFile    ! Input full filename
+    character(len=*), intent(in)   :: PermittedFile    ! Output full filename
+    integer, intent(in)            :: chunkNo
+    logical, intent(in)            :: lowerOverlap
+    logical, intent(in)            :: upperOverlap
+    logical, intent(in)            :: distributingSources
+    logical, intent(in)            :: createFileFlag
+    logical, intent(inout)         :: createthisswath
+    integer, intent(inout)         :: NoCreatedFiles
+    real, intent(inout)            :: timeIn
+    type (Vector_T), dimension(:), pointer :: vectors
+    integer, dimension(:), pointer :: sourceVectors ! Indices
+    integer, dimension(:), pointer :: sourceQuantities ! Indices
+    integer, dimension(:), pointer :: precisionVectors ! Indices
+    integer, dimension(:), pointer :: precisionQuantities ! Indices
+    type (DirectData_T), dimension(:), pointer :: DirectDatabase
+    integer, dimension(:), pointer :: DIRECTFILES ! Indices
+    type(MLSFile_T), pointer :: directFile ! What is the diff between these 2?
+    type(DirectData_T), pointer  :: thisDirect ! => null()
+    type (MLSChunk_T), dimension(:), intent(in) :: Chunks
+    type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
+    logical, intent(in)            :: single
+    logical, intent(in)            :: L2Aux  ! Is the file an L2Aux type?
+    
+    ! Local variables
+    integer                       :: ErrorType
+    character(len=1024)           :: HDFNAME      ! Output swath/sd name
+    integer                       :: Handle
+    integer                       :: HDFNameIndex
+    integer                       :: NumOutput
+    integer                       :: NumPermitted
+    integer                       :: Source
+    real                          :: TimeSetUp, TimeWriting
+    type(L2Metadata_T)            :: l2metaData
+    ! Executable  
+    DEEBUG = LetsDebug ( 'direct', 0 )
+    verbose = BeVerbose( 'direct', -1 )
+    call time_now ( timeSetup ) ! In case there were no datasets to write out
+      ! Loop over the quantities to output
+      NumPermitted = 0
+      NumOutput = 0
+      if(DEEBUG)print *, '************** Loop over quantities to output ***************'
+      do source = 1, noSources
+        ! At this point we're ready to write the data
+        ! Make certain that the sources match the permitted file
+        ! if the sources are being distributed, however
+        if ( distributingSources ) then
+          if ( DirectDataBase(directfiles(source))%filename /= PermittedFile &
+            & .and. &
+            & DirectDataBase(directfiles(source))%filenameBase /= PermittedFile &
+            & ) cycle
+        end if
+        NumPermitted = NumPermitted + 1
+        if ( sourceQuantities(source) < 1 ) then
+          ! This is the case where we write an entire vector
+          vector => vectors(sourceVectors(source))
+          if ( L2Aux ) then
+            ! L2Aux
+            call DirectWrite ( directFile, vector, &
+              & chunkNo, chunks, FWModelConfig, &
+              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+              & single=single, options=options, groupName=groupName )
+          else
+            ! Plain hdf
+            call DirectWrite ( directFile, vector, &
+              & options=options, groupName=groupName )
+          endif
+          cycle
+        end if
+        qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
+          & sourceQuantities(source) )
+        hdfNameIndex = qty%label
+        call get_string ( hdfNameIndex, hdfName, strip=.true. )
+        call ExpandSDNames(thisDirect, trim(hdfName))
+        if ( DEEBUG ) call dump(directFile)
+        if ( precisionVectors(source) /= 0 ) then
+          precQty => GetVectorQtyByTemplateIndex &
+            & ( vectors(precisionVectors(source)), precisionQuantities(source) )
+          ! Check that this is compatible with its value quantitiy
+          if ( qty%template%name /= precQty%template%name ) &
+            & call Announce_Error ( son, no_error_code, &
+            & "Precision and quantity do not match" )
+        else
+          precQty => NULL()
+        end if
+        
+        if ( DeeBUG ) then
+          call outputNamedValue('Number permitted ', NumPermitted)
+          call outputNamedValue('CreateFileFlag ', createFileFlag)
+          call outputNamedValue('file access ', directfile%access)
+          call outputNamedValue('file handle ', handle)
+          call outputNamedValue('outputType ', 'hdf')
+          call outputNamedValue('sd name ', trim(hdfname))
+        end if
+        call time_now ( timeSetup )
+        if ( timeSetup-timeIn > timeReasonable .and. &
+          & switchDetail(switches,'dwreq') > -1 ) then
+          call output('Unreasonable set up time for ' // trim(hdfname), &
+            & advance='yes')
+        end if
+
+        ! Do the actual DirectWrite
+        ! (Why do we need to redefine fileType? Is add_metadata so stupid?)
+          if ( .not. L2Aux ) then
+            ! Plain hdf
+            call DirectWrite ( directFile, qty, precQty, hdfName, &
+              & options=options )
+          elseif ( inputFile /= 'undefined' ) then
+            ! Write the ascii file as if it contained the quantity's values
+            call DirectWrite ( directFile, qty, hdfName, &
+              & chunkNo, options=options, rank=rank, inputFile=inputFile  )
+          else
+            ! Call the l2aux sd write routine.  This should write the 
+            ! non-overlapped portion of qty (with possibly precision in precQty)
+            ! into the l2aux sd named 'hdfName' starting at profile 
+            ! qty%template%instanceOffset ( + 1 ? )
+            ! Note sure about the +1 in this case, probably depends whether it's a
+            ! minor frame quantity or not.  This mixed zero/one indexing is becoming
+            ! a real pain.  I wish I never went down that road!
+            if ( DeeBug ) then
+              call outputnamedValue ( 'CreateFileFlag', CreateFileFlag )
+              call outputnamedValue ( 'fileaccess', DirectFile%access )
+              call outputnamedValue ( 'NoCreatedFiles', NoCreatedFiles )
+              call Dump ( DirectFile )
+            endif
+            call DirectWrite ( directFile, qty, precQty, hdfName, &
+              & chunkNo, chunks, FWModelConfig, &
+              & lowerOverlap=lowerOverlap, upperOverlap=upperOverlap, &
+              & single=single, options=options )
+          end if
+          NumOutput = NumOutput + 1
+
+      end do ! End loop over swaths/sds
+      call time_now ( timeWriting )
+      if ( timeWriting-timeSetup > timeReasonable .and. &
+        & switchDetail(switches,'dwreq') > -1 ) then
+        call output('Unreasonable writing time for ' //trim(hdfname), advance='yes')
+      end if
+      
+      if ( DEEBUG ) then
+        print *, 'Num permitted to ', trim(thisDirect%FileNameBase), ' ', NumPermitted
+        print *, 'Num actually output ', NumOutput
+      end if
+      if ( NumPermitted < 1 ) then
+        if ( parallel%slave) then
+          call Announce_Error ( son, no_error_code, &
+            & "NumPermitted=0", penalty=0 )
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
+            & 'No sources permitted for writing to  ' // trim(thisDirect%FileNameBase) )
+          call FinishedDirectWrite ( ticket )
+        else
+          ! But did we claim we were created this file? If so, decrement
+          if ( createFileFlag ) then
+            noCreatedFiles = noCreatedFiles - 1
+            if ( DeeBug ) call outputNamedValue ( 'Decrementing noCreatedFiles', noCreatedFiles )
+          endif
+          if ( DEEBUG ) then
+            print *, 'No sources written to ', trim(thisDirect%FileNameBase)
+            print *, 'FileAccess ', DirectFile%Access
+            print *, 'hdfVersion ', DirectFile%hdfVersion
+            print *, 'createFileFlag ', createFileFlag
+            print *, 'noCreatedFiles ', noCreatedFiles
+          end if
+        end if
+      end if
+
+      ! Don't forget the metadata
+      if ( createFileFlag .and. TOOLKIT .and. &
+        & .not. distributingSources ) then
+        call OutputNamedValue ( 'HDF File name', thisDirect%fileNameBase )
+        call add_metadata ( node, DirectFile%Name, L2MetaData, &
+          & DirectFile%hdfVersion, l_hdf, errortype, NumPermitted, &
+          & thisDirect%sdNames )
+        if ( errortype /= 0 ) call MLSL2Message ( MLSMSG_Warning, ModuleName, &
+          & 'DirectWriteCommand unable to addmetadata to ' // &
+          & trim(DirectFile%Name), &
+          & MLSFile=directFile )
+      end if
+  end subroutine DWHDF
+
+  ! --------------------------------------------------  DWQty  -----
+  ! Direct write a chunk's worth of DWQty data
+  subroutine DWQty ( Son, Node, noSources, distributingSources, TimeIn, &
+    & Rank, Options, GroupName, Ticket, InputFile, PermittedFile,  &
+    & chunkNo, createFileFlag, createthisswath, lowerOverlap, upperOverlap, &
+    & NoCreatedFiles, &
+    & sourceVectors, sourceQuantities, &
+    & vectors, DirectDatabase, directfiles, &
+    & directfile, thisDirect )
+    ! Args
+    integer, intent(in)            :: Son
+    integer, intent(in)            :: Node
+    integer, intent(in)            :: noSources
+    integer, intent(in)            :: Rank
+    character(len=*), intent(in)   :: GroupName
+    character(len=*), intent(in)   :: options
+    integer, intent(in)            :: ticket
+    character(len=*), intent(in)   :: inputFile    ! Input full filename
+    character(len=*), intent(in)   :: PermittedFile    ! Output full filename
+    integer, intent(in)            :: chunkNo
+    logical, intent(in)            :: lowerOverlap
+    logical, intent(in)            :: upperOverlap
+    logical, intent(in)            :: distributingSources
+    logical, intent(in)            :: createFileFlag
+    logical, intent(inout)         :: createthisswath
+    integer, intent(inout)         :: NoCreatedFiles
+    real, intent(inout)            :: timeIn
+    type (Vector_T), dimension(:), pointer :: vectors
+    integer, dimension(:), pointer :: sourceVectors ! Indices
+    integer, dimension(:), pointer :: sourceQuantities ! Indices
+    type (DirectData_T), dimension(:), pointer :: DirectDatabase
+    integer, dimension(:), pointer :: DIRECTFILES ! Indices
+    type(MLSFile_T), pointer :: directFile
+    type(DirectData_T), pointer  :: thisDirect ! => null()
+    
+    ! Local variables
+    character(len=1024)           :: HDFNAME      ! Output swath/sd name
+    integer                       :: Handle
+    integer                       :: HDFNameIndex
+    integer                       :: NumOutput
+    integer                       :: NumPermitted
+    integer                       :: Source
+    real                          :: TimeSetUp, TimeWriting
+    ! Executable  
+    DEEBUG = LetsDebug ( 'direct', 0 )
+    verbose = BeVerbose( 'direct', -1 )
+    call time_now ( timeSetup ) ! In case there were no datasets to write out
+      ! Loop over the quantities to output
+      NumPermitted = 0
+      NumOutput = 0
+      if(DEEBUG)print *, '************** Loop over quantities to output ***************'
+      do source = 1, noSources
+        ! At this point we're ready to write the data
+        ! Make certain that the sources match the permitted file
+        ! if the sources are being distributed, however
+        if ( distributingSources ) then
+          if ( DirectDataBase(directfiles(source))%filename /= PermittedFile &
+            & .and. &
+            & DirectDataBase(directfiles(source))%filenameBase /= PermittedFile &
+            & ) cycle
+        end if
+        NumPermitted = NumPermitted + 1
+        if ( sourceQuantities(source) < 1 ) then
+          ! This is the case where we write an entire vector
+            call DirectWrite ( directFile, &
+              & vector, &
+              & chunkNo, options=options, rank=rank )
+          cycle
+        end if
+        qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
+          & sourceQuantities(source) )
+        hdfNameIndex = qty%label
+        call get_string ( hdfNameIndex, hdfName, strip=.true. )
+        call ExpandSDNames(thisDirect, trim(hdfName))
+        if ( DEEBUG ) call dump(directFile)
+        
+        if ( DeeBUG ) then
+          call output('CreateFileFlag: ', advance='no')
+          call output(createFileFlag, advance='yes')
+          call output('file access: ', advance='no')
+          call output(DirectFile%access, advance='yes')
+          call output('file handle: ', advance='no')
+          call output(handle, advance='yes')
+          call output('outputType: ', advance='no')
+          call output('Qty', advance='yes')
+          call output('sd name: ', advance='no')
+          call output(trim(hdfname), advance='yes')
+        end if
+        call time_now ( timeSetup )
+        if ( timeSetup-timeIn > timeReasonable .and. &
+          & switchDetail(switches,'dwreq') > -1 ) then
+          call output('Unreasonable set up time for ' // trim(hdfname), &
+            & advance='yes')
+        end if
+
+        ! Do the actual DirectWrite
+        ! (Why do we need to redefine fileType? Is add_metadata so stupid?)
+          if ( inputFile /= 'undefined' ) then
+            ! Write the ascii file as if it contained the quantity's values
+            call DirectWrite ( directFile, qty, hdfName, &
+              & chunkNo, options=options, rank=rank, inputFile=inputFile  )
+          else
+            ! Write the quantity with all its geolocations
+            ! call outputnamedValue( 'Calling DirectWrite with rank', rank )
+            call DirectWrite ( directFile, qty, hdfName, &
+              & chunkNo, options=options, rank=rank )
+          end if
+          NumOutput = NumOutput + 1
+      end do ! End loop over swaths/sds
+      call time_now ( timeWriting )
+      if ( timeWriting-timeSetup > timeReasonable .and. &
+        & switchDetail(switches,'dwreq') > -1 ) then
+        call output('Unreasonable writing time for ' //trim(hdfname), advance='yes')
+      end if
+      
+      if ( DEEBUG ) then
+        print *, 'Num permitted to ', trim(thisDirect%FileNameBase), ' ', NumPermitted
+        print *, 'Num actually output ', NumOutput
+      end if
+      if ( NumPermitted < 1 ) then
+        if ( parallel%slave) then
+          call Announce_Error ( son, no_error_code, &
+            & "NumPermitted=0", penalty=0 )
+          call MLSL2Message ( MLSMSG_Warning, ModuleName, &
+            & 'No sources permitted for writing to  ' // trim(thisDirect%FileNameBase) )
+          call FinishedDirectWrite ( ticket )
+        else
+          ! But did we claim we were created this file? If so, decrement
+          if ( createFileFlag ) noCreatedFiles = noCreatedFiles - 1
+          if ( DEEBUG ) then
+            print *, 'No sources written to ', trim(thisDirect%FileNameBase)
+            print *, 'FileAccess ', DirectFile%Access
+            print *, 'hdfVersion ', DirectFile%hdfVersion
+            print *, 'createFileFlag ', createFileFlag
+            print *, 'noCreatedFiles ', noCreatedFiles
+          end if
+        end if
+      end if
+
+        ! Don't forget to close file
+  end subroutine DWQty
+
+  ! ---------------------------------------------  Announce_Error  -----
+  subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, FIELDINDEX, Penalty )
+
+    use Intrinsic, only: Field_Indices
+    use Lexer_Core, only: Print_Source
+    use Output_M, only: Output
+    use String_Table, only: Display_String
+    use Tree, only: Where_At => Where
+
+    integer, intent(in) :: where   ! Tree node where error was noticed
+    integer, intent(in) :: CODE    ! Code for error message
+    integer, intent(in), optional :: FIELDINDEX ! Extra information for msg
+    character (LEN=*), intent(in), optional :: ExtraMessage
+
+    integer, intent(in), optional :: Penalty
+    integer :: myPenalty
+
+    myPenalty = 1
+    if ( present(penalty) ) myPenalty = penalty
+    error = max( error, myPenalty )
+
+    call output ( '***** At ' )
+    if ( where > 0 ) then
+      call print_source ( where_at(where) )
+    else
+      call output ( '(no lcf tree available)' )
+    end if
+    call output ( ': ' )
+    select case ( code )
+      case ( NotAllowed )
+        call output( 'Field ' )
+        call display_string( field_indices(fieldIndex) )
+        call output( ' is not allowed in this context',advance='yes' )
+      case default
+        call output ( " command caused an unrecognized programming error", advance='yes' )
+    end select
+    if ( present(ExtraMessage) ) then
+      call output( ExtraMessage, advance='yes' )
+    end if
+  end subroutine ANNOUNCE_ERROR
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module JoinUtils_1
+
+!
+! $Log$
+! Revision 2.6  2021/09/02 22:50:33  pwagner
+! -Sprofiled prints MAF data in addition to profiles
+!
+! Revision 2.5  2020/02/07 01:13:14  pwagner
+! Restores writing metadata for Cloud file
+!
+! Revision 2.4  2018/08/17 21:36:44  pwagner
+! Initialize timeSetup in case there were no datasets
+!
+! Revision 2.3  2018/07/27 23:18:48  pwagner
+! Renamed level 2-savvy MLSMessage MLSL2Message
+!
+! Revision 2.2  2018/04/13 00:20:12  pwagner
+! Plain hdf DirectWrites and -Reads are now 'auto'
+!
+! Revision 2.1  2018/01/12 00:20:25  pwagner
+! First commit
+!

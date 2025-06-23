@@ -1,0 +1,45 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+!   subroutine RemoveFill* ( array, FillValue, newArray, second, newSecond )
+!     real(r8), dimension(:), intent(inout) :: array
+!     real(r8), intent(in) :: FillValue
+!     real(r8), dimension(:) :: newArray
+!     real(r8), dimension(:), optional, intent(in) :: second
+!     real(r8), dimension(:), optional :: newSecond
+!     !
+!     ! Local variables
+      integer :: i, k
+      integer :: num ! How many are non-fill
+      ! Executable
+      num = count ( .not. isFillValue( array, FillValue ) )
+      if ( num < 1 ) return
+      k = 0
+      do i=1, size(array)
+        if ( isFillValue( array(i), FillValue) ) cycle
+        k = k + 1
+        newArray(k) = array(i)
+      enddo
+      if ( .not. present(second) .or. .not. present(newSecond) ) return
+      ! Do the same for a second, optional array
+      k = 0
+      do i=1, size(array)
+        if ( isFillValue( array(i), FillValue) ) cycle
+        k = k + 1
+        newSecond(k) = second(i)
+      enddo
+! end subroutine RemoveFill*
+
+! $Log$
+! Revision 1.1  2006/02/01 23:42:57  pwagner
+! First commit
+!

@@ -1,0 +1,305 @@
+# "$Id$"
+
+# Path to source files:
+S = ..
+
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../..
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = $(CONFDIR)/srclib
+
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
+
+dir2 =
+
+MODPATHS = $(dir1) $(blaslib)
+
+UTILDIR=$(CONFDIR)/util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to prefix any unprefixed preset paths
+REECHO=$(UTILDIR)/reecho.sh
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.mod ./
+vpath %.o ./
+vpath %.f90 ../ $(srclib)
+vpath %.f9h ../ $(srclib)
+vpath %.f ../
+vpath %.c ../
+
+include $(srclib)/$(MLSF95).$(MLSPLAT)
+# All the paths to supply .mod and INCLUDE files used in compiling %.f90
+# Precede each path by "-I "
+INC_PATHS := $(EXTRA_PATHS) \
+  $(shell ${REECHO} ${PATH_OPTS} \
+  $(UNPREFXDPTHS) $(MODPATHS) $(PGSINC) $(srclib) $S)
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90 .f .c
+.f90.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+
+.f.o:
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+
+.c.o:
+	$(CC) -c $(COPTS) ${INC_PATHS} -DNAGf90Fortran $<
+
+mlsl3d: MLSL3D.o
+
+short_name=l3
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+include Makefile.dep
+
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+include ../../customblds/$(MLSF95).$(MLSPLAT)
+STATIC_LINK := $(shell echo $(LDOPTS) | grep -e "-static")
+
+# where which_fftw.sh is stored
+#UTILDIR=../../util
+
+MARKING_ARG=-f$(MARK_ALL_AS_UPTODATE) -s$(SKIP_PREREQ_DIRS)
+
+# ========================================================================
+# An automatically constructed Makefile
+# This file was built by mlsconfigure
+# by catenating three files:
+# (1) .configure -- a file of mls settings: compiler, platform, etc.
+# (2) common     -- a file of macros specific for this directory, e.g. paths
+#                   these might be compiler switches, 
+# (3) targets    -- a file of targets with instructions how to build them
+#                    (except for .f90.o rules which are still in MLSCONFG)
+
+# Other files referred to by means of "include" statements:
+#   srclib/$(MLSF95).$(MLSPLAT) -- macros specific for the 
+#         compiler.platform combo; e.g., NAG.Sun
+#   Makefile.dep -- dependencies among the primary Fortran modules
+#   srclib/Makefile.dep -- dependencies among the shared Fortran modules
+#   srclib/targets.h -- linker lines whenever building an executable
+
+# ========================================================================
+#       The objects for the shared source files (in srclib)
+# Include their dependencies
+include $(srclib)/Makefile.dep
+
+# Add them to L3OBJS
+ALLOBJS = $(OBJS) $(srclib_objs)
+
+l3_driver = MLSL3D.o
+
+include $(srclib)/targets.h
+# ========================================================================
+#libmlsl3.a: $(ALLOBJS) $(libdir)/libmls.a
+libmlsl3.a: $(ALLOBJS)
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
+		fi
+	ar ru $@ $?; \
+   if [ "`ar -t libmlsl3.a | grep -i $(l3_driver)`" != "" ]; then \
+	ar d $@ $(l3_driver) ; \
+   fi
+
+#mlsl3d: libmlsl3.a $(CONFDIR)/$(MLSCFILE) $(MODULES) $(libdir)/libmls.a
+mlsl3d: $(ALLOBJS) $(CONFDIR)/$(MLSCFILE) $(MODULES) $(libdir)/libmls.a
+	   ar ru libmlsl3.a $(ALLOBJS); \
+      if [ "`ar -t libmlsl3.a | grep -i $(l3_driver)`" != "" ]; then \
+	   ar d libmlsl3.a $(l3_driver) ; \
+      fi
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
+		fi
+		@echo "$(pvm_message)"
+		@echo "$(blas_message)"
+		@echo "$(lapack_message)"
+		@echo "$(hdf5_message)"
+		@echo "$(mlspack_message)"
+		@cat fftw_link_message
+	$(FC) $(LDOPTS) -o mlsl3d $(l3_driver) \
+   -L./ -lmlsl3 \
+   -L${libdir} -lmls \
+        $(utctotai_linker_line) \
+	-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+        $(hdfeos5_linker_line) \
+        $(hdf5_linker_line) \
+	-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg -lsz \
+	-L${GCTP} -lGctp \
+        $(pvm_linker_line) \
+        $(blas_linker_line) \
+        $(lapack_linker_line) \
+        $(mlspack_linker_line) \
+        $(fftw_linker_line) \
+        $(l_specials) $(LAFTER) \
+
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod mlsl3d
+
+mark_all_as_uptodate:
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -T mlsl3d -M $(MAKE) $(MARKING_ARG) -v \
+       $(libdir) ; \
+		fi
+
+tar:
+	rm -f l3.tgz
+	tar hcvzf l3.tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3d
+
+# ========================================================================
+# $Log$
+# Revision 1.38  2010/08/27 20:57:16  pwagner
+# Uses optional HDF*INC Makefile variables
+#
+# Revision 1.37  2009/07/17 20:27:32  pwagner
+# Added COPTS as cc options
+#
+# Revision 1.36  2007/05/29 17:42:18  pwagner
+# compiler-specific settings now in srclib, not platforms
+#
+# Revision 1.35  2006/06/15 19:31:35  pwagner
+# Now links szlib; comtaible with toolkit 5.2.14.A
+#
+# Revision 1.34  2005/08/17 17:45:05  pwagner
+# Moved more definitions to srclib/targets.h
+#
+# Revision 1.33  2005/03/04 19:13:31  pwagner
+# Utilizes targets.h from srclib
+#
+# Revision 1.32  2004/03/17 19:06:57  pwagner
+# Extra static object to fix building static Lahey executables when Red Hat>8
+#
+# Revision 1.31  2003/06/23 22:51:16  pwagner
+# Some fixes (I hope) to the prob of compiling in l3 twice from l3m
+#
+# Revision 1.30  2003/02/28 17:44:23  pwagner
+# Links utctotai library
+#
+# Revision 1.29  2002/10/03 23:07:45  pwagner
+# l_specials for Lahey depend on gcc_version
+#
+# Revision 1.28  2002/09/04 18:10:22  pwagner
+# LIB_BLAS may be multiple libraries (e.g., f77blas atlas)
+#
+# Revision 1.27  2002/09/03 17:42:00  pwagner
+# Checks before attempting to remove l3_driver from lib
+#
+# Revision 1.26  2002/08/29 23:54:59  pwagner
+# l_specials set to special value for Lahey
+#
+# Revision 1.25  2002/08/22 23:33:59  pwagner
+# Made ready for hdf5
+#
+# Revision 1.24  2002/07/09 17:12:13  pwagner
+# Fixed embedded archive problem
+#
+# Revision 1.23  2002/07/01 17:32:22  pwagner
+# No longer compiles some sources twice
+#
+# Revision 1.22  2002/06/21 00:16:43  pwagner
+# Enroute to ending cascading recompiles
+#
+# Revision 1.21  2002/05/10 20:30:39  pwagner
+# Can build executable if HDFVERSIONS set
+#
+# Revision 1.20  2002/05/02 22:35:17  pwagner
+# NOCASCADE setting in place; forestalls unwanted recompilations
+#
+# Revision 1.19  2002/04/18 20:56:07  pwagner
+# .configure now a prerequisite for executable
+#
+# Revision 1.18  2001/11/26 18:41:37  pwagner
+# Added custom build for L3DMDiag.f90
+#
+# Revision 1.17  2001/11/07 01:14:30  pwagner
+# lapack message refers to this case, not mlsl2
+#
+# Revision 1.16  2001/11/07 00:31:44  pwagner
+# Added lapack linker line and msg
+#
+# Revision 1.15  2001/10/09 20:52:51  pwagner
+# Uses which_fftw to pick fftw libraries
+#
+# Revision 1.14  2001/09/10 18:45:45  pwagner
+# Made custom builds use INC_PATHS
+#
+# Revision 1.13  2001/07/19 22:48:52  pwagner
+# Builds libmlsl3.a; renamed prog to mlsl3d
+#
+# Revision 1.12  2001/07/16 18:00:21  pwagner
+# Builds correctly with hdf5 on new and older Linux
+#
+# Revision 1.11  2001/06/04 22:00:28  pwagner
+# Extra shared-object instructions on hdf5 linker line
+#
+# Revision 1.10  2001/05/25 22:29:10  pwagner
+# Conditionally links with hdf5
+#
+# Revision 1.9  2001/03/12 23:57:47  pwagner
+# New FAFTER, LAFTER flags to postprocess compile & link steps
+#
+# Revision 1.8  2001/02/27 21:25:41  pwagner
+# Now link requires FFTW
+#
+# Revision 1.7  2001/02/22 18:08:11  pwagner
+# Includes L3DZData.f90
+#
+# Revision 1.6  2001/02/08 23:22:14  pwagner
+# variable_linker_line tied to PVM and BLAS
+#
+# Revision 1.5  2001/02/05 19:37:37  pwagner
+# LDOPTS added to load statements
+#
+# Revision 1.4  2001/01/23 23:27:38  pwagner
+# With optional PVM support
+#
+# Revision 1.3  2000/11/17 23:48:45  pwagner
+# Now links on sun (pencil)
+#
+# Revision 1.2  2000/11/16 18:29:00  pwagner
+# L2Interface.f90 needs dusty
+#
+# Revision 1.1  2000/11/15 18:03:57  pwagner
+# First commit
+#
+#

@@ -1,0 +1,218 @@
+!define(isotopicMolecules,{BR_79_O, BR_81_O, CH3CH2CN, CH3CH2OH, CH3CL_35, CH3CL_37, CH3CN, CH3CN_V8, CH3COCH3, CH3OH, CH3OOH, CL_35_O, CL_35_O_V1, CL_37_O, CL_35_OOCL_35, CL_35_OOCL_37, CLOUD_A, CLOUD_S, CO, C_13_O, CO_18, COF2, H2CO, H2O, H2O_V2, H2O_17, HDO, H2O2, H2S_32_O4, HCN, HCN_V2, HC_13_N, HCN_15, HNO3, HNO3_V5, HNO3_V6, HNO3_V7, HNO3_V8, HNO3_V9, HN_15_O3, HO_18_NO2, HONO_18_O, HONOO_18, HO2, HOCL_35, HONO, HOONO, HOONO2, N2, N2O, N2O_V1, N2O_V2, N2O_2V2, N_15_NO, NN_15_O, N2O_18, NO, NO2, O2, O_17_O, O_18_O, O3, O3_V1_3, O3_V2, O3_2V2, O3_V1_3_V2, O3_ASYM_O_17, O3_SYM_O_17, O3_ASYM_O_18, O3_ASYM_O_18_V2, O3_SYM_O_18, O3_SYM_O_18_V2, OCL_35_O, OCS_32, OCS_34, SNGLT_DLTA_O2, S_32_O2, S_32_O2_V2, S_33_O2, S_34_O2, S_32_O_18_O})
+!define(pfaMolecules,     {BR_79_O, BR_81_O, CH3CH2CN, CH3CH2OH, CH3CL_35, CH3CL_37, CH3CN, CH3CN_V8, CH3COCH3, CH3OH, CH3OOH, CL_35_O, CL_35_O_V1, CL_37_O, CL_35_OOCL_35, CL_35_OOCL_37, CLOUD_A, CLOUD_S, CO, C_13_O, CO_18, COF2, H2CO, H2O, H2O_V2, H2O_17, HDO, H2O2, H2S_32_O4, HCN, HCN_V2, HC_13_N, HCN_15, HNO3, HNO3_V5, HNO3_V6, HNO3_V7, HNO3_V8, HNO3_V9, HN_15_O3, HO_18_NO2, HONO_18_O, HONOO_18, HO2, HOCL_35, HONO, HOONO, HOONO2, N2, N2O, N2O_V1, N2O_V2, N2O_2V2, N_15_NO, NN_15_O, N2O_18, NO, NO2,     O_17_O, O_18_O, O3, O3_V1_3, O3_V2, O3_2V2, O3_V1_3_V2, O3_ASYM_O_17, O3_SYM_O_17, O3_ASYM_O_18, O3_ASYM_O_18_V2, O3_SYM_O_18, O3_SYM_O_18_V2, OCL_35_O, OCS_32, OCS_34, SNGLT_DLTA_O2, S_32_O2, S_32_O2_V2, S_33_O2, S_34_O2, S_32_O_18_O})
+
+begin Construct
+
+  ;; ----------------------------------------- Macros
+
+  ;; Define all the molecules we'll consider.  Note that this is only
+  ;; non-isotopic species (at least for the moment).
+  !define(allLogMolecules,{H2O})
+  !define(instrumentMolecules,{!tidyList(!moleculeFamiliesForInstrument)})
+  !define(allLinearMoleculesList,{!removeItem(!list2pct(!allLogMolecules),!instrumentMolecules)})
+  ;; Now print them as defined above
+  !define(allLinearMolecules,{!tidyList(!allLinearMoleculesList)})
+  ;; Most users can pretty much ignore the stuff below here.
+  ;; (And much of the stuff above really!)
+
+  ;; ----------------------------------------- Derived macros
+
+  ;; These are macros derived from above
+  !define(allMolecules,{!allLinearMolecules, !allLogMolecules})
+
+  ;; ----------------------------------------- Tangent pressures and phis
+
+  ptan: Quantity, type=ptan, module=GHz
+  phitan: Quantity, type=phitan, module=GHz
+
+  ;; ----------------------------------------- Temperature / refgph
+
+  temperature: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
+  GPH: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=GPH
+  refGPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=refGPH
+  
+  ;; ----------------------------------------- Volume mixing ratios
+
+  ;; We'll make extensive use of m4 macros here.
+  ;; First macros that define individual molecules.
+  !define(constructLinearVMR,{$1: Quantity, vGrid=vGridStandard, $
+    hGrid=hGridStandard, type=vmr, molecule=$1!nl})
+  !define(constructLogVMR,{$1: Quantity, vGrid=vGridStandard, $
+    hGrid=hGridStandard, type=vmr, molecule=$1, /logBasis, minValue=0.1 ppmv!nl})
+
+  ;; Define the 'standard' vmrs
+  !forall( {constructLinearVMR}, !allLinearMolecules )
+  !forall( {constructLogVMR}, !allLogMolecules )
+
+  ;; ----------------------------------------- RHI
+  rhi: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=rhi, $
+    molecule=h2o
+
+  ;; ----------------------------------------- Baselines
+  !define(constructMAFBaseline,{baselineMAF$1: Quantity, type=baseline, $
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridMAFBaseline, fGrid=fGridStandard})
+    
+    !forall(constructMAFBaseline, !allRadiometers )
+  !define(allMAFBaselines, {!makelist({baselineMAF},{},!allRadiometers)})
+ 
+  ;; ----------------------------------------- Extinctions
+
+  !define(constructExtinction,{!dnl
+  extinction$1: Quantity, type=vmr, molecule=extinction, $
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridStandard!nl
+  extinctionv2$1: Quantity, type=vmr, molecule=extinctionv2, $
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridStandard!nl})
+
+  !forall(constructExtinction, !allRadiometers)
+  !define(allExtinctions,{!makelist({extinction},{},!allRadiometers),!makelist({extinctionv2},{},!allRadiometers)})
+
+  ;; ----------------------------------------- Isotope ratios
+  
+  !define(constructIsotopeRatio,{isotoperatio$1: Quantity, type=isotopeRatio, $
+    molecule=$1!nl})
+    
+  ;; Note! Do not put a space before the close parentheses here
+  ;; otherwise it will end up before the _ratio on the last molecule
+  !forall(constructIsotopeRatio,!isotopicMolecules)
+  !define(allIsotopeRatios,{!makelist({isotoperatio},{},!isotopicMolecules)})
+
+  ;; ----------------------------------------- Radiances
+
+  !define(constructRadiance,{band$1: Quantity, type=radiance, signal=!signal($1)!nl})
+
+  ;; Folded
+  !forall(constructRadiance,!allBands)
+
+  ;; Split
+  !forall(constructRadiance,!allBandLSBs)
+  !forall(constructRadiance,!allBandUSBs)
+
+  ;; All
+  !define(allFoldedRadiances, {!makelist({band},{},!allBands)})
+  !define(allLSBRadiances, {!makelist({band},{},!allBandLSBs)})
+  !define(allUSBRadiances, {!makelist({band},{},!allBandUSBs)})
+  !define(allUnfoldedRadiances,{!allLSBRadiances, !allUSBRadiances})
+
+  ;; ----------------------------------------- Sideband fractions
+
+  !define(constructSidebandFractions, {!dnl
+  limbSidebandFraction$1: Quantity, type=limbSidebandFraction, signal=!signal($1)
+  calSidebandFraction$1: Quantity, type=calSidebandFraction, signal=!signal($1)!nl})
+  
+  ;; These are all split now
+  !forall(constructSidebandFractions,!allBandLSBs)
+  !forall(constructSidebandFractions,!allBandUSBs)
+
+  ;; All
+  !define(allSidebandFractions, {!dnl
+    !makelist({limbSidebandFraction},{},!allBandLSBs), !dnl
+    !makelist({calSidebandFraction},{},!allBandLSBs), !dnl
+    !makelist({limbSidebandFraction},{},!allBandUSBs), !dnl
+    !makelist({calSidebandFraction},{},!allBandUSBs)})
+
+  ;; ----------------------------------------- System temperatures
+
+  !ifdef(flagSkipSysTemp,{},
+  {!dnl
+  !define(constructSystemTemperature, {systemTemperature$1: Quantity, $
+    type=systemTemperature, signal=!signal($1)!nl})
+  
+  !forall(constructSystemTemperature,!allBands)
+
+  !forall(constructSystemTemperature,!allBandLSBs)
+  !forall(constructSystemTemperature,!allBandUSBs)
+
+  ;; All
+  !define(allFoldedSystemTemperatures, {!makelist({systemTemperature},{},!allBands)})
+  !define(allLSBSystemTemperatures, {!makelist({systemTemperature},{},!allBandLSBs)})
+  !define(allUSBSystemTemperatures, {!makelist({systemTemperature},{},!allBandUSBs)})
+  !define(allUnfoldedSystemTemperatures, {!allLSBSystemTemperatures, $
+    !allUSBSystemTemperatures})
+  })
+
+  ;; ----------------------------------------- Noise bandwidths
+
+  !ifdef(flagSkipSysTemp,{},
+  {!dnl
+  !define(constructNoiseBandwidth, {noiseBandwidth$1: Quantity, $
+    type=noiseBandwidth, signal=!signal($1)!nl})
+  
+  !forall(constructNoiseBandwidth,!allBands)
+
+  !forall(constructNoiseBandwidth,!allBandLSBs)
+  !forall(constructNoiseBandwidth,!allBandUSBs)
+
+  ;; All
+  !define(allFoldedNoiseBandwidths, {!makelist({noiseBandwidth},{},!allBands)})
+  !define(allLSBNoiseBandwidths, {!makelist({noiseBandwidth},{},!allBandLSBs)})
+  !define(allUSBNoiseBandwidths, {!makelist({noiseBandwidth},{},!allBandUSBs)})
+  !define(allUnfoldedNoiseBandwidths, {!allLSBNoiseBandwidths, !allUSBNoiseBandwidths})
+  })
+
+  ;; ----------------------------------------- Scan residuals
+
+  scanResidual: Quantity, type=scanResidual, module=GHz
+
+  ;; ----------------------------------------- Elevation offsets
+
+  !define(constructElev,{elev$1: Quantity, type=elevOffset, signal=!signal($1)!nl})
+  !forall(constructElev,!allBandLSBs,!allBandUSBs)
+  !define(allElevs, {!makelist({elev},{},!allBandLSBs,!allBandUSBs)})
+
+
+  ;; ----------------------------------------- Other minor stuff
+
+  earthReflectivity: quantity, type=earthRefl
+  orbitInclination: Quantity, type=orbitInclination, module=SC
+  spaceRadiance: quantity, type=spaceRadiance
+
+  scGeocAlt: Quantity, type=scGeocAlt, module=SC
+  tngtGeocAlt: Quantity, type=tngtGeocAlt, module=GHz
+
+  losVel: quantity, type=losVel, module=GHz
+
+  !define(lesserState, {earthReflectivity, orbitInclination, spaceRadiance, $
+    scGeocAlt, tngtGeocAlt, losVel})
+
+  ;; ------------------------------------------- Now define vector templates
+
+  ;; The first set are for use with special lesser state fills.
+  ElevOffsetTemplate: VectorTemplate, quantities= [$
+    !allElevs ]
+  IsotopeRatioTemplate: VectorTemplate, quantities= [$
+    !allIsotopeRatios ]
+  MiscTemplate: VectorTemplate, quantities= [$
+    earthReflectivity, spaceRadiance ]
+  SBFTemplate: VectorTemplate, quantities= [$
+    !allSidebandFractions ]
+  !ifdef(flagSkipSysTemp,{},
+  {!dnl
+  NoiseBandwidthTemplate: VectorTemplate, quantities= [$
+    !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths ]
+  SystemTemperatureTemplate: VectorTemplate, quantities= [$
+    !allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures ]
+  })
+
+  ;; Now the big enchilada
+  stateTemplate: VectorTemplate, quantities = [ $
+    ptan, phitan, $
+    temperature, $
+    refGPH, GPH, $
+    !allMolecules, $
+    !allMAFBaselines, $
+    !allExtinctions, $
+    !allIsotopeRatios, $
+    !allSidebandFractions, $
+    !ifdef(flagSkipSysTemp,{},{!allFoldedSystemTemperatures, !allUnfoldedSystemTemperatures, $
+    !allFoldedNoiseBandwidths, !allUnfoldedNoiseBandwidths,}) !allElevs, $
+    !lesserState ]
+
+  !ifdef(flagUnfolded,{
+  measurementTemplate: VectorTemplate, quantities = [ $
+    !allFoldedRadiances, !allUnfoldedRadiances, scanResidual ]
+  },{
+  measurementTemplate: VectorTemplate, quantities = [ $
+    !allFoldedRadiances, scanResidual ]
+  })
+    
+end Construct

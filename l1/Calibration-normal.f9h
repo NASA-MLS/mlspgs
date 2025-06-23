@@ -1,0 +1,6 @@
+
+  !! Use for `normal' L1 runs with WinMAFs=10
+  INTEGER, PARAMETER :: WinMAFs = 6     ! window size in MAFs for normal L1 run
+  INTEGER, PARAMETER :: max_cal_index = WinMAFs * 150 - 1
+
+

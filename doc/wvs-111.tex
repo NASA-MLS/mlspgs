@@ -1,0 +1,148 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.1in
+
+\newcommand{\docname}{wvs-111r1}
+\newcommand{\docdate}{5 November 2018}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\Delta B}
+\newcommand{\oDB}{\overline{\DB}}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\hMT}{\MT^s}
+\newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Paul, Alyn, Van\\
+Subject: \>Effect of minimum value of $\lambda$ on convergence\\
+From: \>Van Snyder\\
+Reference: \> \h{wvs-035}, \h{wvs-110}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+Some phases of some retrievals have significant convergence problems. 
+Below are shown plots of the logarithm of the residual (black), and the
+minimum norm expected for a linear model (red), for a retrieval of chunk
+56 of 2005d037, using three profiles per chunk with no overlap.  The
+retrieval was stopped after CorePlusR3; subsequent phases converged
+rapidly and gracefully.
+
+This plot shows the result if no minimum is put on the Levenberg-Marquardt
+stabilization parameter, $\lambda$:
+
+\includegraphics[scale=0.6,angle=270]{wvs-111-MinLambda=0}
+
+\newpage
+
+At Fred Krogh's suggestion, a facility was added to specify a minimum
+value for $\lambda$ on the {\tt retrieve} specification in the {\tt l2cf},
+using a {\tt lambdaMin} field.  This plot shows the result if the minimum
+value of $\lambda$ in InitUTH is set to 0.25, and the minimum value of
+$\lambda$ in CorePlusR3 is set to 0.5.  An experiment with a minimum value
+of 0.1 did not significantly improve CorePlusR3.
+
+\includegraphics[scale=0.6,angle=270]{wvs-111-MinLambda-not=0}
+
+In both cases, the values of {\tt maxJ} were 8 for InitPTAN, 10 for
+InitR2, 10 for FinalPTAN, 10 for InitRHI, 30 for InitUTH, and 20 for
+CorePlusR3.  The value for {\tt ftolerance} was 0.1 in all phases.
+
+There are several possible causes for the failure to converge gracefully
+in the first case.  One is that the constraints are not tight enough,
+allowing the state vector to enter regions where the forward model is not
+physically realistic.  Another is that the problem is strongly nonlinear. 
+In this case, ignoring Hessian information that would be used in a full
+Newton iteration (as described in \h{wvs-110} might produce undesirable
+Newton moves.  Another possibility is that the gradient moves do not have
+a useful length.  In 2006, Herb suggested a strategy to calculate a
+gradient move length.  This is described in \h{wvs-035}.
+
+Another is that the Jacobian is ill conditioned.  Forcing a minimum value
+for $\lambda$ improves the condition.
+
+An alternative to cope with ill conditioning is to factor the problem
+using Householder transformations, instead of forming normal equations,
+followed by Cholesky factorization.  The latter method, which is presently
+used, squares the condition number.  The former method requires about
+twice as much work as the latter method.  It is not presently supported by
+{\tt MatrixModule_0}, {\tt MatrixModule_1}, or {\tt RetrievalModule}.
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.1  2012/08/31 23:37:31  vsnyder
+% Original commit
+%

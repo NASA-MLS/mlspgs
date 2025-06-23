@@ -1,0 +1,260 @@
+\section{Reference}
+\label{sec:Reference}
+
+The reference section of this document mainly focuses on the data types
+(described in Section~\ref{sec:DataTypes}), and subroutines and
+functions (described in Section~\ref{sec:Procedures}) that constitute the
+CFM software.
+
+\subsection{A note on tables and strings}
+
+The MLSL2 software makes heavy use of tables to hold commonly referred
+to entities, such as strings, or entries in the `Level 2 Configuration
+File' (L2CF hereafter).  This is witnessed by the use of integers in
+most of the derived types below to hold items such as the name of a
+quantity template, the type of information it holds (temperature,
+composition etc.), the specific molecule for composition quantities, the
+specific signal for radiance quantities, etc.  However, the MLSCFM
+software presents string arguments to most of the routines supplied that
+relieves the calling code of having to be aware of the underlying
+tables.
+
+\subsection{Data types}
+\label{sec:DataTypes}
+
+\subsubsection{\snippet{HGrid\_T}}
+The \snippet{HGrid\_T} data type describes the `horizontal' coordinate
+system for a vector quantity template.  It is only used for `stacked'
+quantities.  Unstacked quantities (those where the different surfaces in
+an instance do not share the same geolocation) have their horizontal
+coordinate information stored in the quantity template itself.
+
+\lstinputlisting{hgridtype.f9h}
+
+\subsubsection{\snippet{VGrid\_T}}
+The \snippet{VGrid\_T} data type describes the `vertical' coordinate
+system for a vector quantity template.  It is only used for `coherent'
+quantities.  Incoherent quantities (those where the different instances
+do not share the same vertical levels) have their vertical coordinate
+information stored in the quantity template itself.
+
+\lstinputlisting{vgridtype.f9h}
+
+\subsubsection{\snippet{FGrid\_T}}
+The \snippet{FGrid\_T} data type describes the `frequency' coordinate
+system for vector quantities that require one. Examples of such quantities
+are \snippet{Baselines} and \snippet{Extinctions}.
+
+\lstinputlisting{fgridtype.f9h}
+
+\subsubsection{\snippet{QuantityTemplate\_T}}
+The \snippet{QuantityTemplate\_T} type is arguably the most important
+derived type in the MLSCFM software.  It lays out a collection of
+profiles (`instances') for a given quantity (temperature, composition,
+tangent pressure, radiance etc.).  See the discussion in
+Section~\ref{sec:QuantityTemplates} above.  Typically the geolocation
+information is a `shallow copy' (i.e., a pointer to) the source
+\snippet{HGrid\_T} and \snippet{VGrid\_T} information or, in the case of
+minor frame quantities, a minor frame geolocation repository.
+
+Note that this data type only describes the \emph{template} for a given
+quantity, not the individual values it takes in a given vector.  The
+latter are described in the \snippet{VectorValue_T}, below.
+
+\lstinputlisting{quantitytemplatetype.f9h}
+
+\subsubsection{\snippet{VectorValue\_T}}
+
+The \snippet{VectorValue\_T} type contains the individual values for a
+single quantity within a vector.  The \snippet{mask} bitfield contains
+element by element flags intended for internal use by the MLSL2
+software.\footnote{Among the bits in \snippet{mask}, one indicates, on
+  an element by element basis, whether Jacobian computations are
+  desired.  Documentation on this can be added should this element by
+  element granularity be required.}
+
+\lstinputlisting{vectorvaluetype.f9h}
+
+\subsubsection{\snippet{Vector\_T}}
+
+The \snippet{Vector\_T} describes one instantiation (i.e., collection of
+values) for a vector with a given template.
+
+\lstinputlisting{vectortype.f9h}
+
+\subsubsection{\snippet{MatrixElement\_T}}
+
+A \snippet{MatrixElement\_T} type describes one block of a matrix (see
+the discussion in Section~\ref{sec:Matrices}).  Matrix blocks can be
+`absent', `banded', `column sparse', `full', or, occasionally `unknown',
+as described in the comments below.
+
+\lstinputlisting{matrixelementtype.f9h}
+
+\subsubsection{\snippet{RC\_Info}}
+
+The \snippet{RC\_Info} data type describes the rows or columns of a
+matrix.  In addition to citing the vector that describes the rows or
+columns, the ordering of the subblocks within the matrix is also
+defined.
+
+\lstinputlisting{rcinfotype.f9h}
+
+\subsubsection{\snippet{Matrix\_T}}
+
+This type describes a \snippet{Matrix_1} entity -- a collection of
+\snippet{Matrix_0} blocks, along with information describing the rows
+and columns.
+
+\lstinputlisting{matrixtype.f9h}
+
+\subsection{Subroutines and functions}
+\label{sec:Procedures}
+
+This subsection describes the main routines it is anticipated a user of
+the CFM software will need to invoke.  They are presented in
+alphabetical order.  The example given in Appendix~\ref{app:Example}
+illustrates their invocation and logical flow.
+
+\subsubsection{\snippet{AddFileToDatabase}}
+\lstinputlisting{addfile-interface.f9h}
+
+\subsubsection{\snippet{AddQuantityTemplateToDatabase}}
+\lstinputlisting{addqtytemplate-interface.f9h}
+
+\subsubsection{\snippet{CFM\_MLSCleanup}}
+\lstinputlisting{cfm-mlscleanup-interface.f9h}
+
+\subsubsection{\snippet{CFM\_MLSSetup}}
+\lstinputlisting{cfm-mlssetup-interface.f9h}
+
+\subsubsection{\snippet{CreateFGrid}}
+\lstinputlisting{creatfgrid-interface.f9h}
+
+\subsubsection{\snippet{CreatePlainMatrix}}
+\lstinputlisting{creatplainmatrix-interface.f9h}
+
+\subsubsection{\snippet{CreateRegularHGrid}}
+\label{procedure:CreateRegularHGrid}
+This routine bears extra discussion.  It creates an \snippet{hGrid},
+i.e., a horizontal coordinate system for a given range of major frames.  
+The grid is spaced by \snippet{spacing} degrees great circle angle, 
+and aligned such that, were it to encompass a whole orbit, one of the 
+profiles would be at angle \snippet{origin}.  The 
+\snippet{insetOverlaps} argument indicates whether the range of this 
+\snippet{hGrid} should be forced to be narrower than the span of the 
+major frames.
+
+\lstinputlisting{creathgrid-interface.f9h}
+
+\subsubsection{\snippet{CreateQuantityTemplate}}
+\lstinputlisting{creatqtytemplate-interface.f9h}
+
+\subsubsection{\snippet{CreateVector}}
+\lstinputlisting{creatvector-interface.f9h}
+
+\subsubsection{\snippet{CreateVGrid}}
+\lstinputlisting{creatvgrid-interface.f9h}
+
+\subsubsection{\snippet{Destroy\_Ant\_Patterns\_Database}}
+\lstinputlisting{destroy-antenna-interface.f9h}
+
+\subsubsection{\snippet{Destroy\_DACS\_Filter\_Database}}
+\lstinputlisting{destroy-DACS-interface.f9h}
+
+\subsubsection{\snippet{Destroy\_Filter\_Shapes\_Database}}
+\lstinputlisting{destroy-filter-interface.f9h}
+
+\subsubsection{\snippet{Destroy\_Line\_Database}}
+\lstinputlisting{destroy-line-interface.f9h}
+
+\subsubsection{\snippet{Destroy\_PFADataBase}}
+\lstinputlisting{destroy-pfa-interface.f9h}
+
+\subsubsection{\snippet{Destroy\_Pointing\_Grid\_Database}}
+\lstinputlisting{destroy-ptnggrid-interface.f9h}
+
+\subsubsection{\snippet{Destroy\_SpectCat\_Database}}
+\lstinputlisting{destroy-speccat-interface.f9h}
+
+\subsubsection{\snippet{DestroyHGridContents}}
+\lstinputlisting{destroy-hgrid-content-interface.f9h}
+
+\subsubsection{\snippet{DestroyL2PCDatabase}}
+\lstinputlisting{destroy-l2pc-interface.f9h}
+
+\subsubsection{\snippet{DestroyQuantityTemplateDatabase}}
+\lstinputlisting{destroy-qtytemplate-db-interface.f9h}
+
+\subsubsection{\snippet{DestroyVectorInfo}}
+\lstinputlisting{destroy-vector-info-interface.f9h}
+
+\subsubsection{\snippet{DestroyVGridContents}}
+\lstinputlisting{destroy-vgrid-content-interface.f9h}
+
+\subsubsection{\snippet{Dump}}
+\lstinputlisting{dump-interface.f9h}
+
+\subsubsection{\snippet{ExplicitFillVectorQuantity}}
+\lstinputlisting{explicit-fill-interface.f9h}
+
+\subsubsection{\snippet{FillPhitanQuantity}}
+\lstinputlisting{fill-phitan-quantity-interface.f9h}
+
+\subsubsection{\snippet{FillPtanQuantity}}
+\lstinputlisting{fill-ptan-qty-interface.f9h}
+
+\subsubsection{\snippet{FillVectorQuantityFromL1B}}
+\lstinputlisting{l1b-fill-interface.f9h}
+
+\subsubsection{\snippet{ForwardModel}}
+\lstinputlisting{forwardmodel-interface.f9h}
+
+\subsubsection{\snippet{GetVectorQtyByTemplateIndex}}
+\lstinputlisting{get-vector-qty-interface.f9h}
+
+\subsubsection{\snippet{InitializeMLSFile}}
+\lstinputlisting{initmlsfile-interface.f9h}
+
+\subsubsection{\snippet{InitQuantityTemplates}}
+\lstinputlisting{init-qtytemplate-interface.f9h}
+
+\subsubsection{\snippet{mls\_CloseFile}}
+\lstinputlisting{mlsclosefile-interface.f9h}
+
+\subsubsection{\snippet{mls\_openFile}}
+\lstinputlisting{mlsopenfile-interface.f9h}
+
+\subsubsection{\snippet{ReadAntennaPatterns}}
+\lstinputlisting{read-antenna-interface.f9h}
+
+\subsubsection{\snippet{ReadDACSFilterShapes}}
+\lstinputlisting{read-DACS-interface.f9h}
+
+\subsubsection{\snippet{ReadFilterShapes}}
+\lstinputlisting{read-filter-interface.f9h}
+
+\subsubsection{\snippet{ReadHDF5L2PC}}
+\lstinputlisting{read-l2pc-interface.f9h}
+
+\subsubsection{\snippet{ReadPFAFile}}
+\lstinputlisting{read-pfa-interface.f9h}
+
+\subsubsection{\snippet{ReadPointingGrids}}
+\lstinputlisting{read-ptnggrid-interface.f9h}
+
+\subsubsection{\snippet{Read\_Spectroscopy}}
+\lstinputlisting{read-spectroscopy-interface.f9h}
+
+\subsubsection{\snippet{SpreadFillVectorQuantity}}
+\lstinputlisting{spread-fill-interface.f9h}
+
+\subsection{Configuration File Format}
+
+\subsubsection{\snippet{Example}}
+\lstinputlisting{config.l2cf}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "cfm"
+%%% End: 

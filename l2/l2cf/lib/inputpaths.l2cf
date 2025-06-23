@@ -1,0 +1,20 @@
+#
+#The following m4isms merely enforce the defaults
+!define(thepcfpath,!ifelse(!pcfpath,!defn(pcfpath),!dnl
+{!pcfpath},{!INPATH}))
+!define(thel2cfpath,!ifelse(!l2cfpath,!defn(l2cfpath),!dnl
+{!l2cfpath},{!INPATH}))
+!define(thel1bradpath,!ifelse(!l1bradpath,!defn(l1bradpath),!dnl
+{!l1bradpath},{!INPATH}))
+!define(thel1boapath,!ifelse(!l1boapath,!defn(l1boapath),!dnl
+{!l1boapath},{!INPATH}))
+!define(thefwmpath,!ifelse(!fwmpath,!defn(fwmpath),!dnl
+{!fwmpath},{!INPATH}))
+!define(theclimpath,!ifelse(!climpath,!defn(climpath),!dnl
+{!climpath},{!INPATH}))
+!define(theMCFPATH,!ifelse(!MCFPATH,!defn(MCFPATH),!dnl
+{!MCFPATH},{!INPATH}))
+!define(thel2pcpath,!ifelse(!l2pcpath,!defn(l2pcpath),!dnl
+{!l2pcpath},{!INPATH}))
+!define(theaprioripath,!ifelse(!aprioripath,!defn(aprioripath),!dnl
+{!aprioripath},{!INPATH}))

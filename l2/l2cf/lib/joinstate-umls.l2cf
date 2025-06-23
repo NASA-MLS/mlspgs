@@ -1,0 +1,31 @@
+;; $Id$
+
+;; In the future the following may be moved to a separate l2cf fragment
+;; e.g., writephasetiming.l2cf
+!ifdef(flagAvoidDirectWrite,{},{
+begin Fill
+  timing: Vector, template=timingTemplate
+  Fill, quantity=timing.phaseTiming, method=phaseTiming
+  Fill, quantity=timing.sectionTiming, method=sectionTiming
+  Fill, quantity=timing.chunkNumMMAF,    method=geoLocation, manipulation='chunk'
+  Fill, quantity=timing.geodLatMMAF,     method=geoLocation, manipulation='geodlat'
+  Fill, quantity=timing.solarZenithMMAF, method=geoLocation, manipulation='solarzenith'
+  Fill, quantity=timing.profileNum, method=geoLocation, manipulation='profile', $
+        hGrid=hGridStandard
+end Fill
+
+begin Join
+  Label, quantity=timing.phaseTiming,     label='phase timing'
+  Label, quantity=timing.sectionTiming,   label='section timing'
+  Label, quantity=timing.chunkNumMMAF,    label='chunk number'
+  Label, quantity=timing.geodLatMMAF,     label='geod lat'
+  Label, quantity=timing.solarZenithMMAF, label='solar zenith'
+  Label, quantity=timing.profileNum,      label='nearest profile'
+  DirectWrite, hdfVersion=5, $
+  type=l2aux, $
+    source=timing.phaseTiming, source=timing.sectionTiming, $
+    source=timing.chunkNumMMAF, source=timing.geodLatMMAF, $
+    source=timing.solarZenithMMAF, source=timing.profileNum
+end Join
+})
+; $Log$

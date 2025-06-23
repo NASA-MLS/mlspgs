@@ -1,0 +1,523 @@
+\makeatletter\let\ifGm@compatii\relax\makeatother
+\documentclass[landscape]{beamer}
+\usepackage[nofancy,notoday]{rcsinfo}
+% \usepackage{pstcol,pst-plot,pst-char,pst-node}
+\usepackage{color}
+\usepackage[final]{epsfig}
+\usepackage{amsmath}
+
+\usepackage{graphicx}
+\usepackage[strings]{underscore}
+
+\renewcommand{\b}{\mathbf}
+\newcommand{\T}{^{T}}
+\newcommand{\cs}[1]{$_{\text{#1}}$}
+\newcommand{\inv}{^{\mathrm -1}}
+\newcommand{\cp}[1]{$^{\text{#1}}$}
+\newcommand{\degsym}{\ensuremath{^\circ}}
+\newcommand{\newframe}[2][]{\begin{frame}\frametitle{\hfill #2 \hfil}}
+
+\hypersetup{pdfborder={0 0 0}}
+%
+% -----------------------------------------------------------------------------
+%
+\title{Summary of Retriever}
+\subtitle{wvs-050r6}
+\author{Van Snyder}
+\date{13 November 2023} 
+\titlegraphic{\includegraphics[width=1.0in]{pinklogo}}
+\begin{document}
+\sloppy
+
+%
+% -----------------------------------------------------------------------------
+%
+\begin{frame}
+ \titlepage
+\end{frame}
+
+% \maketitle
+%
+% -----------------------------------------------------------------------------
+%
+\newframe{Nomenclature for next slides}
+\begin{itemize}
+\item $i$: MAF number
+\item $\b{C}$: Column scaling matrix
+\item $\b{y}_i-\b{\hat y}_i = -\b{f}_i$: (Measured radiances) - (calculated
+  radiances) for the $i^{\text{th}}$ MAF
+\item $\b{x}_n$: $n^{\text{th}}$: estimate of the state; $\delta\b{x} =
+  \b{x}_{n+1} - \b{x}_n$; $\delta\b{\tilde x} = \b{C}^{-1} \delta \b{x}$
+\item $\b{K}$: The entire matrix of the least-squares problem; $\b{\tilde K}
+  = \b{K C}$
+\item $\b{J}_i$: The Jacobian matrix of derivatives for the
+  $i^{\text{th}}$ MAF, $\frac{\partial \b{f}_i(\b{x}_n)}{\partial\b{x}_n}$
+\item $\b{F}$: Cholesky factor of $\b{S}_a^{-1}$ (a priori covariance),
+  i.e.\ $\b{F}^T\b{F} = \b{S}_a^{-1}$
+\item $\b{W}_i$: Weighting matrix for rows of $i^{\text{th}}$
+  MAF = Cholesky factor of $\b{S}_{{\epsilon}_i}^{-1}$ (measurement
+  covariance for the $i^{\text{th}}$ MAF), i.e.\ $\b{W}_i^T \b{W}_i =
+  \b{S}_{{\epsilon}_i}^{-1}$
+\item $\lambda$: Levenberg-Marquardt stabilization parameter
+\item $\b{R}$: Regularization matrix -- a difference operator
+\item $\mu_a$, $\mu_R$: Scalar ``intensity'' parameters
+\item $-\tilde{\b{f}}$: Entire right-hand-side vector of the least-squares
+  problem
+\end{itemize}
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Introduction to Newton iteration}
+For a scalar function, say $f$, of a scalar argument, say $x$, the Taylor series
+truncated to first order is
+\begin{equation}
+f(x) \approx f(x_0) + (x-x_0) f^{\,\prime}(x0)
+\end{equation}
+The Newton iteration for finding a zero of $f$ is gotten by setting $f(x)$
+to zero and solving for $x$.  It is usually written
+\begin{equation}
+  x_{n+1} = x_n - \frac{f(x_n)}{f^{\,\prime}(x_n)}\;,
+\end{equation}
+where $n$ is initially zero.  Rearranging terms, we have
+\begin{equation}\label{Newton}
+  f^{\,\prime}(x_n) ( x_{n+1} - x_n ) = f^\prime(x_n) \,\delta x = -
+  f(x_n)\;.
+\end{equation}
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Least-squares view of problem (1)}
+In the case of a vector function of a vector argument, the derivative
+$f^{\,\prime}(x_n)$ is replaced by the Jacobian matrix $\b{J} =
+\frac{\partial \b{f}(\b{x}_n)}{\partial \b{x}_n}$, so equation
+(\ref{Newton}) becomes $\b{J}\,\delta \b{x} = -\b{f}(\b{x}_n)$.
+
+When one has many more observations (values of $\b{f}$) than states for
+which to solve (values of $\b{x}_n$), one has a least-squares problem to
+solve at each iteration, instead of an equation.
+
+If the radiative transfer problem is strongly nonlinear, or the
+least-squares problem is poorly conditioned, or has a large residual, one
+needs to add extra constraints to make a solution tractable.
+
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Least-squares view of problem (2)}
+In broad outline, the least-squares problem to be solved in each Newton
+iteration consists of four parts:
+\begin{equation}\label{four}
+ \begin{split}
+   \b{W} \b{J} \delta \b{x}   &\simeq - \b{W} \b{f} \\
+   \b{F} \b{x}_{n+1}          &\simeq \b{F\, a} \\
+   \b{R} \b{x}_{n+1}          &\simeq 0 \\
+   \lambda \b{I} \delta \b{x} &\simeq 0
+  \end{split}
+\end{equation}
+\vspace*{-10pt}
+\begin{itemize}
+\item The first part is the basic Newton iteration, scaled by the Cholesky
+   factor of the inverse of the measurement covariance
+\item The second part is ``The solution should approximate the apriori
+   $\b{a}$, for which $\b{F}$ is the Cholesky factor of the inverse of its
+   covariance''
+\item The third part is ``The solution has a particular functional form''
+  (this is called \emph{Tikhonov regularization})
+\item The fourth part is ``The Jacobian is a good linear approximation on
+  a scale given by $\lambda^{-1}$'' (this is known as
+  \emph{Levenberg-Marquardt stabilization}).
+\end{itemize}
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Least-squares view of problem (3)}
+
+Equations (\ref{four}) are not all equations to solve for
+$\delta\b{x}$.  Re-writing the second and third relations, we have
+
+\begin{equation*}
+ \begin{split}
+   \b{W} \b{J}\, \delta \b{x}            &\simeq - \b{W} \b{f} \\
+   \b{F}\, \b{x}_{n+1} - \b{F}\, \b{x}_n &\simeq \b{F\, a} - \b{F}\, \b{x}_n \\
+   \b{R}\, \b{x}_{n+1} - \b{R}\, \b{x}_n &\simeq - \b{R}\, \b{x}_n \\
+   \lambda \b{I}\, \delta\, \b{x}        &\simeq 0
+  \end{split}
+\end{equation*}
+
+or
+
+\begin{equation*}
+\b{K} \delta  \b{x} =
+\left[ \begin{array}{l}
+  \b{W} \b{J} \\
+  \b{F} \\
+  \b{R} \\
+  \lambda \b{I}\\
+\end{array} \right] \delta \b{x}
+\simeq
+\left[
+\begin{array}{l}
+  - \b{W} \b{f} \\
+  \b{F}\, ( \b{a} - \b{x}_n) \\
+  - \b{R}\, \b{x}_n \\
+  0\\
+\end{array} \right] = -\tilde{\b{f}}
+\end{equation*}
+
+Putting these all together, weighting them, scaling, ... we have ...
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Least-squares view of problem (4)}
+
+The Newton iteration consists of evaluating $\b{K}$ and $\b{f}$ at
+$\b{x}_n$, solving $\b{\tilde K}\delta\b{ \tilde x} \simeq -\b{\tilde f}$
+to get $\b{x}_{n+1}$, and repeating until $|\b{f}|$ or $|\delta\b{x}|$ is
+``small enough.''  In detail:
+
+\begin{equation*}
+\b{\tilde K} \delta \b{\tilde x} = \b{K} \b{C} \; \b{C}^{-1} \delta\b{x} =
+ \left [ \begin{array}{c} \text{...} \\
+                          \b{W}_i \b{J}_i \\
+                          \text{...} \\
+                          \mu_a \b{F} \\
+                          \mu_R \b{R} \\
+                          \lambda \b{I}
+ \end{array} \right ]
+ \b{C} \; \b{C}^{-1} \delta\b{x} \simeq
+ \left [ \begin{array}{c} \text{...} \\
+                          \b{W}_i \, ( \b{y}_i - \b{\hat y}_i ) \\
+                          \text{...} \\
+                          \mu_a \b{F}\, ( \b{a} - \b{x}_n ) \\
+                          -\mu_R \b{R} \, \b{x}_n \\
+                          \b{0}
+ \end{array} \right ] = -\tilde{\b{f}}
+\end{equation*}
+
+where $\b{\tilde K} = \b{K\,C}$, $\delta \b{\tilde x} = \b{C}^{-1} \delta
+\b{x}$, and $\mu_a$ and $\mu_R$ are empirical diagonal matrix scale
+factors.
+
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Aside: Levenberg-Marquardt}
+
+The Levenberg-Marquardt stabilization parameter $\lambda$ is calculated
+using the method described by Jorge J. Mor\'e and Danny C. Sorensen in
+\emph{Computing a Trust Region Step}, {\bf Siam Journal on Scientific and
+Statistical Computing 4}, 3 (1983) pp 553--572, and {\bf Argonne National
+Laboratories ANL-81-83}.
+
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Least-squares view of problem (5)}
+After multiplying by $\b{\tilde K}^T$ to form normal equations, this becomes:
+\begin{equation*}
+\begin{split}
+%\begin{array}{ll}
+  \b{\tilde K}^T \b{\tilde K} \delta\b{\tilde x}
+   &= -\b{\tilde K}^T \tilde{\b{f}} =
+  \b{C}^T \b{K}^T \b{K} \b{C} \; \b{C}^{-1} \delta \b{x} = \\
+   &= \b{C}^T \left [ \Sigma_i \b{J}_i^T \b{S}_{{\epsilon}_i}^{-1} \b{J}_i +
+   \mu_a^2 \b{S}_a^{-1} + \mu_R^2 \b{R}^T \b{R} + \lambda^2 \b{I} \right ] \b{C} \,
+   \b{C}^{-1} \delta \b{x}= \\
+  &= -\b{C}^T \b{K}^T \tilde{\b{f}} =\\
+  &= \b{C}^T \left [ \Sigma_i \b{J}_i^T \b{S}_{{\epsilon}_i}^{-1}
+     (\b{y}_i-\b{\hat y}_i) + \mu_a^2 \b{S}_a^{-1} ( \b{a}-\b{x}_n ) -
+     \mu_R^2 \b{R}^T \b{R}\, \b{x}_n
+   \right ]
+\end{split}
+%\end{array}
+\end{equation*}
+where $\b{C}$ is chosen either to minimize the $\kappa_2$ condition number
+of $\b{\tilde K}^T \b{\tilde K}$ or to make the expected errors in
+$\delta\b{x}$ roughly the same.
+
+Finally
+
+\begin{equation*}
+\delta \b{x} = \b{C} \, \delta \b{\tilde x} \,.
+\end{equation*}
+
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe[Solving]{Solving the least-squares problem (1)}
+The retriever uses Cholesky factorization to solve the least-squares problem. 
+It has the advantages that it is guaranteed to produce an answer if the normal
+equations are non-singular, it doesn't need pivoting to maintain stability, and
+it is easy to take advantage of our sparsity pattern.  It has the disadvantage
+of needing to form the normal equations, which squares the condition
+number.
+%
+Alternatives are
+\begin{itemize}
+\item Preconditioned conjugate gradient, which has the advantage that it may
+  converge after a few matrix-vector multiplies, but has the disadvantages that
+  it may not converge at all if finite arithmetic is used, and calculating
+  the covariance matrix doubles the work.
+\end{itemize}
+
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe[Solving]{Solving the least-squares problem (2)}
+\begin{itemize}
+\item Householder triangularization, which has the advantages that it works
+  directly on the least-squares problem (i.e.\ doesn't need to form normal
+  equations) and therefore doesn't square the condition number, but it
+  can nonetheless be organized to accumulate the factored problem
+  little-by-little (so it doesn't need to have the whole of the $\b{K}$
+  matrix at any one time), and sparsity can be exploited.  It has the
+  disadvantage of requiring about twice as much work as forming normal
+  equations followed by Cholesky factorization.
+\end{itemize}
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Avoiding fill-in during Cholesky factorization (1)}
+
+Consider the sparse symmetric positive-definite matrix
+
+\begin{equation*}
+\mathbf{A} = \left[ \begin{array}{rrrr}
+4 & -1 & -1 & -1 \\
+-1 & 2 &    &    \\
+-1 &   &  2 &    \\
+-1 &   &    &  2 \\
+\end{array} \right]
+\end{equation*}
+
+for which the lower-triangular Cholesky factor (with four units of
+precision) is
+
+\begin{equation*}
+\mathbf{L_A} = \mathbf{U_A^T} = \left[ \begin{array}{rrrr}
+ 2.0000 &         &         &         \\
+-0.5000 &  1.3229 &         &         \\
+-0.5000 & -0.1890 &  1.3093 &         \\
+-0.5000 & -0.1890 & -0.2182 &  1.2910 \\
+\end{array} \right] \,.
+\end{equation*}
+
+As is seen, the lower triangular matrix $\mathbf{L_A}$ is full. The
+entries of $\mathbf{L_A}$ that were zero in $\mathbf{A}$ are called
+\emph{fill-in}.  In $\mathbf{L_A}$, the (3,2), (4,2), and (4,3) elements
+are fill-ins.
+
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Avoiding fill-in during Cholesky factorization (2)}
+
+If $\mathbf{A}$ is multiplied by the permutation matrix
+
+\begin{equation*}
+\mathbf{P} = \left[ \begin{array}{rrrr}
+ 0 & 1 & 0 & 0 \\
+ 0 & 0 & 1 & 0 \\
+ 0 & 0 & 0 & 1 \\
+ 1 & 0 & 0 & 0 \\
+\end{array} \right]
+\end{equation*}
+
+on the left and $\mathbf{P^T}$ on the right, the symmetric
+positive-definite matrix
+
+\begin{equation*}
+\mathbf{B} = \mathbf{P A P^T} = \left[ \begin{array}{rrrr}
+  2 &    &    & -1 \\
+    &  2 &    & -1 \\
+    &    &  2 & -1 \\
+ -1 & -1 & -1 &  4 \\
+\end{array} \right]
+\end{equation*}
+
+is obtained.
+
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Avoiding fill-in during Cholesky factorization (3)}
+
+The lower-triangular Cholesky factor of $\mathbf{B}$, \emph{viz.}
+
+\begin{equation*}
+\mathbf{L_B} = \left[ \begin{array}{rrrr}
+  1.4142 &         &         &         \\
+         &  1.4142 &         &         \\
+         &         &  1.4142 &         \\
+ -0.7071 & -0.7071 & -0.7071 &  1.5811 \\
+\end{array} \right]
+\end{equation*}
+
+has no fill-ins.  The factorization $\mathbf{B} = \mathbf{L_B L_B^T}$ is
+clearly preferable to $\mathbf{A} = \mathbf{L_A L_A^T}$.  The solution $x$
+of $\mathbf{A}x = b$ can be calculated by first finding the solution of
+the linear system $\mathbf{B}y = \mathbf{P}b$ and then setting $x =
+\mathbf{P^T} y$.
+
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Avoiding fill-in during Cholesky factorization (4)}
+
+This is described in detail in {\bf Direct methods for
+sparse matrix solution} by Prof. Iain Duff (Rutherford Appleton
+Laboratory, Chilton, Oxfordshire, UK) and Bora U\c{c}ar (CNRS and ENS,
+Lyon, France), 
+\begin{tiny}
+\url{
+http://www.scholarpedia.org/article/Direct_methods_
+for_sparse_matrix_solution\#Cholesky_factorization}
+\end{tiny}
+
+\vspace*{5pt}
+
+Finding the optimal $\mathbf{P}$ is NP-complete, but there are many
+heuristics to reduce fill-in significantly.  One example is
+\emph{Algorithm 836: A Column Approximate Minimum Degree Ordering
+Algorithm}, {\bf ACM Transactions on Mathematical Software 30}, 3
+(September 2004) pp 377--380 by Timothy A. Davis (University of Florida),
+John R. Gilbert (UC Santa Barbara), Stefan I. Larimore (Microsoft), and
+Esmond G. Ng (Lawrence Berkeley Laboratory), for which the code is
+available from {\tt http://www.netlib.org/toms/836.gz}.
+
+
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Accumulating normal equations little-by-little}
+
+\small
+\begin{itemize}
+\item In the left-hand side of the normal equations $\b{\tilde K}^T
+  \b{\tilde K} \delta \b{\tilde x} = -\b{\tilde K}^T \tilde{\b{f}}$, the
+  matrix $\b{N} = \b{\tilde K}^T \b{\tilde K}$ is formed by computing the
+  inner product of each column of $\b{\tilde K}$ with every other column. 
+  That is, $\b{N}_{ij} = \Sigma_{k=1}^m \b{\tilde K}_{ik} \b{\tilde
+  K}_{jk}$
+
+\item Accumulating normal equations little-by-little amounts to nothing
+  more than running the summation for $k$ from $1$ to $m_1$ for all $i$
+  and $j$, then from $m_1+1$ to $m_2$ for all $i$ and $j$, etc., i.e.\
+  changing the order of addition.
+
+\item A similar perspective applies in forming the right-hand-side vector
+  $-\b{\tilde K}^T \tilde{\b{f}}$ little-by-little.
+
+\item Accumulating normal equations little-by-little allows to compute a
+  piece of the Jacobian matrix, accumulate it into the normal equations,
+  and discard it.  This reduces our storage requirements by a factor of
+  at least 10~-- from 10--40~GB to less than 4~GB.
+
+\item Since the Jacobian matrix has more than twice as many rows as
+  columns (actually, typically 100 times more rows than columns), we
+  scale the rows and columns of the normal equations instead of column
+  scaling the Jacobian.
+\end{itemize}
+
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe[Algebra]{Organization of the linear algebra software (1)}
+\begin{itemize}
+\item The Jacobian matrix is sparse -- mostly zeroes -- and we know the
+  pattern of its sparsity -- roughly diagonal plus a block column on the
+  right.  The normal equations are therefore also sparse with a known
+  pattern.
+
+\item Exploiting the sparsity and its pattern leads to significant
+  reduction in computational effort and memory requirements.
+
+\item To exploit the sparsity, the software to implement the linear
+  algebra is divided into two levels.
+
+\item The high level software performs matrix--matrix and matrix--vector
+  operations using submatrix blocks.
+\end{itemize}
+\end{frame}
+%
+% ----------------------------------------------------------------------------
+%
+\newframe{Organization of the linear algebra software (2)}
+
+The low level software performs operations on the matrix blocks using one
+of four representations:
+
+\begin{description}
+\item[Absent] blocks consisting entirely of zeroes
+\item[Banded] blocks in which the nonzeroes in each column are a small
+fraction of the column, and are adjacent to each other
+\item[Sparse] blocks in which the nonzeroes in each column are a small
+fraction of the column, but are not adacent to each other
+\item[Full] blocks in which the nonzeroes are a significant fraction of
+the whole.
+\end{description}
+
+The forward models usually know which representation to use.  Just in
+case, a procedure that takes a full block as input, and produces the
+appropriate representation as output, is provided.
+\end{frame}
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
+
+% $Log$
+% Revision 1.9  2019/09/19 20:55:47  pwagner
+% Used pinklogo w/o underscores
+%
+% Revision 1.8  2019/09/09 20:53:15  vsnyder
+% Correct a typo, add a definition before a reference
+%
+% Revision 1.7  2019/09/03 23:54:31  pwagner
+% Builds properly again with make scripts
+%
+% Revision 1.6  2019/08/27 00:47:08  vsnyder
+% Add reference for the Moré-Sorensen algorithm to compute the Levenberg-
+% Marquardt stabilization parameter, and a discussion of unnecessary fill-in
+% during Cholesky factorization.
+%
+% Revision 1.5  2019/08/20 02:43:04  vsnyder
+% Correct some notation, add some explanation
+%
+% Revision 1.4  2019/05/31 17:17:05  pwagner
+% A workaround for building beamerclass
+%
+% Revision 1.3  2019/05/29 01:49:36  vsnyder
+% Improve development of least-squares problem
+%
+% Revision 1.2  2019/05/22 20:40:03  vsnyder
+% Convert from slides class to beamer class
+%
+% Revision 1.1  2008/06/11 20:14:53  vsnyder
+% Initial commit
+%
+% Revision 1.1  2008/06/11 20:14:53  vsnyder
+% Initial commit
+%
+% Revision 1.7  2001/06/16 00:57:56  vsnyder
+% More stuff about least-squares, some clean-up
+%
+% $Id$

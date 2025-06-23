@@ -1,0 +1,42 @@
+!divert(-1)
+; $Id$
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+; Actually, this is now the FinalPtan phase--we eliminated Core
+; Should we rename this file accordingly?
+!define(retrophase,{FinalPtan})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the FinalPtan
+; products
+
+begin Fill
+  ;; ------------------------------------ Temperature-FinalPtan
+  !define(flaggingBands,{1,22})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=Temperature,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=Temperature,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+
+  ;; ------------------------------------ GPH-FinalPtan
+  !define(flaggingBands,{1,22})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=GPH,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=GPH,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+
+  ;; ------------------------------------ O3-FinalPtan
+  !define(flaggingBands,{1,22})
+  !define(flaggingRadiometers,{R1A,R1B})!dnl
+  !makeQualityForOneProduct(product=O3,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+  !makeStatusForOneProduct(product=O3,chisqScale=1.0,minRads=150,cloudMax=30K,cloudMin= -4K)
+
+end Fill
+
+; $Log$
+; Revision 1.2  2017/11/07 21:25:31  pwagner
+; Added flagging for ozone of this phase
+;
+; Revision 1.1  2015/11/18 18:36:30  pwagner
+; Added for vam1.00
+;

@@ -1,0 +1,72 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+! subroutine Hermite_Coeffs_* ( Funcs, Derivs, Coeffs )
+  ! Given Funcs(0:n) and Derivs(0:n), compute Coeffs(0:3,1:n) of monomial
+  ! basis polonomials that interpolate the given functions and derivatives
+  ! in each of the N intervals.  Each interval is scaled on 0:1, so to
+  ! compute f(xx) for x(i-1) <= xx <= x(i) use R = (xx-x(i-1))/(x(i)-x(i-1),
+  ! then F = coeffs(0,i) + r*(coeffs(1,i) + r*(coeffs(2,i) + r*coeffs(3,i))).
+    real(rk), intent(in), dimension(0:) :: Funcs, Derivs
+    real(rk), intent(out), dimension(0:,1:) :: Coeffs
+
+    real(rk) :: D ! funcs(i-1) - funcs(i)
+    integer :: I  ! Index of interval, loop inductor
+
+  !{ Starting with $p(x) = c_0 + c_1 x + c_2 x^2 + c_3 x^3$ and
+  !  $p^\prime(x) = c_1 + 2 c_2 x + 3 c_3 x^2$, and evaluating
+  !  $p(0)$, $p^\prime(0)$, $p(1)$ and $p^\prime(1)$ we have the
+  !  following equation to solve:
+  !  \begin{equation*}
+  !  \left[ \begin{array}{llll}
+  !   1 & 0 & 0 & 0 \\
+  !   0 & 1 & 0 & 0 \\
+  !   1 & 1 & 1 & 1 \\
+  !   0 & 1 & 2 & 3 \\ \end{array} \right]
+  !  \left[ \begin{array}{l}
+  !   c_0 \\
+  !   c_1 \\
+  !   c_2 \\
+  !   c_3 \\ \end{array} \right] =
+  !  \left[ \begin{array}{l}
+  !   p(0) \\
+  !   p^\prime(0) \\
+  !   p(1) \\
+  !   p^\prime(1) \\ \end{array} \right]
+  !   \text{ or }
+  !  \left[ \begin{array}{l}
+  !   c_0 \\
+  !   c_1 \\
+  !   c_2 \\
+  !   c_3 \\ \end{array} \right] =
+  !  \left[ \begin{array}{l}
+  !   p(0) \\
+  !   p^\prime(0) \\
+  !   -3 p(0) + 3 p(1) - 2 p^\prime(0) - p^\prime(1) \\
+  !   2 p(0) - 2 p(1) + p^\prime(0) + p^\prime(1) \\ \end{array} \right]
+  !  \end{equation*}
+
+    do i = 1, ubound(funcs,1)
+      coeffs(0,i) = funcs(i-1)
+      coeffs(1,i) = derivs(i-1)
+      d = funcs(i-1) - funcs(i)
+      coeffs(3,i) = d + d + derivs(i-1) + derivs(i)
+      coeffs(2,i) = -(coeffs(3,i) + d + derivs(i-1))
+    end do
+
+! end subroutine Hermite_Coeffs_*
+
+! $Log$
+! Revision 1.1  2006/07/19 22:30:58  vsnyder
+! Initial commit
+!

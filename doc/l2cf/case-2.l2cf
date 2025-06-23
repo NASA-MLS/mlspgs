@@ -1,0 +1,4 @@
+;   Example (2)
+begin ReadApriori
+  Case, label="geos5-classic" ;;; ------------- "geos5-classic" -----------
+end ReadApriori

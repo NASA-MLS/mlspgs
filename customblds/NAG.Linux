@@ -1,0 +1,92 @@
+# "$Id$"
+
+#	special options for compiling some modules--override .f90 rules
+
+# Should put this elsewhere--but in a hurry
+TABLES_DIR=../../tables
+
+# split_path.sh can split off a file name from any prefixed paths
+SPLIT_PATH=$(UTILDIR)/split_path.sh
+
+# FC_NAME may be something like f95 if we need a real compiler, or
+# mark_as_uptodate.sh if we're being asked just to touch targets
+FC_NAME := $(shell ${SPLIT_PATH} -f $(FC))
+
+BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+DUSTIER := $(DUSTY) -maxcontin=100
+
+# Where we and the configuration-specific files that include us are to be
+custom = $(CONFDIR)/customblds
+
+include $(custom)/Makefile.h
+
+CANTBESTATIC := $(shell echo ${LDOPTS} | sed 's/static/dynamic/')
+
+ifeq ($(short_name),cfm)
+libcfm.so: $(prereqs) libcfm.a
+		$(FC) $(CANTBESTATIC) --shared -o libcfm.so $(PVM_OBJS)  \
+                      -L./ -lcfm \
+        $(l_specials) $(LAFTER) \
+
+libcfm_all.so: $(prereqs) libcfm_all.a
+		$(FC) $(CANTBESTATIC) --shared -o libcfm_all.so $(PVM_OBJS)  \
+                      -L./ -lcfm_all \
+        $(l_specials) $(LAFTER) \
+
+endif
+
+# $Log$
+# Revision 1.18  2011/11/18 18:35:07  pwagner
+# Fixed new NAG-only bug in building shared objects
+#
+# Revision 1.17  2010/10/02 00:47:12  pwagner
+# Should be able to build shared objects no matter what
+#
+# Revision 1.16  2009/10/08 23:06:52  pwagner
+# Added workarounds for buggy Intel v11 handling of strings
+#
+# Revision 1.15  2006/04/03 22:12:40  pwagner
+# Uniform changes to accommodate buggy Lahey optimizer in l1
+#
+# Revision 1.14  2005/09/08 00:25:01  pwagner
+# Fixed bug is build command for l1/EngTbls.o
+#
+# Revision 1.13  2004/08/19 00:07:46  pwagner
+# Fixed missing mod dependencies for machine.o
+#
+# Revision 1.12  2003/10/08 21:13:15  pwagner
+# Changed options to sort to tolerate duplicate entries
+#
+# Revision 1.11  2003/05/21 17:46:02  pwagner
+# Commands to build mol_...f9h now formatted correctly
+#
+# Revision 1.10  2003/05/17 00:04:52  pwagner
+# Now create mol_.. files in lib to be used by Molecules.f90 there
+#
+# Revision 1.9  2003/02/19 19:21:07  pwagner
+# Based lib/ncep_dao.f90 FOPTS on DUSTY after quickie changes cause gdrdfld with differing num types
+#
+# Revision 1.8  2003/02/01 00:01:35  pwagner
+# Changed for new l1 with 3 executables
+#
+# Revision 1.7  2002/11/08 01:18:22  pwagner
+# Added l1/OutputL1B_HDF4.f90 which needs (DUSTY)
+#
+# Revision 1.6  2002/07/18 18:00:52  pwagner
+# .o now depends on file_name even if .mod mediated
+#
+# Revision 1.5  2002/07/15 23:20:19  pwagner
+# Added build instructions for getcf_m.mod
+#
+# Revision 1.4  2002/07/12 20:33:47  pwagner
+# l2/init_tables_module does not require custom build
+#
+# Revision 1.3  2002/07/03 00:22:39  pwagner
+# Added line to build l2/init_tables_module.mod
+#
+# Revision 1.2  2002/07/01 20:50:30  pwagner
+# Rebuilds object file when deleted
+#
+# Revision 1.1  2002/07/01 17:24:32  pwagner
+# First commit
+#

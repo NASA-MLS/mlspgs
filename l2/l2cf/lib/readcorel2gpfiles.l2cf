@@ -1,0 +1,46 @@
+; $Id$
+
+;; This l2cf fragment is called to read the l2gp files to take the
+;; results from the 'core' retrievals
+
+begin ReadApriori
+  !ifdef(CoreHDFVersion,{},{!define(CoreHDFVersion,4)})
+
+  ;; These are the species for which we want to read Core data (no
+  ;; continuations allowed).
+  !ifdef(coreL2GPSpecies,{},{!define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,O3})})
+
+  ;; The user might have requested specific versions for specific
+  ;; products
+  !define(initCoreSource,{!dnl
+  !ifelse(!defn(coreversion$1),{},{!define(coreversion$1,!coreversion)})
+  !ifelse(!defn(inpathcore$1),{},{!define(inpathcore$1,!inpathcore)})
+  !ifelse(!defn(corephase$1),{},{!define(corephase$1,{!corephase})})
+  })
+  !forall(initCoreSource,!coreL2GPSpecies,ptan)
+
+  ;; This macro reads in the core l2gps for species $1 from swath name
+  ;; $1-Core
+  !define(readCoreL2GP,{l2gpCore$1Input: l2gp, $
+    file='!inpathcore$1/MLS-Aura_L2GP-DGG_!coreversion$1_!day.he!coreHDFVersion', $
+    swath='$1-!corephase$1', hdfVersion=!coreHDFVersion!nl})
+  !forall(readCoreL2GP,!coreL2GPSpecies)
+
+  ;; Ptan we have to get from an l2aux file, this could be fun!
+  l2auxCorePtanInput: l2aux, $
+    file='!inpathcoreptan/MLS-Aura_L2AUX-DGM_!coreversionptan_!day.h!coreHDFVersion', $
+    sdName='GHz.ptan-!corephaseptan', quantityType=ptan, hdfVersion=!coreHDFVersion
+
+l2auxCoreDTBand32: l2aux, $
+  file='!inpathcoreptan/MLS-Aura_L2AUX-Cloud_!coreversionptan_!day.h!coreHDFVersion', $
+  sdName='R1A:118.B32W:PT.S0.WF4-1.C4 DT-Core', quantityType=radiance, hdfVersion=!coreHDFVersion
+
+l2auxCoreDTBand5: l2aux, $
+  file='!inpathcoreptan/MLS-Aura_L2AUX-Cloud_!coreversionptan_!day.h!coreHDFVersion', $
+  sdName='R2:190.B5F:CLO.S0.FB25-5.C1 DT-Core', quantityType=radiance, hdfVersion=!coreHDFVersion
+
+l2auxCoreDTBand33: l2aux, $
+  file='!inpathcoreptan/MLS-Aura_L2AUX-Cloud_!coreversionptan_!day.h!coreHDFVersion', $
+  sdName='R3:240.B33W:O3.S0.WF4-2.C3 DT-Core', quantityType=radiance, hdfVersion=!coreHDFVersion
+
+end ReadApriori

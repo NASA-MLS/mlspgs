@@ -1,0 +1,293 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-070r5}
+\newcommand{\docdate}{12 August 2014}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dong, Van\\
+Subject: \>Reducing Mie phase function integrated
+ scattering from double to single integrals \\
+From: \>Van Snyder\\
+Reference: \>Cloud ATBD JPL D-19299 (4 June 2004), wvs-067, wvs-068
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\renewcommand{\d}{\text{d}}
+
+The phase function is
+
+\begin{equation}\label{one}
+p(\theta,r) = \frac{p_0(\theta,r)}{C(r)}
+\end{equation}
+
+where
+
+\begin{equation}\begin{split}\label{two}
+p_0(\theta,r) =\,& |S_1(\theta,r)|^2 + |S_2(\theta,r)|^2 =
+  \Re (S_1(\theta,r))^2 + \Im (S_1(\theta,r))^2 +
+  \Re (S_2(\theta,r))^2 + \Im (S_2(\theta,r))^2 \\
+S_1 =\,& \sum_{j=1}^\infty \frac{2j+1}{j(j+1)} \left(
+ a_j(r,T) \frac{\d P_j^1(\cos\theta)}{\d \theta} +
+ b_j(r,T) \frac{P_j^1(\cos\theta)}{\sin\theta} \right) \\
+S_2 =\,& \sum_{j=1}^\infty \frac{2j+1}{j(j+1)} \left(
+ a_j(r,T) \frac{P_j^1(\cos\theta)}{\sin\theta} +
+ b_j(r,T) \frac{\d P_j^1(\cos\theta)}{\d \theta} \right) \\
+C(r) =\,& \frac12 \int_0^\pi p_0(\theta,r) \sin\theta \, \d \theta \,. \\
+\end{split}\end{equation}
+
+The integrated phase function is
+
+\begin{equation}\label{six}
+P(\theta) = \frac\pi{\beta_{c\_s}} \int_0^\infty
+ r^2 n(r) \xi_s(r) p(\theta,r) \, \d r =
+ \frac\pi{\beta_{c\_s}} \int_0^\infty
+ r^2 n(r) \xi_s(r)
+  \frac{p_0(\theta,r)}{C(r)} \,\d r \,.
+\end{equation}
+
+Each of the terms in $p_0(\theta,r)$ can be written in the form
+
+\begin{equation}\label{three}
+\left(\sum_{j=1}^\infty u_j(r) v_j(\theta) + w_j(r) x_j(\theta) \right)^2
+\end{equation}
+
+where $u_j(r)$ is one of $\Re a_j$ or $\Im a_j$, $w_j(r)$ is one of $\Re b_j$
+or $\Im b_j$, and $v_j(\theta)$ and $x_j(\theta)$ are either
+$\frac{2j+1}{j(j+1)} \frac{P^1_j(\cos\theta)}{\sin\theta}$ or
+$\frac{2j+1}{j(j+1)} \frac{\d P^1_j(\cos \theta)}{\d\theta}$.
+
+Equation (\ref{three}) can in turn be written
+
+\begin{equation}\begin{split}\label{four}
+\left(\sum_{j=1}^\infty u_j(r) v_j(\theta) + w_j(r) x_j(\theta) \right)^2 = \,&
+\left(\sum_{j=1}^\infty u_j(r) v_j(\theta) + w_j(r) x_j(\theta) \right)
+\left(\sum_{i=1}^\infty u_i(r) v_i(\theta) + w_i(r) x_i(\theta) \right) \\
+= \,&
+\sum_{i=1}^\infty \sum_{j=1}^\infty
+ ( u_i(r) v_i(\theta) + w_i(r) x_i(\theta) )
+ ( u_j(r) v_j(\theta) + w_j(r) x_j(\theta) ) \\
+= \,&
+\sum_{i=1}^\infty \sum_{j=1}^\infty
+ u_i(r) u_j(r) v_i(\theta) v_j(\theta) +
+ u_i(r) w_j(r) v_i(\theta) x_j(\theta) + & \\
+\,&
+ w_i(r) u_j(r) x_i(\theta) v_j(\theta) +
+ w_i(r) w_j(r) x_i(\theta) x_j(\theta) \,.
+\end{split}\end{equation}
+
+Each of the terms in Equation (\ref{four}) can in turn be written in the form
+$f_{ij}(r) g_{ij}(\theta)$ where $f_{ij}(r)$ is one of $u_i(r) u_j(r)$,
+$u_i(r) w_j(r)$ or $w_i(r) w_j(r)$, and $g_{ij}(\theta)$ is one of
+$v_i(\theta) v_j(\theta)$, $v_i(\theta) x_j(\theta)$ or $x_i(\theta)
+x_j(\theta)$.
+
+Thus the normalization function $C(r)$ can be written
+
+\begin{equation}\label{five}
+C(r) = \frac12 \int_0^\pi p_0(\theta,r)\, \sin\theta\,\d\theta = \sum \left(
+ \sum_{i=1}^\infty\sum_{j=1}^\infty f_{ij}(r) G_{ij} \right) \text{ where }
+ G_{ij} = \frac12 \int_0^\pi g_{ij}(\theta) \sin\theta\, \d\theta
+\end{equation}
+
+and the outer sum is taken over the possible forms of $f_{ij}(r)$ and
+$G_{ij}$.
+
+The quantities $G_{ij}$ are evaluated below, giving a simple explicit
+representation for $C(r)$.
+
+Thus, using this form for $C(r)$, the integrated phase function in
+Equation (\ref{six}) and its derivative w.r.t.\ IWC are no longer double
+integrals ($p_0(\theta,r)$ does not depend upon IWC).
+
+The derivative
+
+\begin{equation}
+\frac{\partial C(r)}{\partial T} =
+ \sum \left( \sum_{i=1}^\infty \sum_{j=1}^\infty
+ \frac{\partial f_{ij}(r)}{\partial T} G_{ij} \right)
+ \text{, where }
+ \frac{\partial f_{ij}(r)}{\partial T} \text{ is of the form }
+ y_i \frac{\partial z_j}{\partial T} +
+ \frac{\partial y_i}{\partial T} z_j
+\end{equation}
+
+and $y$ and $z$ are one of $u$ and $w$, respectively, is messy but
+straightforward.  Thus the derivative
+
+\begin{equation}
+\frac{\partial p(\theta,r)}{\partial T}  =
+ \frac1{C(r)} \left( \frac{\partial p_0(\theta,r)}{\partial T} -
+  p(\theta,r) \frac{\partial C(r)}{\partial T} \right)
+\end{equation}
+
+is again messy but straightforward, and can be written in terms of the
+$G_{ij}$.  Thus, the integral
+
+\begin{equation}\begin{split}
+\frac{\partial P(\theta)}{\partial T} =\,&
+ \frac{\pi}{\beta_{c\_s}} \int_0^\infty r^2\, n(r)\, \xi_s(r)\, p(\theta,r)\,
+ \left( \frac1{n(r)}\, \frac{\partial n(r)}{\partial T} +
+        \frac1{\xi_s(r)}\, \frac{\partial \xi_s(r)}{\partial T} +
+        \frac1{p(\theta,r)}\, \frac{\partial p(\theta,r)}{\partial T}
+ \right) \, \d r \\
+ \,&
+ -\frac{P(\theta)}{\beta_{c\_s}}\, \frac{\partial \beta_{c\_s}}{\partial T} \\
+\end{split}\end{equation}
+
+is also no longer a double integral.
+
+Letting $D_i = \frac{2i+1}{i(i+1)} \frac{\d P_i^1(\cos\theta)}{\d \theta}$ and
+$P_i = \frac{2i+1}{i(i+1)} \frac{P_i^1(\cos\theta)}{\sin\theta}$, suppressing
+the arguments of $a$ and $b$ and whether we are considering the real or
+imaginary part, and writing out the terms of Equation (\ref{five}) in detail
+for terms of $S_1^2$ and $S_2^2$ that arise from the real or imaginary parts of
+$a$ and $b$ in detail, we have
+
+\begin{equation}\begin{split}
+S_1^2 =\,& \sum_{ij} ( a_i D_i + b_i P_i ) ( a_j D_j + b_j P_j ) =
+\sum_{ij} a_i a_j D_i D_j + a_i b_j D_i P_j + a_j b_i P_i D_j + b_i b_j P_i P_j
+\\
+S_2^2 =\,& \sum_{ij} ( a_i P_i + b_i D_i ) ( a_j P_j + b_j D_j ) =
+\sum_{ij} a_i a_j P_i P_j + a_i b_j P_i D_j + a_j b_i P_j D_i + b_i b_j D_i D_j
+\end{split}\end{equation}
+
+From this, we can identify three forms of $f_{ij}$ each for the real and
+imaginary terms, which we will identify as $f_{ijk}$ for $k=1\dots3$ (the real
+and imaginary ones are so similar we won't write both of them), and three forms
+of $g_{ij}$, which we will identify as $g_{ijk}$ for $k=1\dots3$.
+
+\begin{equation}\begin{array}{ll}
+f_{ij1} = a_i a_j & g_{ij1} = P_i P_j \\
+f_{ij2} = a_i b_j & g_{ij2} = P_i D_j \\
+f_{ij3} = b_i b_j & g_{ij3} = D_i D_j \\
+\end{array}\end{equation}
+
+Using these, we can write out the terms of $S_1^2$ and $S_2^2$ that arise from
+the real or imaginary parts of $a$ and $b$ as
+
+\begin{equation}\begin{split}\label{twelve}
+S_1^2 = \,&
+ \sum_{ij} f_{ij1} g_{ij3} + f_{ij2} g_{ji2} + f_{ji2} g_{ij2} + f_{ij3} g_{ij1}
+\\
+S_2^2 = \,&
+ \sum_{ij} f_{ij1} g_{ij1} + f_{ij2} g_{ij2} + f_{ji2} g_{ji2} + f_{ij3} g_{ij3}
+\end{split}\end{equation}
+
+To evaluate $C(r)$ in Equation (\ref{five}) we need the integrals $G_{ijk} =
+\int_0^\pi g_{ijk}(\theta) \sin\theta\,\d\theta$, which turn out to be quite
+simple:
+
+\begin{equation}\begin{split}
+G_{ij1} = G_{ji1} =\,& \int_0^\pi g_{ij1}(\theta) \sin\theta \,\d\theta = \left\{
+ \begin{array}{ll}
+  i+j \text{ odd }  & \rightarrow\, 0 \\
+  i+j \text{ even } & \rightarrow\,
+  \frac{2i+1}{i(i+1)} \frac{2j+1}{j(j+1)} \min(i,j) \left( \min(i,j)+1 \right)
+ \end{array} \right. \\
+G_{ij2} = -G_{ji2} =\,& \int_0^\pi g_{ij2}(\theta) \sin\theta \,\d\theta = \left\{
+ \begin{array}{ll}
+  i>j               & \rightarrow\, G_{i-1,j,1} \\
+  i<j               & \rightarrow\, -G_{i,j-1,1}
+ \end{array} \right. \\
+G_{ij3} = G_{ji3} =\,& \int_0^\pi g_{ij3}(\theta) \sin\theta \,\d\theta = \left\{
+ \begin{array}{ll}
+  i \neq j & \rightarrow\, -G_{ij1} \\
+  i = j    & \rightarrow\, \frac{(2i+1)(2i^2-1)}{i(i+1)}
+ \end{array} \right. \\
+\end{split}\end{equation}
+
+
+Writing $\mathcal{S}_1^2 = \int_0^\pi S_1^2 \sin\theta\,\d\theta$ and similarly
+for $S_2^2$, and observing that $f_{ij2} = f_{ji2}$ and $G_{ij2}=-G_{ji2}$ we
+have
+
+\begin{equation}\begin{split}
+\mathcal{S}_1^2 =\,& \sum_{ij} f_{ij1} G_{ij3} + f_{ij3} G_{ij1} \text{ and }
+\mathcal{S}_2^2 =    \sum_{ij} f_{ij1} G_{ij1} + f_{ij3} G_{ij3} \text{, or} \\
+\mathcal{S}_1^2 + \mathcal{S}_2^2 = \,&
+ \sum_{ij} (f_{ij1}+f_{ij3}) (G_{ij1}+G_{ij3})
+\end{split}\end{equation}
+
+Observing that $G_{ij3} = -G_{ij1}$ when $i\neq j$ this can be further simplified
+to
+
+\begin{equation}
+\mathcal{S}_1^2 + \mathcal{S}_2^2 = \sum_i (f_{ii1}+f_{ii3}) (G_{ii1}+G_{ii3})
+ = \sum_i (4i+2) (f_{ii1}+f_{ii3})
+\end{equation}
+
+We can thus write $C(r)$ in the form
+
+\begin{equation}
+C(r) = \sum_i (2i+1) ( \Re a_i^2 + \Im a_i^2 + \Re b_i^2 + \Im b_i^2 ) =
+       \sum_i (2i+1) ( |a_i|^2 + |b_i|^2 )
+\end{equation}
+
+This simplification does not occur for $S_1^2$ or $S_2^2$ separately, but
+we evaluate $p_0(\theta,r)$ in the form of Equation (\ref{two}), not
+Equation (\ref{twelve}), so it does not matter.
+
+Observing that $\xi_s(r) = \frac2{\chi^2}\, C(r)$ (see wvs-067) and $\chi
+= \frac{2\pi r}{\lambda}$, the integral in Equation (\ref{six}) simplifies
+to
+
+\begin{equation}
+P(\theta) = \frac\pi{\beta_{c\_s}} \int_0^\infty \frac2{\chi^2}\, r^2 n(r)\,
+ p_0(\theta,r) \,\d r =
+ \frac{\lambda^2}{2 \pi \beta_{c\_s}} \int_0^\infty n(r)\, p_0(\theta,r) \,\d r
+\end{equation}
+
+and its derivatives correspondingly simplify to
+
+\begin{equation}\begin{split}
+\frac{\partial P(\theta)}{\partial T} = \,&
+ \frac{\lambda^2}{2 \pi \beta_{c\_s}} \int_0^\infty\,
+  \frac{\partial n(r)}{\partial T}\, p_0(\theta,r) +
+  n(r) \frac{\partial p_0}{\partial T} \,\d r -
+  \frac{P(\theta)}{\beta_{c\_s}} \frac{\partial \beta_{c\_s}}{\partial T}
+\text{ and} \\
+\frac{\partial P(\theta)}{\partial IWC} = \,&
+ \frac{\lambda^2}{2 \pi \beta_{c\_s}} \int_0^\infty\,
+  \frac{\partial n(r)}{\partial IWC}\, p_0(\theta,r) \,\d r -
+  \frac{P(\theta)}{\beta_{c\_s}} \frac{\partial \beta_{c\_s}}{\partial IWC}
+\,.
+\end{split}\end{equation}
+
+\label{lastpage}
+\end{document}
+% $Id$
+
+% $Log$
+% Revision 1.3  2013/01/17 21:08:21  vsnyder
+% Add CVS Log line
+%

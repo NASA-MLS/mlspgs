@@ -1,0 +1,5 @@
+! Deallocates memory allocated by ReadPFAFile. 
+! ReadPFAFile can be called more than once.
+subroutine Destroy_PFADataBase
+end subroutine
+

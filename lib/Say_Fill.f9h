@@ -1,0 +1,40 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+!  ! --------------------------------------------  Say_Fill  -----
+!  subroutine Say_Fill_Double ( Subs, NumZeroRows, Fill, Inc, Format )
+    integer, intent(in) :: Subs(:)
+    integer, intent(inout) :: NumZeroRows
+!    double precision, intent(in) :: Fill
+    integer, intent(in), optional :: Inc
+    character(len=*), intent(in), optional :: FORMAT
+    if ( numZeroRows /= 0 ) then
+      if ( present(inc) ) then
+        call say_subs ( (/ subs(:inc-1), subs(inc)+1, subs(inc+1:) /), numZeroRows )
+      else
+        call say_subs ( subs, numZeroRows )
+      endif
+      call printIt( Fill, format=format )
+      call output ( ' not printed.', advance='yes' )
+      numZeroRows = 0
+    end if
+    if ( present(inc) ) &
+      & call say_subs_only ( (/ subs(:inc-1), subs(inc)+1, subs(inc+1:) /) )
+!  end subroutine Say_Fill_Double
+
+! $Log$
+! Revision 2.2  2011/07/12 00:13:07  pwagner
+! Passes format to printIt
+!
+! Revision 2.1  2009/04/01 23:29:42  pwagner
+! First commit
+!

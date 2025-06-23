@@ -1,0 +1,89 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-075}
+\newcommand{\docdate}{2 April 2008}
+
+\usepackage{graphicx}
+
+\usepackage{floatflt}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Wayne Enright\\
+Subject: \>Title and abstract for ``Scientific Computation on High Performance
+Workstations''\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+Title: ``Data analysis for the Microwave Limb Sounder instrument on the
+EOS Aura Satellite''
+
+Abstract:
+
+A brief discussion of the goals of the Microwave Limb Sounder (MLS)
+instrument on NASA's Earth Observing System (EOS) Aura satellite, which
+was launched on 15 July 2004, is followed by a discussion of the
+organization and mathematical methods of the software used for analysis
+of data received from that instrument.
+
+The MLS instrument measures microwave thermal emission from the
+atmosphere by scanning the earth's limb, looking forward in the plane of
+the orbit, 3500 times per day.  The limb tangent altitude varies from 8
+to 80 km. Roughly 600 million measurements in five spectral bands are
+returned every day.  From these, estimates of the concentration of
+approximately 20 trace atmospheric constituents, and temperature, are
+formed at 70 pressure levels on each of these scans -- altogether roughly
+5 million results per day.  The program is organized to process
+``chunks'' consisting of about 20 scans, with a five-scan overlap at both
+ends of the chunk, giving 350 chunks per day.  Processing each chunk
+requires about 15 hours on a 3.6 GHz Pentium Xeon workstation.  Although
+one chunk can be processed on a workstation, processing all of the data
+requires the attention of 350 such processors.
+
+The software is an interpreter of a ``little language,'' as described in
+April 2008 Software: Practice and Experience.  This confers substantial
+benefits for organization, development, maintenance and operation of the
+software.  Most importantly, it separates the responsibilities, and the
+requirements for expertise, of the software engineers who develop and
+maintain the software, from the scientists who configure the software.
+
+Mathematically, the problem consists of tracing rays through the
+atmosphere, roughly corresponding to limb views of the instrument.  The
+radiative transfer equation, together with variational equations with
+respect to the parameters of interested, are then integrated along these
+rays.  A Newton method is then used to solve for the parameters of
+interest.
+
+\label{lastpage}
+\end{document}
+% $Id$

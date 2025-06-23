@@ -1,0 +1,7 @@
+type FGrid_T
+   integer :: name                     ! String index of name
+   integer :: noChans                  ! Number of `channels'
+   integer :: frequencyCoordinate      ! Literal, see below
+   real(r8), dimension(:), pointer :: values => NULL() ! The frequencies
+end type FGrid_T
+

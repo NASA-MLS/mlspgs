@@ -1,0 +1,41 @@
+!ifdef(flagCopyStandardProducts,{},
+{
+; ------------------------------------------------- Fill, column abundances -----
+
+;; This set of macros fills the columns for the current contents of the
+;; state vector.
+;;
+;; We would need to augment and modify it account for
+;; (1) Possibly using GEOS5 eta-level files to construct another PTrop
+;; (2) Filling H2O using the _hr quantity
+;; (3) Mandating unit=DU for O3
+;;
+;; However we won't trouble to do this because
+;; (1) We're in an awful hurry
+;; (2) Nearly every l2cf will be built with flagCopyStandardProducts
+;;
+;; To see how how to implement the changes here, see retrievalmacros.l2cf
+begin Fill
+
+  ;; --------------------------------------------- tpPressure
+  !ifdef(tpPressure,{
+    Fill, quantity=state.tpPressure, method=explicit, $
+      explicitValues=!tpPressure, /spread
+    !define(TropoName, {wmo tropopause})},{
+  Fill, quantity=state.tpPressure, method=wmoTropopause, $
+    temperatureQuantity=state.temperature, refGPHQuantity=state.refGPH, $
+    internalVgrid=vGridWMO
+  })
+
+  ;; --------------------------------------------- Now the columns
+
+  !define(fillOneColumn,{!dnl
+  Fill, quantity=state.column_$1, method=columnAbundance, vmrQuantity=state.$1, $
+    boundaryPressure=state.tpPressure
+  Fill, quantity=outputPrecision.column_$1, method=columnAbundance, vmrQuantity=outputPrecision.$1, $
+    boundaryPressure=state.tpPressure!nl})
+
+  !forall(fillOneColumn,!allStandardProductsWithColumns)
+
+end Fill
+})

@@ -1,0 +1,18 @@
+! Use the input given, and the L1BOA file to create a regular hGrid.
+type(HGrid_T) function CreateRegularHGrid_maf (instrumentModuleName, origin, &
+              pacing, insetOverLaps, filedatabase, &
+              firstL1Maf, lastL1Maf) result(hgrid)
+
+    ! The (x,y) origin of coordinate
+    real(r8), intent(in) :: origin
+    real(r8), intent(in) :: spacing
+    ! the filedatabase must contains L1BOA file (see CFM_MLSSetup)
+    type(MLSFile_T), dimension(:), pointer :: filedatabase
+    ! Either "GHz" or "THz" but the string is case-insensitive.
+    character(len=*), intent(in) :: instrumentModuleName
+    logical, intent(in) :: insetOverlaps
+    ! Start of the maf range in the given L1BOA in the filedatabase
+    integer, intent(in) :: firstL1Maf
+    ! End of the maf range in the given L1BOA in the filedatabase
+    integer, intent(in) :: lastL1Maf
+end function

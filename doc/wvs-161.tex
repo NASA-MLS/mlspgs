@@ -1,0 +1,400 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-161r1}
+\newcommand{\docdate}{12 June 2020}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Area of spherical triangle using vertex co\"ordinates\\
+From: \>Van Snyder\\
+%Reference: \> foo \\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+Why are we interested in the areas of spherical triangles?
+
+Within a planar triangle whose vertices are
+$(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$, the barycentric interpolation
+coefficient $\eta_i$ from vertex $\mathbf{v}_i$ to a point $\mathbf{X}$ is
+the ratio of the area of the triangle
+$(\mathbf{v}_j,\mathbf{v}_k,\mathbf{X})$ to the area of the triangle
+$(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3) \,\, (i \neq j \neq k)$.
+
+There are (at least) three ways to define barycentric interpolation on a
+sphere, using planar barycentric interpolation:
+
+\begin{itemize}
+
+\item Project $\mathbf{X}$ to the planar triangle whose vertices are
+      $(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$ and use barycentric
+      interpolation within that triangle to the projection of
+      $\mathbf{X}$ to that plane.
+
+\item Construct a plane tangent to the sphere and parallel to the plane
+      defined by $(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$.  Project
+      $\mathbf{X}$ and $(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$ onto
+      that plane, and use barycentric interpolation within the projected
+      triangle to the projected image of $\mathbf{X}$.
+
+\item Construct a plane tangent to the sphere at $\mathbf{X}$. Project
+      $(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$ into that plane, and use
+      barycentric interpolation within the projected triangle.
+
+\end{itemize}
+
+In all of these methods, one loses either linear precision
+
+\begin{equation*}
+f(\mathbf{X}) = \sum_i \eta_i f(\mathbf{v}_i)
+\end{equation*}
+
+(assuming $f$ is linear), or unitarity
+
+\begin{equation*}
+\sum_i \eta_i = 1 \,.
+\end{equation*}
+
+To preserve both linear precision and unitarity, one must use the areas of
+spherical triangles to compute barycentric interpolation coefficients.
+
+The area of a spherical triangle whose vertices are
+$(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$ and whose edges are arcs of
+great circles is
+%
+\begin{equation}
+A = R^2\, E
+\end{equation}
+%
+where $E = \alpha + \beta + \gamma - \pi$ is the \emph{spherical excess},
+and $\alpha$, $\beta$, and $\gamma$ are angles at the vertices.  For
+example, for one octant, $A = \frac{4 \pi R^2}8$. With $\alpha = \beta
+= \gamma = \frac\pi2$, $E = \frac\pi2$ and $A = \frac{\pi R^2}2$.
+
+If one has vectors in Cartesian co\"ordinates from the center to the
+vertices, it is easy to compute the arc lengths, in radians, as the
+inverse cosine of the dot product of unit vectors to adjacent vertices.
+
+If one has the arc lengths of edges, angles at the corners can be
+calculated from
+%
+\begin{equation}\label{Alpha}
+\tan \frac{\alpha}2 = \sqrt{ \frac{ \sin(s-b) \sin(s-c) }
+                                  { \sin s \sin(s-a) }}
+\end{equation}
+%
+where $a$ is the arc length of the side opposite angle $\alpha$, $b$ is
+the arc length of the side opposite angle $\beta$, $c$ is the arc length
+of the side opposite angle $\gamma$, $s = \frac12(a + b + c)$, and
+similarly for the other vertices. Thereby, to calculate $E$ from three dot
+products of vectors to adjacent vertices requires three inverse cosines,
+four sines, seven multiplies, three divides, three square roots, three
+inverse tangents, and three multiplies. Some spherical triangles are
+poorly characterized by their edge arc lengths, so this might have some
+numerical difficulty.
+
+Using the formula for the sine of a sum of angles,
+%
+\begin{equation}
+\sin(p+q+r) = -\sin p \sin q \sin r + \sin p \cos q \cos r +
+               \cos p \sin q \cos r + \cos p \cos q \sin r \,,
+\end{equation}
+%
+we see that Equation (\ref{Alpha}) can be written in terms of sines and
+cosines of halves of edge arc lengths.  Assuming
+$(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$ are unit vectors, the cosine of
+the arc length is the dot product of the unit vectors from the center of
+the sphere to the adjacent vertices, e.g., $a =
+\mathbf{p}_1\cdot\mathbf{p}_2$.  Using the half-angle formulae
+%
+\begin{equation}\label{half}
+\cos\frac\theta2 = \sqrt{\frac{1+\cos\theta}2} \text{ and }
+\sin\frac\theta2 = \sqrt{\frac{1-\cos\theta}2}\,,
+\end{equation}
+%
+the sines and cosines of half arc lengths can be written in terms of
+square roots of dot products.  Therefore, Equation (\ref{Alpha}) can be
+written in terms of square roots involving dot products.  It is not
+necessary to compute inverse cosines of the dot products, and sines of the
+sums of angles.
+
+Writing $\cos\frac{a}2 = x$, $\cos\frac{b}2 = y$, $\cos\frac{c}2 = z$,
+        $\sin\frac{a}2 = \xi$, $\sin\frac{b}2 = \eta$, and
+        $\sin\frac{c}2 = \zeta$, we have
+%
+\begin{equation}\begin{array}{lrr}
+\sin s = \sin(\frac{a+b+c}2) & =
+ -\xi \eta \zeta + \xi y z + x \eta z + x y \zeta & 8 \text{ multiplies} \\
+\sin(s-a) = \sin(\frac{-a+b+c}2) & =
+  \xi \eta \zeta - \xi y z + x \eta z + x y \zeta & 0 \text{ multiplies} \\
+\sin(s-b) = \sin(\frac{a-b+c}2) & =
+  \xi \eta \zeta + \xi y z - x \eta z + x y \zeta & 0 \text{ multiplies} \\
+\sin(s-c) = \sin(\frac{a+b-c}2) & =
+  \xi \eta \zeta + \xi y z + x \eta z - x y \zeta & 0 \text{ multiplies} \\
+\end{array}\end{equation}
+%
+The last three rows do not require new multiplies because the products in
+$\sin(s)$ can be reused.
+
+Thereby, once the sines of the arc lengths are obtained, each corner angle
+can be calculated using one inverse tangent, three multiplies, one divide
+and one square root.  Calculating $E$ requires three inverse tangents, 18
+multiplies, three divides, and nine square roots.
+
+A formula for the spherical excess, in terms of arc lengths of the sides,
+is
+%
+\begin{equation}\label{Tangent}
+\tan\left(\frac{E}4\right) = \sqrt{\tan\left(\frac{s}2\right)
+                                   \tan\left(\frac{s-a}2\right)
+                                   \tan\left(\frac{s-b}2\right)
+                                   \tan\left(\frac{s-c}2\right)}\,.
+\end{equation}
+
+To calculate $E$ from three dot products of vectors to adjacent vertices
+requires three inverse cosines, four tangents, four multiplies, four
+divides, one square root, and one inverse tangent.
+
+Using the half-angle formula for tangent, this can be written
+%
+\begin{equation}\label{Dot}
+\tan\left(\frac{E}4\right) = \sqrt{
+  \frac{(1 - \cos(s)) (1 - \cos(s-a)) (1 - \cos(s-b)) (1 - \cos(s-c))}
+       {(1 + \cos(s)) (1 + \cos(s-a)) (1 + \cos(s-b)) (1 + \cos(s-c))}}
+\end{equation}
+
+Using the formula for the cosine of a sum of angles,
+%
+\begin{equation}
+\cos(p+q+r) = \cos p \cos q \cos r - \cos p \sin q \sin r
+            - \sin p \cos q \sin r - \sin p \sin q \cos r \,,
+\end{equation}
+%
+we see that Equation (\ref{Dot}) can be written in terms of sines and
+cosines of halves of the edge arc lengths. Therefore, Equation
+(\ref{Dot}) can be written in terms of square roots involving dot
+products. It is not necessary to compute inverse cosines of the dot
+products, and tangents of the sums of angles.
+
+Writing $\cos\frac{a}2 = x$, $\cos\frac{b}2 = y$, $\cos\frac{c}2 = z$,
+        $\sin\frac{a}2 = \xi$, $\sin\frac{b}2 = \eta$, and
+        $\sin\frac{c}2 = \zeta$, we have
+%
+\begin{equation}\begin{array}{lrr}
+\cos s = \cos(\frac{a+b+c}2) & =
+ x y z - x \eta \zeta - \xi y \zeta - \xi \eta z & 8 \text{ multiplies} \\
+\cos(s-a) = \cos(\frac{-a+b+c}2) & =
+ x y z + x \eta \zeta - \xi y \zeta - \xi \eta z & 0 \text{ multiplies} \\
+\cos(s-b) = \cos(\frac{a-b+c}2) & =
+ x y z - x \eta \zeta + \xi y \zeta - \xi \eta z & 0 \text{ multiplies} \\
+\cos(s-c) = \cos(\frac{a+b-c}2) & =
+ x y z - x \eta \zeta - \xi y \zeta + \xi \eta z & 0 \text{ multiplies} \\
+\end{array}\end{equation}
+
+The last three rows do not require new multiplies because the products in
+$\cos(s)$ can be reused.
+
+Thereby, $E$ can be calculated using four square roots, 14 multiplies,
+one divide, and one arctangent.
+
+In summary the operation counts (excluding dot products, vector norms,
+addition and subtraction) to compute $E$ are:
+%
+\begin{longtable}{lcccc}
+& Equation (\ref{Alpha}) & Equation (\ref{Alpha}) & Equation (\ref{Tangent}) & Equation (\ref{Dot}) \\
+Using & Sines            & Dot products           & Tangents                 & Dot products \\
+\hline
+\\[-9pt]
+$\cos^{-1}$  & 3         & 0                      & 3                        & 0 \\
+$\sin$       & 4         & 0                      & 0                        & 0 \\
+$\tan$       & 0         & 0                      & 4                        & 0 \\
+$\tan^{-1}$  & 3         & 3                      & 1                        & 1 \\
+sqrt         & 3         & 9                      & 1                        & 4 \\
+multiply     & 7         & 18                     & 4                        & 15 \\
+divide       & 3         & 3                      & 4                        & 1 \\[-10pt]
+\end{longtable}
+%
+Some triangles are poorly characterized by their edge lengths. In such
+cases these equations should not be used.
+
+The angles $\alpha$, $\beta$, and $\gamma$ cannot be computed as dot
+products involving $(\mathbf{v}_1,\mathbf{v}_2,\mathbf{v}_3)$. The
+differences of the azimuths between the two edges incident on each vertex
+must be computed.  This requires six azimuth computations because
+$\alpha_{ij} \neq -\alpha_{ji}$, where $\alpha_{ij}$ is the azimuth from
+$\mathbf{p}_i$ to $\mathbf{p}_j$ In spherical co\"ordinates
+$(\lambda,\phi)$ where $\lambda$ is longitude and $\phi$ is latitude:
+%
+\begin{equation}\label{Azimuth}
+\tan \alpha_{ij} =
+  \frac{\sin(\lambda_j-\lambda_i)}
+       {\cos\phi_i \tan\phi_j - \sin\phi_i \cos(\lambda_j-\lambda_i)} \,.
+\end{equation}
+
+Equation (\ref{Azimuth}) can be derived by two rotations,
+$\mathbf{p}^{\prime\prime} = \mathbf{R}_2 \mathbf{R}_1 \mathbf{p}$, with
+%
+\begin{equation}
+\begin{array}{ll}
+\mathbf{R}_1 = \left[ \begin{array}{ccc}
+ \cos\lambda_i & \sin \lambda_i & 0 \\
+ -\sin \lambda_i & \cos\lambda_i & 0 \\
+ 0 & 0 & 1 \end{array} \right]\,, &
+\mathbf{R}_2 = \left[ \begin{array}{ccc}
+ \cos\phi_i & 0 & \sin\phi_i \\
+ 0 & 1 & 0 \\
+ -\sin\phi_i & 0 & \cos\phi_i \\
+\end{array} \right]\,. \end{array}
+\end{equation}
+%
+$\mathbf{R}_1$ rotates about the $z$ axis by $-\lambda_i$.  This puts
+$\mathbf{p}_i'$ on the prime meridian of the rotated co\"ordinate system.
+$\mathbf{R}_2$ rotates about the new $y$ axis by $-\phi_i$.  This puts
+$\mathbf{p}_i^{\prime\prime}$ on the equator of the co\"ordinate system of
+the second rotation.  Then Equation (\ref{Azimuth}) is
+%
+\begin{equation}
+\tan \alpha_{ij} =
+\frac{\mathbf{p}^{\prime\prime}_{j_2}}{\mathbf{p}^{\prime\prime}_{j_3}}.
+\end{equation}
+
+Using $(x_i,y_i,z_i)$ as Cartesian co\"ordinates of $\mathbf{p}_i$,
+$\tan\lambda_i = \frac{y_i}{x_i}$ and $\tan\phi_i =
+\frac{z_i}{\sqrt{x_i^2+y_i^2}}$. Calculating spherical co\"ordinates from
+Cartesian co\"ordinates requires two divides, one square root, and two
+arctangents for each point. Using sines and cosines of latitude and
+longitude expressed in Cartesian co\"ordinates and $\mathbf{r}_i = ( x_i,
+y_i, 0 )$:
+%
+\begin{equation}\begin{split}\label{Spherical}
+\sin\lambda_i = \,& \frac{y_i}{\sqrt{x_i^2+y_i^2}} =
+\frac{y_i}{|\mathbf{r}_i|}
+ \hspace{0.2in} \sin(\lambda_j-\lambda_i) =
+     \frac{x_i y_j - x_j y_i}
+          {\sqrt{x_i^2+y_i^2} \, \sqrt{x_j^2+y_j^2} } =
+     \frac{( \mathbf{r}_i \times \mathbf{r}_j )_3}
+          { |\mathbf{r}_i|\,|\mathbf{r}_j|} \\
+\cos\lambda_i = \,& \frac{|x_i|}{\sqrt{x_i^2+y_i^2}} =
+\frac{|x_i|}{|\mathbf{r}_i|}
+ \hspace{0.2in} \cos(\lambda_j-\lambda_i) =
+     \frac{x_i x_j + y_i y_j}
+          {\sqrt{x_i^2+y_i^2} \, \sqrt{x_j^2+y_j^2} } =
+     \frac{\mathbf{r}_i \cdot \mathbf{r}_j}
+          { |\mathbf{r}_i|\,|\mathbf{r}_j|} \\
+\sin\phi_i = \,& \frac{z_i}{\sqrt{x_i^2+y_i^2+z_i^2}} =
+ \frac{z_i}{| \mathbf{p}_i |} \hspace{0.25in}
+\cos\phi_i = \frac{\sqrt{x_i^2+y_i^2}}{\sqrt{x_i^2+y_i^2+z_i^2}} =
+ \frac{|\mathbf{r}_i|}{| \mathbf{p}_i |} \,. \\
+\end{split}\end{equation}
+%
+Thereby, $\alpha_{ij}$ can be computed from Equation (\ref{Azimuth}) in
+terms of Cartesian co\"ordinates using four square roots, 11 multiplies,
+six divides, and one arctangent.
+
+% One could also compute
+% %
+% \begin{equation}
+% \mathbf{n}_{ij} = \frac{\mathbf{N}_{ij}}{|\mathbf{N}_{ij}|} \text{ where }
+% \mathbf{N}_{ij} = \mathbf{p}_i \times \mathbf{p}_j \,,
+% \end{equation}
+% 
+% from which $\sin(\lambda_j-\lambda_i) = \mathbf{n}_{{ij}_1}$ and
+% $\cos(\lambda_j-\lambda_i) = \mathbf{n}_{{ij}_2}$.  This requires six
+% multiplies, one square root, and three divides instead of eight
+% multiplies, two square roots, and two divides using Equation
+% (\ref{Spherical}).
+
+Equation (\ref{Azimuth}) can be expressed directly in Cartesian
+co\"ordinates by substituting Equations (\ref{Spherical}):
+%
+% \begin{equation}\begin{split}
+% \tan \alpha_{ij} = \,&
+%   \frac{\sqrt{x_i^2 + y_i^2 + z_i^2} \,(x_j^2 + y_j^2 + z_j^2) \, (x_i y_j - x_j y_i)}
+%        {(x_i^2 + y_i^2 + z_i^2) ( x_j^2 + y_j^2 ) z_j
+%         - ( x_i x_j + y_i y_j ) (x_j^2 + y_j^2 + z_j^2) z_i} \\[5pt]
+% =\,&
+%   \frac{|\mathbf{p}_i| |\mathbf{p}_j|^2 ( \mathbf{r}_i \times \mathbf{r}_j )_3 }
+%        {|\mathbf{p}_i|^2 |\mathbf{r}_j|^2 z_j -
+%         \mathbf{r}_i \cdot \mathbf{r}_j |\mathbf{p}_j|^2 z_i} \,,
+% \end{split}\end{equation}
+% %
+% which requires 16 multiplies, one square root, one divide, and one
+% arctangent, to compute each azimuth.
+%
+\begin{equation}\begin{split}
+\tan \alpha_{ij} = \,&
+ \frac{\sqrt{x_i^2+y_i^2+z_i^2}\,(x_i y_j - x_j y_i)}
+      {(x_i^2+y_i^2)z_j - ( x_i x_j + y_i y_j )z_i}
+=
+\frac{|\mathbf{p}_i| \, ( \mathbf{r}_i \times \mathbf{r}_j )_3 }
+     {\mathbf{r}_i \cdot ( z_j \mathbf{r}_i - z_i \mathbf{r}_j)}
+\end{split}\end{equation}
+%
+which requires 10 multiplies, one square root, one divide, and one
+arctangent, to compute each azimuth.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$

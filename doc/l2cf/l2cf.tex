@@ -1,0 +1,65 @@
+\documentclass[11pt]{article}
+\usepackage{shortmlsdoc}
+%%\usepackage{times,mathptm}
+\usepackage{times,mathptmx}
+\usepackage{geometry}
+\usepackage[svgnames]{xcolor}
+\usepackage{listings}
+\usepackage[square]{natbib}
+\usepackage{amsmath}
+\usepackage{array,booktabs}
+\usepackage{underscore}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{url}
+%
+\newcommand{\mycomment}[1]{{\color{red}\sffamily\slshape #1}}
+\newcommand{\snippet}[1]{\texttt{#1}}
+\newcommand{\cs}[1]{\ensuremath{_\text{#1}}}
+\newcommand{\cp}[1]{\ensuremath{^\text{#1}}}
+\renewcommand{\b}[1]{\ensuremath{\mathbf{#1}}}
+\newcommand{\degsym}{\ensuremath{^\circ}}
+%
+\setlength{\fboxsep}{4mm}
+% \newcommand{\tbd}[2][TBD:]{\par\noindent\colorbox{Linen}{\parbox{\linewidth-2\fboxsep}{%
+%       \sffamily{\large\textbf{#1}\par}\vspace{1.5ex}#2}}\par}
+\newcommand{\tbd}[1]{%
+%  \colorbox{Linen}{%
+    \begin{quote}
+      \colorbox{Linen}{\parbox{\linewidth}{%
+          \sffamily\textbf{TBD:} #1}}
+    \end{quote}}
+%
+%\rcsInfo$Id$
+\seriestitle{Aura Microwave Limb Sounder (MLS)}
+\title{l2cf: Sections and Run-time Flags}
+\author{ P.~A.~Wagner}
+\version{v1.0.0, \today}
+%
+\begin{document}
+\maketitle
+%
+%\lstset{language=Fortran}
+\lstset{language=idl}
+\lstset{backgroundcolor=\color{WhiteSmoke}}
+\lstset{frame=single,framerule=0pt}
+\lstset{xleftmargin=1ex}
+\lstset{xrightmargin=1ex}
+%
+\lstset{basicstyle=\footnotesize\ttfamily}
+\lstset{commentstyle=\color{red}\itshape}
+\lstset{keywordstyle=\color{Green}\bfseries}
+%\lstset{identifierstyle=\color{MediumBlue}}
+\lstset{stringstyle=\color{Chocolate}}
+%
+% --------------------------------------------- Main document
+%
+\addtocounter{tocdepth}{-1}
+\tableofcontents
+\input{sections.tex}
+\input{runtimeflags.tex}
+%
+\bibliographystyle{plainnat}
+\bibliography{l2cfbib}
+
+\end{document}

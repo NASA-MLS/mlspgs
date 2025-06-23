@@ -1,0 +1,10 @@
+! This is a generic subroutine for printing many data types
+! including Vector_T, VectorTemplate_T, VectorValue_T,
+! QuantityTemplate_T, FGrid_T, VGrid_T, HGrid_T, Matrix_T
+subroutine Dump (quantity, details)
+   ! quantity: A user-type object of one of the fore-mentioned types
+
+   ! The greater the details, the more details about the object
+   ! will be printed. A value of 3 will typically mean to print everything.
+   integer, intent(in) :: details
+end subroutine

@@ -1,0 +1,79 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.6in
+\textheight 9.20in
+
+\newcommand{\docname}{\bf wvs-034}
+\newcommand{\docdate}{5 May 2006}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Equation 11.4 in ATBD\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+The relation between Equation 11.4 in the Forward Model ATBD and the structure
+of the code is not clear.  The Fadeeva function is evaluated by separate
+procedures called {\tt simple\_voigt}, {\tt real\_simple\_voigt}, etc.  I
+suggest writing Equation 11.4 and the subsequent paragraph as follows.
+
+LineShape$\left( x^k_j(\nu), y^k_j(\nu), z^k_j(\nu) \right)$ =
+\begin{equation*}
+ \left(\frac\nu{\nu^k_{0j}}\right)
+ \left\{
+ V(x^k_j(\nu) + i y^k_j(\nu)) + V(z^k_j(\nu) + i y^k_j(\nu)) - 
+ Y^k_j \left(
+  L(x^k_j(\nu) + i y^k_j(\nu)) - L(z^k_j(\nu) + i y^k_j(\nu)) \right)
+ \right\}
+\end{equation*}
+
+where $V(x+iy)$ and $L(x+iy)$ are the real and imaginary parts of $w(x+iy)$,
+the Fadeeva function or plasma dispersion function (eq 7.1.4 in [1]) defined by
+
+\begin{equation*}
+w(x+iy) =
+ \frac{i}\pi \int^\infty_{-\infty} \text{d}t \frac{e^{-t^2}}{x + iy -t} =
+ \frac1\pi \int^\infty_{-\infty} \text{d}t \frac{(y+i(x-t))e^{-t^2}}
+                                                {(x-t)^2+y^2} =
+ e^{-(x+iy)^2} \text{erfc}(-i(x+iy))
+\end{equation*}
+
+and $x^k_j(\nu) = \frac{\sqrt{\ln 2}(\nu-\nu^{\prime k}_j)}{w^k_d}$\dots.
+
+Then replace the four sentences ``The integral\dots The numerator\dots The
+numerator\dots [16]'' by ``The real part of the Fadeeva function is the Voigt
+function.  $w(x^k_j(\nu) + i y^k_j(\nu))$ is evaluated as described in [16].
+$z^k_j(\nu)$ is always large, so $w(z^k_j(\nu) + i y^k_j(\nu))$ is approximated
+by one term of an asymptotic expansion.''
+
+\label{lastpage}
+\end{document}
+% $Id$

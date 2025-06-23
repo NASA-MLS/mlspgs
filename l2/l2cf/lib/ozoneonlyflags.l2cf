@@ -1,0 +1,30 @@
+!divert(-1)
+; $Id$
+
+; ----------- Phase name vs. retrieval name
+; Some phase(s) may not have Retrieve sections
+; and so we'll need to know the last one
+!define(retrophase,{!phase})
+
+!ifdef(flagHiResO3inCPR3,{!define(O3StdProd,O3_HR)},{!define(O3StdProd,O3)})
+
+!divert!dnl
+; This l2cf fragment does all the quality flagging for the OzoneOnly phase
+; products.
+
+begin Fill
+  ;; ------------------------------------ O3-240 (Ozone only)
+  !define(flaggingBands,{7,24})
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=!O3StdProd,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+
+  ;; ------------------------------------- CO-240 (Ozone only)
+  !define(flaggingBands,{9,25})
+  !define(flaggingRadiometers,{R3})!dnl
+  !makeQualityForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+  !makeStatusForOneProduct(product=CO,chisqScale=1.0,minRads=1500,cloudMax=30K,cloudMin= -20K)
+
+end Fill
+
+; $Log$

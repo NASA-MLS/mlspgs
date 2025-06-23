@@ -1,0 +1,15 @@
+
+****************************************
+BEGIN_PGE: Mon Jan  8 14:53:48 2001
+MSG_TAG: 11
+FILE: /user2/pwagner/mlspgs/l3/LogReport
+LOGGING: status message logging enabled
+TRACE_LEVEL: tracing disabled
+PID_LOGGING: disabled
+DISABLED_LEVELS: none
+DISABLED_SEEDS: none
+DISABLED_CODES: none
+THREAD-SAFE MODE:  disabled
+TOOLKIT_VERSION: SCF B.0 TK5.2.6.1
+****************************************
+

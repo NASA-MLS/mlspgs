@@ -1,0 +1,625 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module vGrid                    ! Definitions for vGrids in vector quantities
+!=============================================================================
+
+  implicit none
+  private
+
+  public :: CreateVGridFromMLSCFInfo
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! -----     Private declarations     ---------------------------------
+
+  integer, private :: ERROR
+
+! Error codes for "announce_error"
+  integer, private, parameter :: ExtraIf = 1
+  integer, private, parameter :: InconsistentUnits = ExtraIf + 1
+  integer, private, parameter :: MoreUnits = InconsistentUnits + 1
+  integer, private, parameter :: NeedBoth = MoreUnits + 1
+  integer, private, parameter :: NoL2GP = NeedBoth + 1
+  integer, private, parameter :: NoStep = NoL2GP + 1
+  integer, private, parameter :: NotPositive = NoStep + 1
+  integer, private, parameter :: RedundantCoordinates = NotPositive + 1
+  integer, private, parameter :: RequireExplicit = RedundantCoordinates + 1
+  integer, private, parameter :: RequiredIf = RequireExplicit + 1
+  integer, private, parameter :: ResolutionZetaOnly = RequiredIf + 1
+  integer, private, parameter :: StartStopNumber = ResolutionZetaOnly + 1
+  integer, private, parameter :: StartStopUnits = StartStopNumber + 1
+  integer, private, parameter :: TooFew = StartStopUnits + 1
+  integer, private, parameter :: Unitless = TooFew + 1
+  integer, private, parameter :: UnitsPressure = Unitless + 1
+  integer, private, parameter :: WrongUnits = UnitsPressure + 1
+
+contains ! =====     Public Procedures     =============================
+
+  !------------------------------------  CreateVGridFromMLSCFInfo  -----
+  type(vGrid_T) function CreateVGridFromMLSCFInfo ( name, root, l2gpDatabase, &
+    & Status ) result ( vGrid )
+
+    ! This routine creates a vGrid according to user supplied information
+    ! in the l2cf.  It's used for temperature grids, too, because they
+    ! have use the same data type.
+
+    use Allocate_Deallocate, only: Allocate_Test
+    use EXPR_M, only: EXPR
+    use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, &
+      & F_RESOLUTION, F_SOURCEL2GP, F_START, F_STOP, F_TYPE, &
+      & F_VALUES, FIELD_FIRST, FIELD_LAST, &
+      & L_ANGLE, L_DIMENSIONLESS, L_DIMLESS, L_EXPLICIT, L_GeocAltitude, &
+      & L_GEODALTITUDE, L_GPH, L_ICEDENSITY, L_INTEGER, L_L2GP, L_LINEAR, &
+      & L_LOGARITHMIC, L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
+      & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_ICEDENSITY, PHYQ_Length, &
+      & PHYQ_Pressure, PHYQ_Temperature, S_TGRID, S_VGRID
+    use L2GPData, only: L2GPDATA_T
+    use MoreTree, only: Get_Spec_ID
+    use TOGGLES, only: GEN, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATION, NSONS, SUBTREE
+    use VGridsDatabase, only: VGrid_T, NullifyVGrid
+
+    ! Dummy arguments
+    integer, intent(in) :: NAME    ! String index of name
+    integer, intent(in) :: ROOT    ! Root of vGrid subtree in abstract syntax
+    type (L2GPData_T), pointer, dimension(:), optional :: L2GPDATABASE
+    integer, intent(out) :: Status ! 0 => OK, nonzero => trouble
+
+    ! Local variables
+    integer :: CoordIndex          ! Index in tree of coordinate field
+    integer :: CoordType           ! One of t_vGridCoord's literals
+    integer :: FIELD               ! First son of Son
+    integer :: FIELD_INDEX         ! F_..., see Init_Tables_Module
+    integer :: FORMULA             ! Index in tree of formula field
+    logical :: GOT_FIELD(field_first:field_last)
+    integer :: I                   ! Loop counter or limit
+    integer :: L2GPINDEX           ! Index into database
+    integer :: L2GPWhere           ! Tree index for L2GP
+    integer :: NUMBER              ! NINT ( Value of number field )
+    integer :: NumberNode          ! Index in tree of number field
+    integer :: PREV_UNITS          ! Units of previous element of Value field
+    integer :: RESOLUTION          ! Index in tree of resolution field
+    integer :: SON                 ! Son of Root
+    integer :: StartNode           ! Index in tree of start field
+    double precision :: STEP       ! Step for linear or logarithmic grid
+    double precision :: STOP(2)    ! Value of Stop field
+    integer :: STOP_UNITS          ! Units of Stop field
+    integer :: StopNode            ! Index in tree of stop field
+    integer :: UNITS(2)            ! Output from Expr
+    integer :: VALUE               ! Index in tree of value tree for a field
+    integer :: VALUE_FIELD         ! Index in tree of value field
+    double precision :: VALUES(2)  ! Output from Expr
+
+    ! Executable code
+
+    call nullifyVGrid ( vGrid ) ! for Sun's still useless compiler
+    if ( toggle(gen) ) call trace_begin ( "CreateVGridFromMLSCFInfo", root )
+
+    coordType = 0
+    error = 0
+    got_field = .false.
+    number = 0
+    resolution = 0
+    vGrid%name = name
+    vGrid%noSurfs = 0
+    vGrid%verticalCoordinate = L_None
+    prev_units = PHYQ_Dimensionless
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      field = subtree(1,son)
+      value = subtree(2,son)
+      field_index = decoration(field)
+      got_field(field_index) = .true.
+      select case ( field_index )
+      case ( f_coordinate )
+        coordIndex = field
+        vGrid%verticalCoordinate = decoration(value)
+      case ( f_formula )
+        formula = son
+      case ( f_number )
+        numberNode = son
+        call expr ( value, units, values )
+        number = nint(values(1))
+!       if ( number < 2 ) call announce_error ( root, tooFew )
+      case ( f_start )
+        startNode = son
+      case ( f_resolution )
+        resolution = son
+      case ( f_stop )
+        stopNode = son
+        stop_units = check_units(stopNode,f_stop) ! All sons the same unit
+      case ( f_sourceL2GP )
+        l2gpIndex = decoration(decoration(value))
+        l2gpWhere = field
+      case ( f_type )
+        coordType = decoration(value)
+      case ( f_values )
+        value_field = son
+      case default ! Can't get here if tree_checker works properly
+      end select
+    end do
+
+    select case ( get_spec_id(root) )
+    case ( s_vGrid )
+
+      ! Now check that this is a sensible vGrid; first the obvious stuff.
+
+      call makeGrid ( -1.0d0 ) ! Computes prev_units also
+
+      ! Check that the given surfaces are in an appropriate unit
+
+      if ( got_field(f_start) .and. &
+        &( prev_units == PHYQ_Pressure .neqv. coordType == l_logarithmic) ) &
+        & call announce_error ( subtree(1,startNode), unitsPressure )
+
+      select case ( vGrid%verticalCoordinate )
+      case (l_angle)
+        if ( prev_units /= PHYQ_Angle) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_angle )
+      case (l_dimensionless,l_dimless,l_integer)
+        if ( prev_units /= PHYQ_Dimensionless) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_dimensionless )
+      case (l_geocAltitude, l_geodAltitude)
+        if ( prev_units /= PHYQ_Length) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_length )
+      case (l_gph)
+        if ( prev_units /= PHYQ_Length) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_length )
+      case (l_none)
+        if ( coordType /= l_explicit ) &
+          & call announce_error ( root, requireExplicit )
+        if ( prev_units /= PHYQ_Dimensionless ) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, &
+            & phyq_dimensionless )
+      case (l_pressure)
+        if ( prev_units /= PHYQ_Pressure) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_pressure )
+      case (l_theta)
+        if ( prev_units /= PHYQ_Temperature) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_temperature )
+      case (l_icedensity)
+        if ( prev_units /= PHYQ_Icedensity ) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, &
+            & phyq_icedensity )
+      case (l_zeta)
+        select case ( prev_units )
+        case ( PHYQ_Dimensionless )     ! OK, do nothing
+        case ( PHYQ_Pressure )          ! Need to take log
+          vgrid%surfs= -LOG10(vgrid%surfs)
+        case default
+          call announce_error ( coordIndex, wrongUnits, f_type, phyq_dimensionless )
+          call announce_error ( coordIndex, moreUnits, lit_index=phyq_pressure )
+        end select
+      end select
+
+    case ( s_tGrid )
+      vGrid%verticalCoordinate = l_theta
+      call MakeGrid ( 1.0d0, PHYQ_Temperature )
+
+    end select
+
+    if ( toggle(gen) ) call trace_end ( "CreateVGridFromMLSCFInfo" )
+
+    status = error
+
+  contains
+
+    subroutine LogarithmicFormula ( StepSign, NeedUnits )
+    ! Allocate and fill vGrid%surfs from the Formula field
+      double precision, intent(in) :: StepSign ! +/- 1.0d0
+      integer, intent(in), optional :: NeedUnits
+      integer :: I, K, L, N ! Loop counter, index, offset
+      integer :: nFormula ! Number of sons of f_formula
+      vgrid%noSurfs = 0
+      if ( got_field(f_formula) ) then
+        nFormula = nsons(formula)
+        do i = 2, nFormula ! Compute total number of surfaces
+          call expr ( subtree(i,formula), units, values )
+          if ( units(1) /= phyq_dimensionless .or. &
+            &  units(2) /= phyq_dimensionless ) &
+            call announce_error ( subtree(1,formula), wrongUnits, f_formula, &
+              & phyq_dimensionless )
+          vgrid%noSurfs = vgrid%noSurfs + nint(values(1))
+        end do
+        if ( got_field(f_start) ) prev_units = check_units ( startNode, f_start )
+      end if
+      if ( error == 0 ) then
+        call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
+          & ModuleName )
+        k = 1
+        n = 1 ! One less surface the first time, since we have one at the start.
+        call expr ( subtree(2,startNode), units, values )
+        if ( present(needUnits) ) then
+          if ( units(1) /= needUnits ) call announce_error ( &
+            & startNode, wrongUnits, f_start, needUnits )
+        end if
+        vgrid%surfs(1,1) = values(1)
+        do i = 2, nFormula
+          call expr ( subtree(i,formula), units, values )
+          if ( values(2) <= 0.0d0 ) then
+            call announce_error ( subtree(1,formula), notPositive, f_formula )
+            exit
+          end if
+          step = 10.0 ** (StepSign/values(2))
+          do l = 1, nint(values(1)) - n
+            k = k + 1
+            vgrid%surfs(k,1) = vgrid%surfs(k-1,1) * step
+          end do
+          n = 0 ! Do all of the surfaces after the first time.
+        end do
+      end if
+
+    end subroutine LogarithmicFormula
+
+    subroutine MakeGrid ( StepSign, NeedUnits )
+      double precision, intent(in) :: StepSign ! +/- 1.0d0. for log grid
+      integer, intent(in), optional :: NeedUnits
+      integer :: I, J ! Loop counters
+      integer :: N    ! number of sons of NumberNode etc.
+      integer :: Son  ! of NumberNode etc.
+      integer :: Surf ! Subscript of vGrid%surfs
+      select case ( coordType )
+      case ( l_explicit )
+        call check_fields ( root, l_explicit, got_field, &
+          & required=(/ f_values /), &
+          & extra=(/ f_formula, f_start, f_stop /) )
+        vgrid%noSurfs = nsons(value_field)-1
+        call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
+          & ModuleName )
+        if ( got_field(f_values) ) &
+          & prev_units = check_units ( value_field, f_values, vgrid%surfs(:,1) )
+        if ( got_field(f_resolution) ) then
+          if ( all ( vGrid%verticalCoordinate /= (/ l_zeta, l_pressure /) ) ) &
+            & call announce_error ( root, resolutionZetaOnly )
+          call expr ( subtree(2,resolution), units, values )
+          if ( units(1) /= phyq_dimensionless ) &
+            & call announce_error ( subtree(1,resolution), unitless, f_resolution )
+          if ( prev_units /= phyq_pressure )  &
+            & call announce_error ( subtree(1,resolution), wrongunits, &
+            & f_resolution, phyq_dimensionless )
+          vGrid%surfs = 10.0**( nint ( log10(vGrid%surfs) * values(1) ) / values(1) )
+        end if
+      case ( l_l2gp )
+        if (.not. present(l2gpdatabase)) then
+          call announce_error(l2gpWhere, noL2GP)
+        else if ( .not. associated(l2gpDatabase) ) then
+          call announce_error ( l2gpWhere, noL2GP )
+        else if (got_field(f_coordinate)) then
+          call announce_error ( coordIndex, redundantCoordinates )
+        else
+          vgrid%noSurfs = l2gpDatabase(l2gpIndex)%nLevels
+            vgrid%verticalCoordinate = l_zeta
+            call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
+              & ModuleName )
+            vgrid%surfs(:,1) = l2gpDatabase(l2gpIndex)%pressures
+        end if
+      case ( l_linear )
+        call check_fields ( root, l_linear, got_field, &
+          & required=(/ f_number, f_start, f_stop /), &
+          & extra=(/ f_formula, f_values /) )
+        if ( got_field(f_number) ) then
+          n = nSons(numberNode)
+          if ( got_field(f_start) .and. got_field(f_stop) ) then
+            if ( n /= nSons(startNode) .or. n/= nSons(stopNode) ) &
+              &  call announce_error ( root, startStopNumber )
+          end if
+          vgrid%noSurfs = 0
+          do i = 2, nSons(numberNode)
+            son = subtree(i,numberNode)
+            call expr ( son, units, values )
+            if ( units(1) /= phyq_dimensionless ) &
+              & call announce_error ( son, unitless, f_number )
+            vgrid%noSurfs = vgrid%noSurfs + nint(values(1))
+          end do
+          call allocate_test ( vgrid%surfs, vgrid%noSurfs, 1, "vGrid%surfs", &
+            & ModuleName )
+        end if
+        if ( got_field(f_start) ) then
+          prev_units = check_units ( startNode, f_start ) ! All sons same units
+          if ( prev_units /= stop_units ) &
+            & call announce_error ( root, startStopUnits )
+          if ( present(needUnits) ) then
+            if ( prev_units /= needUnits ) call announce_error ( &
+              & startNode, wrongUnits, f_start, needUnits )
+          end if
+        end if
+        if ( error == 0 ) then
+          surf = 0    ! Subscript in vgrid%surfs
+          do j = 2, n ! Loop over formulae
+            call expr ( subtree(j,numberNode), units, values )
+            number = nint(values(1))
+            surf = surf + 1
+            call expr ( subtree(j,startNode), units, values )
+            vgrid%surfs(surf,1) = values(1)
+            call expr ( subtree(j,stopNode), units, stop )
+            if ( number > 1 ) step = ( stop(1) - values(1) ) / ( number-1 )
+            do i = 2, number
+              surf = surf + 1
+              vgrid%surfs(surf,1) = values(1) + (i-1) * step
+            end do
+          end do
+        end if
+      case ( l_logarithmic )
+        call check_fields ( root, l_logarithmic , got_field, &
+          & required=(/ f_formula, f_start /), &
+          & extra=(/ f_stop, f_values /) )
+        call logarithmicFormula ( stepSign, needUnits )
+      end select
+
+    end subroutine MakeGrid
+
+  end function CreateVGridFromMLSCFInfo
+
+! =====     Private Procedures     =====================================
+
+! -----------------------------------------------  ANNOUNCE_ERROR  -----
+  subroutine ANNOUNCE_ERROR ( WHERE, CODE, FIELD_INDEX, LIT_INDEX )
+    use Intrinsic, only: FIELD_INDICES, LIT_INDICES, PHYQ_INDICES
+    use MoreTree, only: StartErrorMessage
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
+    integer, intent(in) :: WHERE   ! Tree node where error was noticed
+    integer, intent(in) :: CODE    ! Code for error message
+    integer, intent(in), optional :: FIELD_INDEX, LIT_INDEX ! Extra stuff
+
+    if ( code == moreUnits ) then
+      call display_string ( phyq_indices(lit_index), before=' or ', advance='yes' )
+      return
+    end if
+    error = max(error,1)
+    call startErrorMessage ( where )
+    select case ( code )
+    case ( extraIf )
+      call output ( "If the type is '" )
+      call display_string ( lit_indices(lit_index) )
+      call output ( "' the '" )
+      call display_string ( field_indices(field_index) )
+      call output ( "' field is not permitted.", advance='yes' )
+    case ( inconsistentUnits )
+      call output ( "Elements of the '" )
+      call display_string ( field_indices(field_index) )
+      call output ( "' field have inconsistent units", advance='yes' )
+    case ( NeedBoth )
+      call output ( 'If "formula" does not appear, both "number" and "step" shall appear' )
+    case ( NoL2GP )
+      call output ( 'No L2GP database defined yet.', advance='yes' )
+    case ( NoStep )
+      call output ( 'If "formula" appears, neither "number" nor "step" shall appear' )
+    case ( notPositive )
+      call output ( "The value of the '" )
+      call display_string ( field_indices(field_index) )
+      call output ( "' field is required to be positive.", advance='yes' )
+    case ( redundantCoordinates )
+      call output ( 'Redundant coordinate spec for vGrid from l2gp.', advance='yes' )
+    case ( requireExplicit )
+      call output ( "If the 'coordinate' field is 'none', the 'type' field", &
+        & advance='yes' )
+      call output ( "shall be 'explicit'.", advance='yes' )
+    case ( requiredIf )
+      call output ( "The '" )
+      call display_string ( field_indices(field_index) )
+      call output ( "' field is required if the type is '" )
+      call display_string ( lit_indices(lit_index) )
+      call output ( ".", advance='yes' )
+    case ( resolutionZetaOnly )
+      call output ( &
+        & "Resolution is only appropriate for zeta based vGrids", &
+        & advance='yes' )
+    case ( startStopNumber )
+      call output ( &
+        & "The 'start', 'stop' and 'number' fields do not have the same extents.", &
+        & advance='yes' )
+    case ( startStopUnits )
+      call output ( &
+        & "The 'start' and 'stop' fields do not have the same units.", &
+        & advance='yes' )
+    case ( tooFew )
+      call output ( "If 'type' is linear 'number' >= 2 is required.", &
+        & advance='yes' )
+    case ( unitless )
+      call output ( "The value for the " )
+      call display_string ( field_indices(field_index) )
+      call output ( " field is required to be unitless.", advance='yes' )
+    case ( unitsPressure )
+      call output ( "Pressure units are required for logarithmic vGrids,", &
+        & advance='yes' )
+      call output ( "and prohibited otherwise.", advance='yes' )
+    case ( wrongUnits )
+      call output ( "The " )
+      call display_string ( field_indices(field_index) )
+      call output ( " field has incorrect units.", advance='yes' )
+      if ( present(lit_index) ) call display_string ( phyq_indices(lit_index), &
+        before='Units should be ', advance='yes' )
+    end select
+    end subroutine ANNOUNCE_ERROR
+
+  ! -----------------------------------------------  CHECK_FIELDS  -----
+  subroutine CHECK_FIELDS ( ROOT, GRID_TYPE, GOT_FIELD, REQUIRED, EXTRA )
+
+  ! If any fields of Root that are listed in Extra are marked .true.
+  ! in Got_field, or any fields of Root that are listed in Required are marked
+  ! .false. in Got_field, announce an error.
+
+    integer, intent(in) :: ROOT         ! Root of vGrid, used for message
+    integer, intent(in) :: GRID_TYPE    ! Type field of vGrid, used for message
+    logical, intent(in) :: Got_field(:) ! Which fields were present?
+    integer, intent(in) :: REQUIRED(:)  ! List of required fields
+    integer, intent(in) :: EXTRA(:)     ! List of prohibited fields
+
+    integer :: I
+
+    do i = 1, size(required)
+      if ( .not. got_field(required(i)) ) &
+        & call announce_error ( root, requiredIf, required(i), grid_type )
+    end do
+    do i = 1, size(extra)
+      if ( got_field(extra(i)) ) &
+        & call announce_error ( root, extraIf, extra(i), grid_type )
+    end do
+  end subroutine CHECK_FIELDS
+
+  ! ------------------------------------------------  CHECK_UNITS  -----
+  integer function CHECK_UNITS ( ROOT, FIELD_INDEX, FIELD_VALUES )
+
+  ! Check that subtrees 2-n of Root have the same units, or that all
+  ! but one are PHYQ_Dimensionless
+
+    use EXPR_M, only: EXPR
+    use INIT_TABLES_MODULE, only: PHYQ_Dimensionless
+    use MLSKinds, only: R8              ! KIND for REAL
+    use TREE, only: NSONS, SUBTREE
+
+    integer, intent(in) :: ROOT         ! Root of the subtree
+    integer, intent(in) :: FIELD_INDEX  ! F_... From Init_Tables_Module
+    real(r8), intent(out), optional :: FIELD_VALUES(:)  ! Values of the fields
+
+    integer :: I                        ! Loop counter
+    integer :: UNITS(2)                 ! Units of an expression
+    double precision :: VALUES(2)       ! Values of an expression
+
+    check_units = phyq_dimensionless
+    do i = 2, nsons(root)
+      call expr ( subtree(i,root), units, values )
+      if ( present(field_values) ) field_values(i-1) = values(1)
+      if ( check_units /= phyq_dimensionless .and. &
+        &  units(1) /= phyq_dimensionless .and. &
+        &  check_units /= units(1) ) &
+        &  call announce_error ( subtree(1,field_index), inconsistentUnits, &
+        &  field_index )
+      if ( units(1) /= phyq_dimensionless ) check_units = units(1)
+    end do
+  end function CHECK_UNITS
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module vGrid
+
+!
+! $Log$
+! Revision 2.32  2017/12/07 01:01:24  vsnyder
+! Don't use host-associated variable as a DO index
+!
+! Revision 2.31  2015/02/05 21:54:45  vsnyder
+! Add geocentric altitude as possible coordinate
+!
+! Revision 2.30  2014/09/05 01:24:59  vsnyder
+! Get kinds from MLSKinds instead of from MLSCommon
+!
+! Revision 2.29  2014/03/01 03:10:56  vsnyder
+! Move units checking to init_tables_module
+!
+! Revision 2.28  2011/03/23 19:56:11  honghanh
+! Make l2gpdatabase an optional argument
+!
+! Revision 2.27  2009/06/23 18:46:19  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.26  2009/06/04 20:37:23  vsnyder
+! Make start, stop, number fields arrays for linear grids
+!
+! Revision 2.25  2008/09/30 22:33:05  vsnyder
+! Change TGrid definition
+!
+! Revision 2.24  2008/06/05 02:18:49  vsnyder
+! Added dimensionless, dimless and iceDensity coordinates, spiffed error handler
+!
+! Revision 2.23  2005/06/22 18:57:02  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.22  2004/06/17 23:05:15  pwagner
+! integer now a possible coord type for a VGrid
+!
+! Revision 2.21  2004/06/12 00:41:13  vsnyder
+! Handle formula field in tGrid
+!
+! Revision 2.20  2004/06/08 19:27:30  vsnyder
+! Add tGrid, improve error detection and reporting
+!
+! Revision 2.19  2004/05/22 02:30:54  vsnyder
+! Use StartErrorMessage from MoreTree, push USEs down
+!
+! Revision 2.18  2004/04/02 01:06:39  livesey
+! Fixed a bug in the resolution/explicit stuff
+!
+! Revision 2.17  2004/03/24 18:26:16  livesey
+! Bug fix for resolution argument, inappropriate error message.
+!
+! Revision 2.16  2004/03/10 22:20:10  livesey
+! Added resolution to the explicit type.
+!
+! Revision 2.15  2003/06/20 19:37:06  pwagner
+! Quanities now share grids stored separately in databses
+!
+! Revision 2.14  2002/11/22 12:23:24  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
+! Revision 2.13  2002/10/08 17:36:23  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.12  2002/08/04 16:04:24  mjf
+! Added some nullify statements for Sun's rubbish compiler.
+!
+! Revision 2.11  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
+! Revision 2.10  2001/04/21 01:25:39  livesey
+! Can now fill from l2gp
+!
+! Revision 2.9  2001/04/10 23:53:45  vsnyder
+! Improve 'dump'
+!
+! Revision 2.8  2001/04/07 01:50:49  vsnyder
+! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+! some related stuff to fwdmdl/ForwardModelConfig.
+!
+! Revision 2.7  2001/03/28 03:03:38  vsnyder
+! Remove use, only's that aren't used
+!
+! Revision 2.6  2001/03/28 01:25:38  vsnyder
+! Move DUMP_VGRIDS from dumper.f90 to VGrid.f90
+!
+! Revision 2.5  2001/02/28 17:21:05  livesey
+! Allowed user to specify zeta grids in pressure as well as log pressure space.
+!
+! Revision 2.4  2001/02/22 23:44:50  livesey
+! Got rid of VC_Invalid
+!
+! Revision 2.3  2001/02/22 23:43:43  livesey
+! Nullified vGrid_T%surfs by default
+!
+! Revision 2.2  2001/02/09 19:30:16  vsnyder
+! Move checking for required and duplicate fields to init_tables_module
+!
+! Revision 2.1  2000/12/04 23:34:38  vsnyder
+! Move more of addItemToDatabase into the include.
+!
+! Revision 2.0  2000/09/05 18:57:05  ahanzel
+! Changing file revision to 2.0.
+!
+! Revision 1.1  2000/09/02 02:05:04  vsnyder
+! Initial entry
+!

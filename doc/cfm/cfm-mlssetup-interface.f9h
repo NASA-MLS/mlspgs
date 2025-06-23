@@ -1,0 +1,13 @@
+! Initializes CFM library and HDF5 library. Also parses the forward model
+! configuration file.
+subroutine CFM_MLSSetup_Compact (signalFileName, configFileName, &
+ForwardModelConfigDatabase)
+    ! The name of the signal database file
+    character(len=*), intent(in) :: signalFileName
+    ! The name of the forward model configuration file
+    character(len=*), intent(in) :: configFileName
+    ! Output: to store all ForwardModelConfig_T objects declared in
+    ! the config file.
+    ! This argument will be nullified inside this subroutine.
+    type (ForwardModelConfig_T), pointer :: ForwardModelConfigDatabase(:)
+end subroutine

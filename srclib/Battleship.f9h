@@ -1,0 +1,122 @@
+! Copyright 2012, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! How to handle dumping stats in every module procedure of dump_0
+! where it makes sense to dump stats
+! 
+! $Id$
+! $RCSfile$
+
+    ! Args
+    real(rk), external                          :: fun
+    real(rk), intent(in)                        :: arg1 ! 1st circle
+    real(rk), intent(in)                        :: delta ! tolerance
+    integer, optional, intent(in)               :: maxPhase1 ! max phase1 shots
+    integer, optional, dimension(:), intent(in) :: ns ! array of phase1 shots
+    real(rk), intent(out)                       :: root ! root
+    integer, optional, intent(out)              :: status ! /= 0 if failed
+    ! Internal variables
+    real(rk) :: flast
+    real(rk) :: fnext
+    integer  :: shot
+    real(rk) :: f1
+    real(rk) :: f2
+    real(rk) :: x0
+    real(rk) :: x1
+    real(rk) :: x2
+    logical, parameter :: DEEBUG = .false.
+    ! Executable
+    root = -1 ! in case we can't find root
+    if ( present(status) ) status = 1
+    ! Phase 1
+    ! Some error checks
+    if ( present(maxPhase1) ) then
+      if ( maxPhase1 < 1 ) return
+      x2 = arg1 ! Initialize things
+      fnext = fun(x2)
+      do shot = 1, maxPhase1
+        x1 = x2
+        x2 = 2*x1
+        flast = fnext
+        fnext = fun(x2)
+        if ( flast*fnext <= 0._rk ) exit
+      enddo
+      if ( shot > maxPhase1 ) return ! No shot was long enough
+    else
+      if ( .not. present(ns) ) return
+      x2 = arg1 ! Initialize things
+      fnext = fun(x2)
+      do shot = 1, size(ns)
+        x1 = x2
+        x2 = x1 + ns(shot)*delta
+        flast = fnext
+        fnext = fun(x2)
+        if ( flast*fnext <= 0._rk ) exit
+      enddo
+      if ( shot > size(ns) ) return ! No shot was long enough
+    end if
+    ! Phase 2
+    if ( present(status) ) status = 0
+    ! Narrow the spashes, always keeping root between x0 and x2
+    if ( DEEBUG ) then
+      call outputnamedValue ('No. of phase 1 shots', shot )
+      call outputnamedValue ('x1, x2', (/x1, x2/) )
+      shot = 0
+    endif
+    x0 = x1
+    f1 = flast
+    f2 = fun(x2)
+    if ( DEEBUG ) call outputnamedValue ('f1, f2', (/f1, f2/) )
+    if ( f2*f1 == 0._rk ) then
+      if ( fun(x2) == 0._rk ) then
+        root = x2
+      else
+        root = x1
+      end if
+      return
+    end if
+    do
+      if ( DEEBUG ) shot = shot + 1
+      x1 = (x0 + x2) / 2
+      f1 = fun(x1)
+      ! This test should prevent us from looping endlessly
+      if ( abs((x1-x0)/delta) < 2 ) then
+        ! apparently x0 = x2 - 1, so we've found our root
+        if ( abs(f1) < abs(f2) ) then
+          root = x1
+        else
+          root = x2
+        end if
+        if ( DEEBUG ) call outputnamedValue ('No. of phase 2 shots', shot )
+        return
+      end if
+      if ( f2*f1 == 0._rk ) then
+        if ( fun(x2) == 0._rk ) then
+          root = x2
+        else
+          root = x1
+        end if
+        if ( DEEBUG ) call outputnamedValue ('No. of phase 2 shots', shot )
+        return
+      elseif ( f2*f1 < 0._rk ) then
+        x0 = x1
+      else
+        x2 = x1
+        f2 = f1
+      end if
+    enddo
+! $Log$
+! Revision 1.2  2013/02/11 17:19:39  pwagner
+! Battleship returns nonzero status if cant find root
+!
+! Revision 1.1  2012/06/12 18:10:54  pwagner
+! First commit
+!

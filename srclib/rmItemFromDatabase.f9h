@@ -1,0 +1,105 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+  ! Similar (in fact based on) addItemToDatabase.f9h
+  ! but for the opposite purpose
+  !
+  ! The subprogram that includes this file must declare:
+  ! database(:)         the existing database that will be shrunk by one
+  ! tempDatabase(:)     workspace, the same user-defined type as database
+  ! Item                the item to be removed, also the same user type
+  ! okToDeallocEmptyDB  a logical param: set to FALSE if you prefer
+  !                      to deallocate the database yourself resulting
+  !                      if Item should be the only one in database
+  
+  ! Assumption: the user-defined type must have a component 'name'
+  ! that is a scalar and unique for each item in the database
+  ! e.g. an integer id
+  !   (This assumption could be relaxed by 
+  !   forcing the subprogram to find rmItemNumber itself prior)
+    integer :: newSize, oldSize, status
+    integer :: rmItemNumber, i
+    character(127) :: ERMSG
+
+    ! Executable code
+
+    ! What is the rmItemNumber corresponding to Item ?
+    rmItemNumber = 0
+    do i=1, SIZE(database)
+      if( Item%name == database(i)%name ) rmItemNumber=i
+    end do
+
+    block
+      use, intrinsic :: ISO_C_Binding, only: C_Intptr_t, C_Loc
+      integer(C_Intptr_t) :: Addr
+      newSize=0
+      if ( .not. associated(database) ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Attempt to remove item from an empty database")
+      else if ( size(database) < rmItemNumber .or. rmItemNumber < 1) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Attempt to remove an item not found database")
+      else if ( size(database) == 1) then
+        if ( okToDeallocEmptyDB ) then
+          oldSize = size(database) * storage_size(database) / 8
+          addr = 0
+          if ( oldSize > 0 ) addr = transfer ( c_loc ( database(1) ), addr )
+          deallocate ( database, STAT=status, ERRMSG=ermsg )
+          call test_deallocate ( status, ModuleName, "database", oldSize, &
+            & ermsg=ermsg, address=addr )
+        end if
+      else
+        allocate ( tempDatabase(SIZE(database)-1), STAT=status, ERRMSG=ermsg )
+        addr = 0
+        if ( status == 0 ) then
+          if ( size(tempDatabase) > 0 ) addr = transfer ( c_loc ( tempDatabase(1) ), addr )
+        end if
+        call test_allocate ( status, ModuleName, "tempDatabase", &
+          uBounds = SIZE(database)-1, elementSize = storage_size(tempDatabase) / 8, &
+          ermsg=ermsg, address=addr )
+        do i=1, SIZE(database)
+          if (i /= rmItemNumber) then
+            newSize = newSize+1
+            tempDatabase(newSize) = database(i)
+          end if
+        end do
+        oldSize = size(database) * storage_size(database) / 8
+        deallocate ( database, STAT=status, ERRMSG=ermsg )
+        addr = 0
+        if ( oldSize > 0 ) addr = transfer ( c_loc ( database(1) ), addr )
+        call test_deallocate ( status, ModuleName, "database", oldSize, &
+          & ermsg=ermsg, address=addr )
+        database => tempDatabase
+      end if
+    end block
+
+! $Log$
+! Revision 1.6  2015/03/28 00:54:34  vsnyder
+! Stuff to trace allocate/deallocate addresses -- mostly commented out
+! because NAG build 1017 doesn't yet allow arrays as arguments to C_LOC.
+!
+! Revision 1.5  2014/09/04 23:55:17  vsnyder
+! Add allocate/deallocate size tracking
+!
+! Revision 1.4  2005/06/22 20:03:56  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 1.3  2002/10/02 16:00:33  bwknosp
+! Added Id and RCS info
+!
+! Revision 1.2  2001/09/20 20:55:48  pwagner
+! Tweaked some things
+!
+! Revision 1.1  2001/09/19 23:39:16  pwagner
+! First commit
+!

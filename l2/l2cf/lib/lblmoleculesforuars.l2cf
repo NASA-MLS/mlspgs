@@ -1,0 +1,50 @@
+; $Id$
+
+;; =======================lblMoleculesforpfafwm================================
+;; removes newline char from the string returned by !esyscmd
+!define(DropLastChar, {!substr({$*},0,!eval(!len({$*})-1))})
+  
+;; replace l2cf line continuation char '$' with shell char '\'
+!define(TransLitContinueLineChar, {!translit({$*}, {$}, {\})})
+  
+;; the macros !ExpandRTVLMandatoryLBLMoleculesForX are contained in
+;; the spectroscopy l2cf defs file
+!define(ExpandRTVLMandatoryLBLMoleculesFor, {!makelist(!RTVLMandatoryLBLMoleculesFor,{},$@)})
+
+;; system call to python routine
+!define(PyCatLBLMolecules, {!DropLastChar(!esyscmd(!home/mlspgs/scripts/pycatlblmolecules.py {$*}))})
+!define(CatLBL, {!PyCatLBLMolecules(!TransLitContinueLineChar({$*}))})
+
+;; e.g. call as !lblMolecules(2L, 3L) to get the required lbl
+;; molecules for these sidebands
+;;!define(lblMolecules, {!CatLBL(!ExpandRTVLMandatoryLBLMoleculesFor($@))})
+;;!define(lblMolecules, {!RTVLMandatoryLBLMoleculesFor$@})
+
+;; system call to python routine 
+!define(PyDiff, {!DropLastChar(!esyscmd(!home/mlspgs/scripts/pydiff.py {$*}))})
+!define(lblMoleculesR3Ext, {!PyDiff('!lblMolecules($*)' 'H2O, H2O_R3, N2, O2')})
+
+;; =======================lblMoleculesforpfafwm================================
+
+!define(lblMolecules,{!dnl
+!ifelse($1,R1,{!RTVLMandatoryLBLMoleculesForR1})!dnl
+!ifelse($1,R2,{!RTVLMandatoryLBLMoleculesForR2})!dnl
+!ifelse($1,R3,{!RTVLMandatoryLBLMoleculesForR3})})
+
+!define(LbandsForRadiometer,{!dnl
+!ifelse($1,R1,{1L})!dnl
+!ifelse($1,R2,{2L,3L,4L})!dnl
+!ifelse($1,R3,{5L,6L})})
+
+!define(UbandsForRadiometer,{!dnl
+!ifelse($1,R1,{1U})!dnl
+!ifelse($1,R2,{2U,3U,4U})!dnl
+!ifelse($1,R3,{5U,6U})})
+
+;$Log$
+;Revision 1.2  2006/06/29 23:05:52  lambert
+;added lblMoleculesR3Ext and PyDiff definitions
+;
+;Revision 1.1  2006/04/27 23:40:01  lambert
+;handles mandatory lbl molecules for PFA forward models
+;

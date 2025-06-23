@@ -1,0 +1,158 @@
+\documentclass[11pt]{article}
+\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+%\settowidth{\hW}{\bf wvs-003}
+\settowidth{\hW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    26 April 2000\hfill\parbox[t]{\hW}{{\bf wvs-003}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+%\thispagestyle{empty}
+%{\hfill\bf J3/00-103}
+%\pagenumbering{arabic}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Zvi, Bill, Dave, Nathaniel\\
+Subject: \>The Forward Model\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+\section{What I've done}
+
+I have converted the forward model Zvi gave me to Fortran 95.
+
+The main advantage is that every procedure is now a module procedure.
+This means that the compiler can check interfaces.  I have put
+{\tt ONLY} specifiers on the {\tt USE} statements.  This has two
+salutary effects:
+\begin{itemize}
+\item One accesses only necessary resources from each module, which
+reduces the possibility of name clashes, and
+\item One can find where every resource in a module is defined, by
+searching in that module alone.
+\end{itemize}
+
+I have not completely converted the forward model to use Fortran 95
+idioms.  In particular, I have used assumed-shape arrays only in one
+module.  Using assumed-shape arrays would reduce the lengths of several
+calling sequences.  The dummy arguments that are now used to indicate the
+dimensions of other dummy arguments would become local variables. It would
+be necessary to have statements to get their values using intrinsic
+functions, i.e. {\tt SIZE} or {\tt UBOUND}.
+
+I made free use of generic interfaces and internal procedures.  I also
+specified that some functions are pure (a facility new in Fortran 95), as
+I think that may help optimizers.
+
+I put the declarations of dummy arguments in the same order as they appear
+in the procedure header, and alphabetized declarations of local entities,
+to the extent possible.
+
+I eliminated the need for the {\tt SizeOf} function, by using the
+``Inquire by IOLENGTH'' feature of Fortran 90.
+
+I copied the following routines, that Zvi didn't send me:
+
+{\tt\begin{verbatim}
+cp /nas/zvi/f90/l2pc/s_get_one_eta.f90 .
+cp /nas/zvi/f90/library/s_hunt.f s_hunt_m.f90
+cp /nas/zvi/f90/prep/abs_cs_*f90 .
+cp /nas/zvi/vax_code/slabs_prep.for slabs_pref_m.f90
+cp /nas/zvi/f90/library/solve_quad.f solve_quad_m.f90
+cp /nas/zvi/f90/library/dcspline_der.f dcspline_der_m.f90
+cp /nas/zvi/f90/library/d_lintrp.f d_lintrp_m.f90
+cp /nas/zvi/f90/library/dcspline.f d_cspline_m.f90
+cp /nas/zvi/sun/library/csinterp.f  csinterp_m.f90
+cp /nas/zvi/vax_code/q_log.for q_log_m.f90
+\end{verbatim}}
+
+Are these the right ones?
+
+I had trouble with {\tt SLABS\_PREP}.  The one I copied has an interface
+that is not compatible with its use in {\tt CREATE\_BETA\_COEFF}.
+
+I had trouble with {\tt SCSPLINE}.  The one I copied has an interface
+that is not compatible with its use in {\tt FOV\_CONVOLVE}.
+
+I had trouble with {\tt CSINTERP}.  The one I copied has an interface
+that is not compatible with its use in {\tt I\_AND\_K\_STAR} and {\tt
+I\_K\_STAR\_NO\_CONV}.
+
+I also wrote some string handling routines.  Let me know if any of the
+following assumptions are incorrect:
+\begin{itemize}
+\item {\tt SqzStr} is used to remove all blanks from a string.
+\item {\tt Leftj} is used to remove leading blanks from a string.
+\item {\tt StrLwr} is used to replace upper-case letters by their
+  lower-case eqivalents.
+\item {\tt StrUpr} is used to replace lower-case letters by their
+  upper-case eqivalents.
+\end{itemize}
+
+I used an I/O error message processor that has provision to use the error
+status code to look up some error text, if the vendor's library has
+support to do so.
+
+I deleted the use of procedure {\tt Get\_Rid} in procedure {\tt
+WRITE\_K\_RECORDS}, substituting {\tt status~= 'delete'} in the
+immediately previous {\tt CLOSE} statement.  Let me know if this is not
+the correct interpretation of that routine's functionality.
+
+I have inserted the version control declarations and comments.
+
+I haven't used precisely the style spelled out in the group's style
+guide.  Instead, I have used lower-case keywords.  In declarations,
+I used upper-case names.  Elsewhere, I used the case that was already
+in the code, if the code was largely lower-case, or converted it to
+lower case if it was largely upper-case.  The reason I put names in
+declarations in upper case is so that {\tt grep} will find only the
+declarations, when I want to search for where something is declared.
+
+\section{What needs doing}
+
+Aside from getting the remaining procedures noted above, it would be
+useful to improve the built-in documentation in each routine.
+
+The most useful comment in each routine is a summary of its functionality.
+
+I have added the {\tt INTENT} attribute to the declaration for each dummy
+argument. It would be even more useful to have a comment explaining the
+use of each dummy argument.
+
+It would also be useful, but with lower priority, to have a comment
+explaining the use of each local variable in each procedure.
+
+There are several variables declared using {\tt Logical*1}.  This has
+never been part of any standard.  If they are not written into files
+that are read by C programs, their type declarations should be
+brought into conformance with the standard.
+
+Most importantly, I don't have any input data, I don't know how to use the
+model, and I don't know how to interpret its output, so I haven't done any
+testing.  There remains the substantial chance that I introduced some
+errors during the conversion process.
+
+\label{lastpage}
+\end{document}
+% $Id$

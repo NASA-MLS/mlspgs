@@ -1,0 +1,91 @@
+!divert(-1)
+;; $Id$
+
+  ;; This is for the case where we wish to store the a priori quantities
+  ;; in the dgg files
+  !define(LabelOneAPQuantity,{!dnl
+!ifelse($1,{Temperature}, {
+  Label, quantity=aPriori.$1_HR, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
+$1,{GPH}, {
+  Label, quantity=aPriori.$1_HR, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
+$1,{geoHeight}, {
+  Label, quantity=aPriori.$1_HR, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1_HR, label='$1-APrioriPrecision'},
+$1,{H2O}, {
+  Label, quantity=aPriori.$1, label='$1_LR-APriori'
+  Label, quantity=aPrioriPrecision.$1, label='$1_LR-APrioriPrecision'},
+$1,{O3}, {
+  Label, quantity=aPriori.$1, label='$1_LR-APriori'
+  Label, quantity=aPrioriPrecision.$1, label='$1_LR-APrioriPrecision'},
+$1,{O3_HR}, {
+  Label, quantity=aPriori.$1, label='O3-APriori'
+  Label, quantity=aPrioriPrecision.$1, label='O3-APrioriPrecision'},
+{
+  Label, quantity=aPriori.$1, label='$1-APriori'
+  Label, quantity=aPrioriPrecision.$1, label='$1-APrioriPrecision'})
+})
+  !define(DirectWriteOneAPQuantity,{, $
+!ifelse($1,{Temperature},
+   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR}, 
+   $1,{GPH}, 
+   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR},
+   $1,{geoHeight}, 
+   {  source=aPriori.$1_HR, precision=aPrioriPrecision.$1_HR},
+   {  source=aPriori.$1, precision=aPrioriPrecision.$1})})
+  
+!ifdef(allAprioriProducts,{},{
+!define(allAprioriProducts,{!allStandardProducts})
+})
+!divert!dnl
+
+  !ifdef(flagWriteAPrioriToDGG,{
+begin Join
+  !forall(LabelOneAPQuantity,!allAprioriProducts)
+  DirectWrite, hdfVersion=!hdfVersion, $
+  type=l2dgg !forall(DirectWriteOneAPQuantity,!allAprioriProducts)
+  
+; Not an APriori quantity, but this a convenient place to write
+; Cloud Top Height anyway
+  Label, quantity=aPriori.CloudTopPressure, label='CloudTopPressure-StdProd'
+  Label, quantity=aPrioriPrecision.CloudTopPressure, label='CloudTopPressure-StdProdPrecision'
+  DirectWrite, hdfVersion=!hdfVersion, $
+  type=l2dgg, source=aPriori.CloudTopPressure, precision=aPrioriPrecision.CloudTopPressure
+end Join
+;begin Join
+;  Label, quantity=aPriori.surfaceType, label='Ascend(+1)Descend(-1)'
+;  DirectWrite, hdfVersion=!hdfVersion, $
+;  type=l2dgg, source=aPriori.surfaceType
+;end Join
+  })
+!divert(-1)
+;$Log$
+;Revision 1.9  2024/02/02 21:42:08  pwagner
+;Added CloudTopPressure as new std prod
+;
+;Revision 1.8  2017/12/15 18:27:25  mmadatya
+;Added geoHeight as new quantity template
+;
+;Revision 1.7  2017/11/07 21:24:40  pwagner
+;Added allAprioriProducts to define which apriori swaths to write
+;
+;Revision 1.6  2016/01/05 00:34:13  pwagner
+;Supplied command to resume output
+;
+;Revision 1.5  2014/12/11 17:53:10  pwagner
+;Ascend/Descend Mode no longer used in all l2gp and dgg DirectWrites so not Filled
+;
+;Revision 1.4  2014/12/10 23:05:29  pwagner
+;Correct erroneous calculation of AscDescMode; now based on geodAngle
+;
+;Revision 1.3  2014/04/07 18:15:30  pwagner
+;Added stuff for writing Ascending/Descending Mode flags
+;
+;Revision 1.2  2013/10/15 17:57:25  pwagner
+;Spacecraft ascend/descend mode now written to dgg
+;
+;Revision 1.1  2013/01/25 21:26:18  pwagner
+;First commit
+;
+!divert!dnl

@@ -1,0 +1,431 @@
+\section{Gradients, Jacobians, and Hessians}
+
+
+Gradient vector of $I_l: \mathbb{R}^Q \rightarrow \mathbb{R}$ is given as
+\begin{eqnarray}
+\nabla I_l(\vf) &=& \left[ \begin{array}{ccc}
+\displaystyle \frac{\partial I_l}{\partial f_1} & \cdots & \displaystyle  \frac{\partial I_l}{\partial f_Q} 
+\end{array} \right].
+\label{eqn:Gradient_vector}
+\end{eqnarray}
+Jacobian matrix of $I: \mathbb{R}^Q \rightarrow \mathbb{R}^L$ is given as
+\begin{eqnarray}
+J I(\vf) &=& \left[ \begin{array}{ccc}
+\displaystyle \frac{\partial I_1}{\partial f_1} & \cdots & \displaystyle  \frac{\partial I_1}{\partial f_Q} \\
+\vdots & & \vdots \\
+\displaystyle \frac{\partial I_L}{\partial f_1}  & \cdots & \displaystyle  \frac{\partial I_L}{\partial f_Q}
+\end{array} \right].
+\label{eqn:Jacobian_matrix}
+\end{eqnarray}
+Hessian matrix of $I_l: \mathbb{R}^Q \rightarrow \mathbb{R}$ is given as
+\begin{eqnarray}
+H I_l(\vf) &=& J(\nabla I_l(\vf)) \ = \ \left[ \begin{array}{c}
+\displaystyle \nabla \Big( \frac{\partial I_l}{\partial f_1} \Big) \\
+\vdots \\
+\displaystyle \nabla \Big( \frac{\partial I_l}{\partial f_Q} \Big)
+\end{array} \right] \ = \ \left[ \begin{array}{ccc}
+\displaystyle \frac{\partial^2 I_l}{\partial f_1 \partial f_1} & \cdots & \displaystyle  \frac{\partial^2 I_l}{\partial f_Q \partial f_1} \\
+\vdots & & \vdots \\
+\displaystyle \frac{\partial^2 I_l}{\partial f_1 \partial f_Q} & \cdots & \displaystyle  \frac{\partial^2 I_l}{\partial f_Q \partial f_Q} 
+\end{array} \right].
+\label{eqn:Hessian_matrix}
+\end{eqnarray}
+Since $I$ is a function from $\mathbb{R}^Q \rightarrow \mathbb{R}^L$, i.e.
+\begin{eqnarray*}
+I(\vf) = (I_1, I_2, \ldots, I_L),
+\end{eqnarray*}
+then the array of second partial derivatives is not a two-dimensional matrix of size $Q \times Q$, but rather a tensor of order 3, with dimensions $L \times Q \times Q$.
+
+
+\clearpage
+
+
+\section{Sensitivity Measurements}
+
+Denote $\vf^*$ be an unperturbed state vector, for which the radiance $I_l(\vf^*)$ at level $L$, as well as gradient vector $\nabla I_l(\vf^*)$ and Hessian matrix $HI_l(\vf^*)$ had been calculated.  Let $\vf$ denote the perturbed state vector, with perturbation defined as $\triangle \vf = \vf - \vf^*$. \\
+\ \\
+Accuracy of an $n-th$ order Taylor expansion can be assessed via calculating $I_l(\vf)$ analytically, and comparing the result with an approximation $I_l^{approx}(\vf)$ obtained using the Taylor expansion.
+
+
+\subsection{First-Order Model}
+
+The accuracy of the first order Taylor expansion can be determined by comparing how similar $I_l(\vf)$ is to the result obtained with the first order Taylor polynomial:
+\begin{eqnarray*}
+I_l(\vf) \approx I_l(\vf^*) + \sum_{q=1}^{Q} \frac{\partial I_l}{\partial f_q} (\vf^*) \cdot (f_q-f_q^*).
+\end{eqnarray*}
+This can be written in matrix notation:
+\begin{eqnarray*}
+I(\vf) \approx I(\vf^*) + J I(\vf^*) \cdot (\vf-\vf^*)
+\end{eqnarray*}
+or
+\begin{eqnarray*}
+I(\vf^* + \triangle \vf) \approx I(\vf^*) + J I(\vf^*) \cdot \triangle \vf.
+\end{eqnarray*}
+
+
+\subsection{Second-Order Model}
+
+The accuracy of the second order Taylor expansion can be determined using
+\begin{eqnarray*}
+I_l(\vf) \approx I_l(\vf^*) + \sum_{q=1}^{Q} \frac{\partial I_l}{\partial f_q} (\vf^*) \cdot (f_q-f_q^*) + \frac{1}{2} \sum_{q,\tilde{q}=1}^{Q} \frac{\partial^2 I_l}{\partial f_q \partial f_{\tilde{q}}} (\vf^*) \cdot (f_q-f_q^*) \cdot (f_{\tilde{q}}-f_{\tilde{q}}^*),
+\end{eqnarray*}
+or
+\begin{eqnarray*}
+I_l(\vf) \approx I_l(\vf^*) + \nabla I_l(\vf^*) \cdot \triangle \vf + \frac{1}{2} (\triangle \vf)^t \cdot H I_l(\vf^*) \cdot \triangle \vf.
+\end{eqnarray*}
+This can not be directly reformulated in {\it full} matrix notation. However, we could generalize hessian matrix $H$ to $\hat{H}$ and write:
+\begin{eqnarray*}
+I(\vf) \approx I(\vf^*) + J I(\vf^*) \cdot (\vf-\vf^*) + \frac{1}{2} (\vf-\vf^*)^t \cdot \hat{H} I(\vf^*) \cdot (\vf-\vf^*).
+\end{eqnarray*}
+
+
+\clearpage
+
+
+\subsubsection{Numerical Computations}
+
+Denote $\triangle \vf = \vf - \vf^*$. \\
+The {\bf first order} sensitivity measurement can be tested approximating $I_l(\vf)$ as:
+\begin{eqnarray*}
+I_l^{approx}(\vf) = I_l(\vf^*) + \nabla I_l(\vf^*) \cdot \triangle \vf,
+\end{eqnarray*}
+for $l = 1, \ldots, L$. \\
+The {\bf second order} sensitivity measurement can be tested with
+\begin{eqnarray*}
+I_l^{approx}(\vf) = I_l(\vf^*) + \nabla I_l(\vf^*) \cdot \triangle \vf + \frac{1}{2} (\triangle \vf)^t \cdot H I_l(\vf^*) \cdot \triangle \vf.
+\end{eqnarray*}
+\ \\
+In the experiments below, $\nabla I_l(\vf^*)$ was obtained {\it analytically} for both mixing ratio and temperature state vectors, in both first-order and second-order cases.  For mixing ratios, $HI_l(\vf^{O_3 *})$ was obtained either {\it analytically} or {\it numerically}.  For temperature, $HI_l(\vf^{T *})$ was obtained {\it numerically}.
+
+
+
+\begin{comment}
+
+\begin{table*}[t]
+%% increase table row spacing, adjust to taste
+\renewcommand{\arraystretch}{1.3}
+% if using array.sty, it might be a good idea to tweak the value of
+% \extrarowheight as needed to properly center the text within the cells
+\caption{$L_{\infty}$ norm}
+\label{table:L_inf} \centering
+%% Some packages, such as MDW tools, offer better commands for making tables
+%% than the plain LaTeX2e tabular which is used here.
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}%{|c||c|}
+\hline
+  & $\nu_1 =$ 234709.8550 & $\nu_2 =$  235309.855 & $\nu_3 =$ 235509.855 & $\nu_4 =$ 235659.855 & $\nu_5 =$ 235709.855 \\
+\hline
+\hline
+$f^{O_3}$, 1st order & 0.047640869152929 & 0.185445116134360 & 0.316604195711420 & 0.245899758091184 & 3.222548373378913 \\
+\hline
+$f^{O_3}$, 2nd order & 5.697385569760627e-04 & 0.003334323136812 & 0.008174481628060 & 0.009471060255095 & 0.201299761950949 \\
+\hline
+\hline
+$f^{T}$, 1st order & 2.461654986768451 & 2.869500089223521 & 3.532435350311374 & 4.819460698987029 & 2.214362697656810 \\
+\hline
+$f^{T}$, 2nd order & 0.655472851364863 & 0.665297346985568 & 0.648935948136454 & 0.585415609474580 & 0.263059818327406 \\
+\hline
+\end{tabular}
+\end{table*}
+
+\begin{table*}[t]
+%% increase table row spacing, adjust to taste
+\renewcommand{\arraystretch}{1.3}
+% if using array.sty, it might be a good idea to tweak the value of
+% \extrarowheight as needed to properly center the text within the cells
+\caption{$L_1$ norm}
+\label{table:L1} \centering
+%% Some packages, such as MDW tools, offer better commands for making tables
+%% than the plain LaTeX2e tabular which is used here.
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}%{|c||c|}
+\hline
+  & $\nu_1 =$ 234709.8550 & $\nu_2 =$  235309.855 & $\nu_3 =$ 235509.855 & $\nu_4 =$ 235659.855 & $\nu_5 =$ 235709.855 \\
+\hline
+\hline
+$f^{O_3}$, 1st order & 0.099390547203430 & 0.460319672804973 & 0.880676177338585 & 0.779770823395667 & 25.883546592368571 \\
+\hline
+$f^{O_3}$, 2nd order & 9.400016018338285e-04 & 0.007915374262308 & 0.020785965005216 & 0.027962629739133 & 1.372388959004812 \\
+\hline
+\hline
+$f^{T}$, 1st order & 4.697044966257595 & 5.310847184806018 & 5.981177069063371 & 27.177339054741509 & 11.452408505160163 \\
+\hline
+$f^{T}$, 2nd order & 1.104617064966691 & 1.140513607531942 & 1.634731643439549 & 1.941249640245345 & 1.732814656046629 \\
+\hline
+\end{tabular}
+\end{table*}
+
+
+\begin{table*}[t]
+%% increase table row spacing, adjust to taste
+\renewcommand{\arraystretch}{1.3}
+% if using array.sty, it might be a good idea to tweak the value of
+% \extrarowheight as needed to properly center the text within the cells
+\caption{$L_2$ norm}
+\label{table:L2} \centering
+%% Some packages, such as MDW tools, offer better commands for making tables
+%% than the plain LaTeX2e tabular which is used here.
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}%{|c||c|}
+\hline
+  & $\nu_1 =$ 234709.8550 & $\nu_2 =$  235309.855 & $\nu_3 =$ 235509.855 & $\nu_4 =$ 235659.855 & $\nu_5 =$ 235709.855 \\
+\hline
+\hline
+$f^{O_3}$, 1st order & 0.061820938594710 & 0.254540422886568 & 0.457401529924424 & 0.375982575156714 & 7.594305137459997 \\
+\hline
+$f^{O_3}$, 2nd order & 6.471058148171842e-04 & 0.004635810119041 & 0.011304564411152 & 0.014098862822197 & 0.428164759892863 \\
+\hline
+\hline
+$f^{T}$, 1st order & 2.713586865343748 & 3.089889734138263 & 3.729236850867014 & 10.603813031533436 & 4.033001109350677 \\
+\hline
+$f^{T}$, 2nd order & 0.695884304059675 & 0.726083814493919 & 0.805675584136845 & 0.840502472338163 & 0.527047599133099 \\
+\hline
+\end{tabular}
+\end{table*}
+
+\end{comment}
+
+\ \\
+The $L_{\infty}$, $L_1$, and $L_2$ norms on errors between the exact radiance $I(\vf)$ and its approximation $I^{approx}(\vf)$ are given as:
+\begin{eqnarray*}
+||I(\vf) - I^{approx}(\vf)||_{\infty} &=& \max_l | I_l(\vf) - I_l^{approx}(\vf) | \\
+||I(\vf) - I^{approx}(\vf)||_{1} &=& \sum_{l=1}^L | I_l(\vf) - I_l^{approx}(\vf) | \\
+||I(\vf) - I^{approx}(\vf)||_{2} &=& \Big( \sum_{l=1}^L | I_l(\vf) - I_l^{approx}(\vf) |^2 \Big)^{\frac{1}{2}}
+\end{eqnarray*}
+
+
+
+\begin{table*}[h]
+%% increase table row spacing, adjust to taste
+\renewcommand{\arraystretch}{1.3}
+% if using array.sty, it might be a good idea to tweak the value of
+% \extrarowheight as needed to properly center the text within the cells
+\caption{$L_{\infty}$ norm}
+\label{table:L_inf} \centering
+%% Some packages, such as MDW tools, offer better commands for making tables
+%% than the plain LaTeX2e tabular which is used here.
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}%{|c||c|}
+\hline
+  & $\nu_1 =$ 234709.8550 & $\nu_2 =$  235309.855 & $\nu_3 =$ 235509.855 & $\nu_4 =$ 235659.855 & $\nu_5 =$ 235709.855 \\
+\hline
+\hline
+$\vf^{O_3}$, 1st order & 0.047641 & 0.18545 & 0.31660 & 0.24590 & 3.2225 \\
+\hline
+$\vf^{O_3}$, 2nd order & 0.00056974 & 0.0033343 & 0.0081745 & 0.0094711 & 0.20130 \\
+$H$ numerical &  &  &  &  & \\
+\hline
+$\vf^{O_3}$, 2nd order & 0.00056974 & 0.0033343 & 0.0081742 & 0.0094665 & 0.20125 \\
+$H$ analytical &  &  &  &  & \\
+\hline
+\hline
+$\vf^{T}$, 1st order & 2.4617 & 2.8695 & 3.5324 & 4.8195 & 2.2144 \\
+\hline
+$\vf^{T}$, 2nd order & 0.65547 & 0.66530 & 0.64894 & 0.58542 & 0.26306 \\
+$H$ numerical &  &  &  &  & \\
+\hline
+\end{tabular}
+\end{table*}
+
+\begin{table*}[h]
+%% increase table row spacing, adjust to taste
+\renewcommand{\arraystretch}{1.3}
+% if using array.sty, it might be a good idea to tweak the value of
+% \extrarowheight as needed to properly center the text within the cells
+\caption{$L_1$ norm}
+\label{table:L1} \centering
+%% Some packages, such as MDW tools, offer better commands for making tables
+%% than the plain LaTeX2e tabular which is used here.
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}%{|c||c|}
+\hline
+  & $\nu_1 =$ 234709.8550 & $\nu_2 =$  235309.855 & $\nu_3 =$ 235509.855 & $\nu_4 =$ 235659.855 & $\nu_5 =$ 235709.855 \\
+\hline
+\hline
+$\vf^{O_3}$, 1st order & 0.099391 & 0.46032 & 0.88068 & 0.77977 & 25.884 \\
+\hline
+$\vf^{O_3}$, 2nd order & 0.00094000 & 0.0079154 & 0.020786 & 0.027963 & 1.3724 \\
+$H$ numerical &  &  &  &  & \\
+\hline
+$\vf^{O_3}$, 2nd order &  0.00094000 & 0.0079152 & 0.020784 & 0.027923 &  1.3720 \\
+$H$ analytical &  &  &  &  & \\
+\hline
+\hline
+$\vf^{T}$, 1st order & 4.6970 & 5.3108 & 5.9812 & 27.177 & 11.452 \\
+\hline
+$\vf^{T}$, 2nd order & 1.1046 & 1.1405 & 1.6347 & 1.9412 & 1.7328 \\
+$H$ numerical &  &  &  &  & \\
+\hline
+\end{tabular}
+\end{table*}
+
+
+\begin{table*}[h]
+%% increase table row spacing, adjust to taste
+\renewcommand{\arraystretch}{1.3}
+% if using array.sty, it might be a good idea to tweak the value of
+% \extrarowheight as needed to properly center the text within the cells
+\caption{$L_2$ norm}
+\label{table:L2} \centering
+%% Some packages, such as MDW tools, offer better commands for making tables
+%% than the plain LaTeX2e tabular which is used here.
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}%{|c||c|}
+\hline
+  & $\nu_1 =$ 234709.8550 & $\nu_2 =$  235309.855 & $\nu_3 =$ 235509.855 & $\nu_4 =$ 235659.855 & $\nu_5 =$ 235709.855 \\
+\hline
+\hline
+$\vf^{O_3}$, 1st order & 0.061821 & 0.25454 & 0.45740 & 0.37598 & 7.5943 \\
+\hline
+$\vf^{O_3}$, 2nd order & 0.00064711 & 0.0046358 & 0.011305 & 0.014099 & 0.42816 \\
+$H$ numerical &  &  &  &  & \\
+\hline
+$\vf^{O_3}$, 2nd order & 0.00064710 & 0.0046358 & 0.011304 & 0.014087 & 0.42806  \\
+$H$ analytical &  &  &  &  & \\
+\hline
+\hline
+$\vf^{T}$, 1st order & 2.7136 & 3.0899 & 3.7292 & 10.604 & 4.0330 \\
+\hline
+$\vf^{T}$, 2nd order & 0.69588 & 0.72608 & 0.80568 & 0.84050 & 0.52705 \\
+$H$ numerical &  &  &  &  & \\
+\hline
+\end{tabular}
+\end{table*}
+
+
+\clearpage
+
+
+%\begin{comment}
+
+%----------------------------- Errors -----------------------------
+
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Accuracy comparisons of first and second order Taylor approximations for Radiances. {\it Mixing Ratios} Gradients were obtained {\it analytically} and {\it Mixing Ratios} Hessians were obtained {\it numerically}. \\
+(Part 1 of 2)} \\ [0.30cm]
+$\begin{array}{c@{\hspace{0.05in}}c}
+\mbox{ \bf{Antenna Radiances} } & \mbox{ \bf{Errors} } \\ [0.15cm]
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/fk_I_nu_234709.855_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/fk_E_nu_234709.855_Analytical.eps} \\
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/fk_I_nu_235309.855_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/fk_E_nu_235309.855_Analytical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\label{fig:errors_MR_Jac_A_Hes_N_1}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf (Part 2 of 2)} \\ [0.30cm]
+$\begin{array}{c@{\hspace{0.05in}}c}
+\mbox{ \bf{Antenna Radiances} } & \mbox{ \bf{Errors} } \\ [0.15cm]
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/fk_I_nu_235509.855_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/fk_E_nu_235509.855_Analytical.eps} \\
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/fk_I_nu_235659.855_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/fk_E_nu_235659.855_Analytical.eps} \\
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/fk_I_nu_235709.855_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/fk_E_nu_235709.855_Analytical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\label{fig:errors_MR_Jac_A_Hes_N_2}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Accuracy comparisons of first and second order Taylor approximations for Radiances. {\it Mixing Ratios} Gradients and {\it Mixing Ratios} Hessians were obtained {\it analytically}.  \\
+(Part 1 of 2)}  \\ [0.30cm]
+$\begin{array}{c@{\hspace{0.05in}}c}
+\mbox{ \bf{Antenna Radiances} } & \mbox{ \bf{Errors} } \\ [0.15cm]
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Analytical/fk_I_nu_234709.855_Jac_Analytical_Hes_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Analytical/fk_E_nu_234709.855_Jac_Analytical_Hes_Analytical.eps} \\
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Analytical/fk_I_nu_235309.855_Jac_Analytical_Hes_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Analytical/fk_E_nu_235309.855_Jac_Analytical_Hes_Analytical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\label{fig:errors_MR_Jac_A_Hes_A_1}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf (Part 2 of 2)} \\ [0.30cm]
+$\begin{array}{c@{\hspace{0.05in}}c}
+\mbox{ \bf{Antenna Radiances} } & \mbox{ \bf{Errors} } \\ [0.15cm]
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Analytical/fk_I_nu_235509.855_Jac_Analytical_Hes_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Analytical/fk_E_nu_235509.855_Jac_Analytical_Hes_Analytical.eps} \\
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Analytical/fk_I_nu_235659.855_Jac_Analytical_Hes_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Analytical/fk_E_nu_235659.855_Jac_Analytical_Hes_Analytical.eps} \\
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Analytical/fk_I_nu_235709.855_Jac_Analytical_Hes_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Analytical/fk_E_nu_235709.855_Jac_Analytical_Hes_Analytical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\label{fig:errors_MR_Jac_A_Hes_A_2}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf Accuracy comparisons of first and second order Taylor approximations for Radiances. {\it Temperature} Gradients were obtained {\it analytically} and {\it Temperature} Hessians were obtained {\it numerically}.  \\
+(Part 1 of 2)} \\ [0.30cm]
+$\begin{array}{c@{\hspace{0.05in}}c}
+\mbox{ \bf{Antenna Radiances} } & \mbox{ \bf{Errors} } \\ [0.15cm]
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/T_I_nu_234709.855_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/T_E_nu_234709.855_Analytical.eps} \\
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/T_I_nu_235309.855_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/T_E_nu_235309.855_Analytical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\label{fig:errors_MR_Jac_A_Hes_N_1}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+{\bf (Part 2 of 2)} \\ [0.30cm]
+$\begin{array}{c@{\hspace{0.05in}}c}
+\mbox{ \bf{Antenna Radiances} } & \mbox{ \bf{Errors} } \\ [0.15cm]
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/T_I_nu_235509.855_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/T_E_nu_235509.855_Analytical.eps} \\
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/T_I_nu_235659.855_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/T_E_nu_235659.855_Analytical.eps} \\
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/T_I_nu_235709.855_Analytical.eps} &
+    \epsfxsize=0.5\linewidth
+    \epsffile{eps/Jac_Analytical/errors_Jac_Analytical_Hes_Numerical/T_E_nu_235709.855_Analytical.eps} \\ [-0.40cm]
+\end{array}$
+\end{center}
+\label{fig:errors_MR_Jac_A_Hes_N_2}
+\end{figure}
+
+
+\clearpage
+
+
+% $Id$

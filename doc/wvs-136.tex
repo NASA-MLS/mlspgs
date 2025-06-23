@@ -1,0 +1,155 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-136r1}
+\newcommand{\docdate}{4 November 2016}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\Delta B}
+\newcommand{\oDB}{\overline{\DB}}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\hMT}{\MT^s}
+\newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van\\
+Subject: \>Closest approach between two lines\\
+From: \>Van Snyder\\
+%Reference: \>
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-20pt}
+
+Let $\mathbf{C}$ be a point on a line, and $\mathbf{U}$ be an unit vector
+along the line.
+
+Consider two lines $\mathcal{L}_1(s_1) = \mathbf{C}_1 + s_1 \mathbf{U}_1$
+and $\mathcal{L}_2(s_2) = \mathbf{C}_2 + s_2 \mathbf{U}_2$.  We want to
+find $s_1$ and $s_2$ such that $|\mathcal{L}_1(s_1) - \mathcal{L}_2(s_2)|$
+is minimal.
+
+Let the vector $\mathbf{W} = \mathbf{C}_W + s_1 \mathbf{U}_1 - s_2
+\mathbf{U}_2 = \mathbf{P}_1 - \mathbf{P}_2$, where $\mathbf{C}_W =
+\mathbf{C}_1 - \mathbf{C}_2$, be the vector between the points
+$\mathbf{P}_1$ and $\mathbf{P}_2$ on $\mathcal{L}_1(s_1)$
+and $\mathcal{L}_2(s_2)$ that are closest to each other.
+
+The vector $\mathbf{W}$ is necessarily perpendicular to both
+$\mathcal{L}_1(s_1)$ and $\mathcal{L}_2(s_2)$.
+
+\begin{centering}
+\includegraphics[scale=0.75]{wvs-136-lines}\\
+\end{centering}
+
+
+Therefore
+
+\begin{equation*}\begin{split}
+\mathbf{W} \cdot \mathbf{U}_1 =\,& 0 \text{ and}\\
+\mathbf{W} \cdot \mathbf{U}_2 =\,& 0\\
+\end{split}\end{equation*}
+
+Substituting $\mathbf{W}$ into these equations yields two equations
+
+\begin{equation*}\begin{split}
+\mathbf{U}_1 \cdot \mathbf{U}_1\, s_1 - \mathbf{U}_1 \cdot \mathbf{U}_2\, s_2
+ =\,& -\mathbf{U}_1 \cdot \mathbf{C}_W \text{ and} \\
+\mathbf{U}_1 \cdot \mathbf{U}_2\, s_1 - \mathbf{U}_2 \cdot \mathbf{U}_2\, s_2
+ =\,& -\mathbf{U}_2 \cdot \mathbf{C}_W\\
+\end{split}\end{equation*}
+
+Putting $a = \mathbf{U}_1 \cdot \mathbf{U}_1$,
+$b = \mathbf{U}_1 \cdot \mathbf{U}_2$,
+$c = \mathbf{U}_2 \cdot \mathbf{U}_2$,
+$d = \mathbf{U}_1 \cdot \mathbf{C}_W$, and
+$e = \mathbf{U}_2 \cdot \mathbf{C}_W$, and observing that $a = c = 1$
+because $\mathbf{U}_1$ and $\mathbf{U}_2$ are unit vectors, we can solve
+for $s_1$ and $s_2$ as
+
+\begin{equation*}\begin{split}
+s_1 =\,& \frac{b e - d}{1-b^2} \\
+s_2 =\,& \frac{e - b d}{1-b^2} \\
+\end{split}\end{equation*}
+
+provided $b^2 \neq 1$.  The distance between the lines is
+$|\mathbf{P}_1-\mathbf{P}_2|$.
+
+If $b^2 = 1$, the lines are parallel, and we can solve for the distance
+between the lines by setting the value of $s_1$ to an arbitrary value,
+say zero, and solving for $s_2$, giving $s_2 = e$.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$

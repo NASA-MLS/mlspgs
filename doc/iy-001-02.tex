@@ -1,0 +1,47 @@
+\section{Absorption Coefficient Calculations}
+
+$k$ - molecule \\
+$j$ - line
+
+\begin{equation*}
+\S_j^k = \I_j^k(300) + \frac{\vh c El_j^k}{\log 10 k} \bigg( \frac{1}{300}-\frac{1}{T} \bigg) + \log \Bigg[ \frac{ Q^k(300) \cdot \tanh\{\vh \nu / (2kT)\} \cdot \Big( 1 + \exp\big\{ -\vh \nu_j^k / (kT) \big\}\Big) }{ Q^k(T) \cdot \Big( 1 - \exp\big\{ -\vh \nu_{0j}^k / (300k) \big\}\Big) } \Bigg]
+\end{equation*}
+
+\begin{eqnarray*}
+x_j^k(\nu) = \frac{\sqrt{\log 2} (\nu - \nu_j^{'k})}{w_d^k}, \ \ \ \ y_j^k(\nu) = \frac{\sqrt{\log 2} w_{cj}^k P}{w_d^k} \Big( \frac{300}{T} \Big)^{n_{cj}^k}, \ \ \ \ z_j^k(\nu) = \frac{\sqrt{\log 2} (\nu + \nu_j^{'k})}{w_d^k},
+\end{eqnarray*}
+
+\begin{eqnarray*}
+\nu_j^k &=& \Bigg[ \nu_{0j}^k + \triangle \nu_{0j}^k P\Big( \frac{300}{T} \Big)^{n_{\triangle \nu_{0j}^{k}}} \Bigg], \\
+\nu_j^{'k} &=& \nu_j^k v_c, \\
+v_c &=& 1 + (-6.8 \km/\s)/ c
+\end{eqnarray*}
+$T$ is temperature in $\K$, \\
+$P$ is pressure in $\hPa$, \\
+$\R^k$ is the isotopic fraction for the species, \\
+$\I_j^k(300)$ is the logarithm of the integrated intensity in $\nm^2 \MHz$ at 300\K, \\
+$\nu_{0j}^{k}$ is the unshifted rest line center frequency in $\MHz$, \\
+$El_j^k$ is the ground state energy in $\cm^{-1}$, \\
+$Q^k(T)$ is the partition function, \\
+$w_d^k$ is the Doppler width in $\MHz$, \\
+\ \\
+$w_{cj}^k$ is the collision width in $\MHz \hPa^{-1}$ at 300\K, $n_{cj}^k$ is its temperature dependence, \\
+$\nu_j^k$ is the line position frequency in $\MHz$ \\
+$\nu$ is the radiation frequency in $\MHz$ \\
+\ \\
+$v_c$ is the Doppler shift of the line position due to the z-axis component of the spacecraft and Earth velocities, $\vv$, \\
+$\triangle \nu_{0j}^k$ is the pressure shift parameter in $\MHz \, \hPa^{-1}$, and $n_{\triangle \nu_{0j}^{k}}$ is its temperature dependence. \\
+
+
+
+\begin{eqnarray*}
+\mbox{LineShape} \Big( x_j^k(\nu), y_j^k(\nu), z_j^k(\nu) \Big) = \bigg( \frac{\nu}{\nu_{0j}^k} \bigg) \bigg\{ \frac{1}{\sqrt{\pi}} \frac{y_j^k(\nu)}{(y_j^k(\nu))^2 + (x_j^k(\nu))^2} + \frac{1}{\sqrt{\pi}} \frac{y_j^k(\nu)}{(z_j^k(\nu))^2 + (y_j^k(\nu))^2} \bigg\}
+\end{eqnarray*}
+
+The cross-section $\beta^k$ for the $k$th species is given by
+\begin{eqnarray*}
+\beta^k = \R^k \sqrt{\frac{\log 2}{\pi}} \frac{10^{-13}}{k} \frac{P}{T \cdot w_d^k} \bigg[ \sum_j 10^{S_j^k} \mbox{LineShape} \Big( x_j^k(\nu), y_j^k(\nu), z_j^k(\nu) \Big) \bigg]
+\end{eqnarray*}
+
+
+% $Id$

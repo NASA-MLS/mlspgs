@@ -1,0 +1,173 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-085r1}
+\newcommand{\docdate}{22 September 2009}
+
+\usepackage{graphicx}
+
+\usepackage{floatflt}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Dong\\
+Subject: \>Scattered brightness temperature\\
+From: \>Van\\
+\end{tabbing}
+
+\parindent 0pt \parskip 4pt
+\vspace{-20pt}
+
+\section{Introduction}
+
+We wish to calculate the intensity of radiation scattered from a point to
+an observer.
+
+The intensity at the scattering point is measured by brightness
+temperature, denoted $T_b$.  This is considered to be incident upon the
+scattering point from all directions.
+
+The amount of radiation scattered to the observer from a particular
+direction is the product of the incident $T_b$ from that direction and
+the Mie phase function $P(\xi)$, where $\xi$ is the angle between the
+incident ray and the ray scattered to the observer.  The radiation
+observed is the integral over the unit sphere of this product, i.e.,
+
+\begin{equation}
+\frac1{4\pi} \oint_S \text{d} \Omega\, T_b(\Omega) P(\xi)\,.
+\end{equation}
+
+\section{One obvious co\"ordinate system}
+
+The co\"ordinate system is a polar co\"ordinate system, oriented so the
+observer is on the positive $x$ axis and the north pole (of the
+co\"ordinate system, not the earth) is on the positive $z$ axis.  The
+connection with MLS geometry is that the $x-y$ plane is the orbit plane,
+the positive $x$ axis is the direction of the limb tangent, and the
+positive $y$ axis is the zenith direction.
+
+Consider first the case of integrating around a circle of latitude, then
+sweeping the latitudes from pole to pole.
+
+Let $\phi$ be the angle about the $z$ axis, in the $x-y$ plane, measured
+anticlockwise from the positive $x$ axis as viewed from the positive $z$
+axis, i.e., longitude.  Let $\theta$ be the complement of the angle from
+the positive $z$ axis, i.e., latitude. In this co\"ordinate system,  the
+surface area element d$\Omega = \text{d}\phi\,\text{d}\theta\cos\theta$
+and a point on the sphere is given by the vector $(\cos\theta\cos\phi,
+\cos\theta\sin\phi, \sin\theta)^T$.  The cosine of the angle between this
+vector and the vector to the observer at $(1,0,0)^T$ is the inner product
+of these two vectors, i.e., $\cos\theta\cos\phi$, so $\xi=
+\cos^{-1}(\cos\theta \cos\phi)$.  Retaining $\xi$ without explicit
+$\theta$ and $\phi$ dependence, and formally exchanging the order of
+integration, the integral becomes
+
+\begin{equation}\label{two}
+\frac1{4\pi} \oint_S \text{d} \Omega\, T_b(\Omega) P(\xi) =
+\frac1{4\pi} \int_{-\pi}^\pi \text{d} \phi
+ \int_{-\frac\pi2}^\frac\pi2 \text{d} \theta\, T_b(\theta,\phi) P(\xi) \cos\theta\,.
+\end{equation}
+
+We are only able to calculate $T_b(0,\phi)$, i.e., only in the $x-y$
+plane, so we must assume some sort of symmetry.  Further, the argument
+$\xi$ of $P(\xi)$ is undesirable.
+
+\section{Another co\"ordinate system}
+
+If we instead think of the integration as first around the ``equator,''
+then rotate about the $x$ axis (so we now have a different equator for
+each pole position), the argument $\xi$ in $P(\xi)$ is always $\phi$, the
+longitude from the observer along the current equator.  Writing this with
+the ``around the equator'' integration on the inside, and then formally
+exchanging the order of integration, we have
+
+\begin{equation}
+\frac1{4\pi} \int_{-\frac\pi2}^\frac\pi2 \text{d}\theta\,
+ \int_{-\pi}^\pi \text{d}\phi\, T_b(\theta,\phi) P(\phi) \cos\theta =
+\frac1{2\pi} \int_{-\pi}^\pi \text{d}\phi\, P(\phi)\,
+ \frac12 \int_{-\frac\pi2}^\frac\pi2 \text{d}\theta\, T_b(\theta,\phi)
+  \cos\theta\,,
+\end{equation}
+
+where the normalizations for the inner and outer integrals are separated
+in the right-hand side.  The problem remains that we can only calculate
+$T_b(0,\phi) = T_{b0}(\phi)$, so we still need to make a symmetry
+assumption that allows us to estimate $T_b(\theta,\phi)$.
+
+We are not assuming a horizontally isotropic atmosphere, so we cannot
+assume $T_{b0}(\phi) = T_{b0}(\pi-\phi)$.  When $\theta=0$ we want
+$T_b(\theta,\phi) \mapsto T_{b0}(\phi) = T_b(0,\phi)$.  When
+$\theta=\frac\pi2$ we want some linear combination of $T_{b0}(0)$ and
+$T_{b0}(\pi)$.  In particular when $\phi=\frac\pi2$ we want
+$T_b(\frac\pi2,\frac\pi2) = \frac12(T_{b0}(0) + T_{b0}(\pi))$.  For
+intermediate points, we want some linear combination of
+$T_{b0}(\phi^\prime)$ and $T_{b0}(\pi-\phi^\prime)$, where $\phi^\prime$
+is at the same angle from the spacecraft zenith (the positive $y$ axis in
+our coordinate system) as $\phi$, i.e., $\phi^\prime =
+\sin^{-1}(\sin\phi\cos\theta)$, in the same quadrant as $\phi$.  Putting
+everything together we have
+
+\begin{equation}
+\frac1{2\pi} \int_{-\pi}^\pi \text{d}\phi\, P(\phi)\, 
+ \frac12 \int_{-\frac\pi2}^\frac\pi2 \text{d} \theta\, T_b(\theta,\phi)\,
+  \cos\theta \approx
+\frac1{2\pi} \int_{-\pi}^\pi \text{d}\phi\, P(\phi)\, \overline{T}_{b0}(\phi)\,
+\end{equation}
+
+where
+
+\begin{equation}
+\overline{T}_{b0}(\phi)=
+  \frac2{8-\pi}\int_{-\frac\pi2}^\frac\pi2 \text{d}\theta\,
+   \left[
+   \cos\theta\, T_{b0}(\phi^\prime) + (1-\cos\theta)
+    \left( (1+\cos\phi) T_{b0}(\phi^\prime) +
+           (1-\cos\phi) T_{b0}(\hat{\phi}^\prime) \right)
+   \right] \cos\theta
+\end{equation}
+
+and
+
+\begin{equation}
+ \hat{\phi}^\prime = \left\{
+  \begin{array}{ll}
+   \pi-\phi^\prime\,, & \phi \geq 0 \\
+   -\pi-\phi^\prime\,, & \phi < 0 \\
+  \end{array} \right .
+\end{equation}
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.1  2009/09/22 19:01:12  vsnyder
+% Initial commit, just to keep details of Section 2
+%

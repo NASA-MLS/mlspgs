@@ -1,0 +1,16 @@
+#Makefile.dep -- a file to be included by a Makefile
+#to compile a Fortran 9x program or library
+OBJS = \
+dchol.o   machine.o   test_cholesky2.o   test_cholesky.o   test_choleskyInvert.o  \
+amach.o   dchol.o   ddot.o   sdot.o  \
+\
+ 
+# using f90makedep.pl to calculate dependencies 
+test_cholesky.o: test_cholesky.f90 $(dir1)MLSCommon.o $(dir1)MatrixModule_0.o \
+	machine.o
+test_cholesky2.o: test_cholesky2.f90 machine.o
+test_choleskyInvert.o: test_choleskyInvert.f90 $(dir1)MatrixModule_0.o \
+	machine.o
+ 
+#End of Makefile.dep
+ 

@@ -1,0 +1,60 @@
+; $Id$
+
+;; =======================lblMoleculesforpfafwm================================
+;; removes newline char from the string returned by !esyscmd
+!define(DropLastChar, {!substr({$*},0,!eval(!len({$*})-1))})
+  
+;; replace l2cf line continuation char '$' with shell char '\'
+!define(TransLitContinueLineChar, {!translit({$*}, {$}, {\})})
+  
+;; the macros !ExpandRTVLMandatoryLBLMoleculesForX are contained in
+;; the spectroscopy l2cf defs file
+!define(ExpandRTVLMandatoryLBLMoleculesFor, {!makelist(!RTVLMandatoryLBLMoleculesFor,{},$@)})
+
+;; system call to python routine
+!define(PyCatLBLMolecules, {!DropLastChar(!esyscmd(!home/mlspgs/scripts/pycatlblmolecules.py {$*}))})
+!define(CatLBL, {!PyCatLBLMolecules(!TransLitContinueLineChar({$*}))})
+
+;; e.g. call as !lblMolecules(2L, 3L) to get the required lbl
+;; molecules for these sidebands
+!define(lblMolecules, {!CatLBL(!ExpandRTVLMandatoryLBLMoleculesFor($@))})
+
+;; system call to python routine 
+!define(PyDiff, {!DropLastChar(!esyscmd(!home/mlspgs/scripts/pydiff.py {$*}))})
+!define(lblMoleculesR3Ext, {!PyDiff('!lblMolecules($*)' 'H2O, H2O_R3, N2, O2')})
+
+;; =======================lblMoleculesforpfafwm================================
+
+!define(LbandsForRadiometer,{!dnl
+!ifelse($1,R1A,{1L,22L,32L})!dnl
+!ifelse($1,R1B,{21L,26L,34L})!dnl
+!ifelse($1,R2,{2L,3L,4L,5L,6L,23L,27L})!dnl
+!ifelse($1,R3,{7L,8L,9L,24L,25L,33L})!dnl
+!ifelse($1,R4,{10L,11L,12L,13L,14L,28L,29L,30L,31L})!dnl
+!ifelse($1,R5H,{15L,16L,17L})!dnl
+!ifelse($1,R5V,{18L,19L,20L})})
+
+!define(UbandsForRadiometer,{!dnl
+!ifelse($1,R1A,{1U,22U,32U})!dnl
+!ifelse($1,R1B,{21U,26U,34U})!dnl
+!ifelse($1,R2,{2U,3U,4U,5U,6U,23U,27U})!dnl
+!ifelse($1,R3,{7U,8U,9U,24U,25U,33U})!dnl
+!ifelse($1,R4,{10U,11U,12U,13U,14U,28U,29U,30U,31U})!dnl
+!ifelse($1,R5H,{15U,16U,17U})!dnl
+!ifelse($1,R5V,{18U,19U,20U})})
+
+!define(PFAMolsForR4,{!dnl
+    BR_79_O,BR_81_O,CH3CL_35,CH3CL_37,CH3CN,CH3CN_V8,CH3OH,$
+    CLOUD_A,CLOUD_S,CL_35_O,CL_37_O_V1,C_13_O,EXTINCTIONV2,$
+    H2O,H2O2,HCL_35,HCL_37,HNO3,HNO3_V5,HNO3_V6,HNO3_V7,HNO3_V8,HNO3_V9,$
+    HO2,HOCL_35,HOCL_37,N2,N2O,N2O_V1,N2O_V2,O2,$
+    O3,O3_2V2,O3_ASYM_O_17,O3_ASYM_O_18,O3_ASYM_O_18_V2,O3_SYM_O_17,$
+    O3_SYM_O_18,O3_SYM_O_18_V2,O3_V1_3,O3_V1_3_V2,O3_V2,$
+    S_32_O2,S_32_O2_V2,extinction,h2o_r4})
+;$Log$
+;Revision 1.2  2006/06/29 23:05:52  lambert
+;added lblMoleculesR3Ext and PyDiff definitions
+;
+;Revision 1.1  2006/04/27 23:40:01  lambert
+;handles mandatory lbl molecules for PFA forward models
+;

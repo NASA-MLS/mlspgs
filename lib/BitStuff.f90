@@ -1,0 +1,794 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!=============================================================================
+module BitStuff
+!=============================================================================
+
+! This module contains routines for interrogating, manipulating, using bits.
+
+  use MLSFinds, only: Findall
+  use MLSStringLists, only: NumStringElements, StringElement
+  use Output_M, only: Blanks, Output, Newline
+
+  implicit none
+  private
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+! In the following "bits" refers in most cases to the bits
+! held within an integer. Thus an integer can be decomposed
+! into an array of bits. How large an array and what the starting index to use
+! are very important. We will assume that the starting index is 0 and 
+! that the largest index is MAXBITNUMBER.
+
+!     (subroutines and functions)
+! BitEq              Generalized bits "==" (optionally ignoring leading bits)
+! BitsToBooleans     Converts bits to an array of Boolean
+! BooleansToBits     Converts an array of Boolean to bits
+! CountBits          Returns the number of non-zero bits
+! DumpBitCounts      Dump count of bits set
+! DumpBitNames       Dump names of bits set
+! IsBitPatternSet    Are any of the bits set in bitpattern also set in the arg
+! IsBitSet           Is the specified bit number set
+! NegativeIfBitPatternSet  Return the negative abs. of the first arg
+!                      if any of the bits set in bitpattern also set in i
+! NegativeIfBitSet   Return the negative abs. of the first arg
+!                      if the bitnumber is set in i
+! Reverse            Return the integer represented reversing the bits
+! SetBits            Return the integer represented by the bits set among set
+! WhichBitsAreSet    Which bit numbers are set?
+! === (end of toc) ===
+! === (start of api) ===
+! log biteq (bits i, log Booleans(:), [char* options])
+! log biteq (bits i, bits probe, int numBits, [char* options])
+! BitsToBooleans ( bits i, log Booleans(:) )
+! BooleansToBits ( log Booleans(:), bits i )
+! int CountBits ( value )
+!                 value can be a scalar or an array of ints or chars
+! DumpBitCounts ( values(:), [char* itemName], [log showPct] )
+! DumpBitNames ( bits i, char* bitNames(:), [char* itemName], [log oneLine] )
+! DumpBitNames ( bits i(:), char* bitNames(:), [char* itemName], [log sortByName] )
+! log IsBitPatternSet ( bits i, bits bitPattern )
+! log IsBitSet ( bits i, int bitNumber )
+! value NegativeIfBitPatternSet ( value, bits i, bits bitPattern )
+! value NegativeIfBitSet ( value, bits i, int bitNumber )
+!                  value can be an int, real or double, scalar or array
+! bits Reverse ( bits i )
+! bits SetBits ( int set(:) )
+! WhichBitsAreSet ( bits i, int set(:), [int howMany], [int unset(:)] )
+! === (end of api) ===
+
+  public :: biteq
+  public :: BitsToBooleans, BooleansToBits
+  public :: CountBits, CountBits_0, CountBits_1, CountBits_2
+  public :: CountCharBits_0, CountCharBits_1, CountCharBits_2
+  public :: DumpBitCounts, DumpBitNames, isBitSet, IsBitPatternSet
+  public :: NegativeIfBitSet, NegativeIfBitPatternSet
+  public :: Reverse
+  public :: SetBits, WhichBitsAreSet
+
+  interface biteq
+    module procedure biteq_Boolean, biteq_bits
+  end interface
+
+  interface CountBits
+    module procedure countBits_0, countBits_1, countBits_2
+    module procedure countCharBits_0, countCharBits_1, countCharBits_2
+  end interface
+  
+  interface DumpBitNames
+    module procedure dumpBitNames_sca, dumpBitNames_array
+  end interface
+  
+
+  interface NegativeIfBitSet
+    module procedure NegativeIfBitSet_int, NegativeIfBitSet_sng, &
+      & NegativeIfBitSet_dbl
+  end interface
+
+  interface NegativeIfBitPatternSet
+    module procedure NegativeIfBitPatternSet_int, NegativeIfBitPatternSet_sng, &
+      & NegativeIfBitPatternSet_dbl
+  end interface
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+  ! bitNumber starts with 0 at the smallest
+  ! and goes up from there
+  integer, private :: ibitindx ! A dummy index used in array constructor
+  
+  ! Note: the following is assumed to be the max bit number by all
+  ! procedures in this module except for Reverse
+  ! which relies on the intrinsic bit_size which should return
+  ! an integer = (MAXBITNUMBER+1)
+  ! If you plan on using the software on a platform for which
+  ! bit_size returns a different value, change the following
+  integer, parameter, public :: MAXBITNUMBER = 30 ! The 31st is the sign bit
+  integer, parameter, dimension(0:MAXBITNUMBER) :: BITVALUES = &
+    & (/ (2**ibitindx, ibitindx = 0, MAXBITNUMBER) /)
+    ! Count the number of nonzero bits in Word.
+  integer, parameter :: Counts(0:255) = & ! Number of nonzero bits in a byte
+    !    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
+    & (/ 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,  & ! 0 
+    &    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,  & ! 1 
+    &    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,  & ! 2 
+    &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! 3 
+    &    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,  & ! 4 
+    &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! 5 
+    &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! 6 
+    &    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,  & ! 7 
+    &    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,  & ! 8 
+    &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! 9 
+    &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! A 
+    &    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,  & ! B 
+    &    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,  & ! C 
+    &    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,  & ! D 
+    &    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,  & ! E 
+    &    4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8 /)  ! F 
+
+contains
+
+  ! -------------------------------------------------  biteq  -----
+  ! This family of functions generalizes bit "=="
+  ! ignoring leading bits
+  ! Unless bitnum is supplied, find max bit number n of probe or array bound
+  ! Then consider only bit numbers {0 .. n}
+  ! If bitnum contains a positive integer n, 
+  !   consider only bit numbers {0 .. n}
+  ! If bitnum contains a negative integer -n, 
+  !   consider only bit numbers {n+1 .. MAXBITNUMBER}
+  !
+  ! Note: when testing for bit numbers {0 .. n} we do comparisons mod 2**(n+1)
+  ! When testing for bit numbers {n+1 .. MAXBITNUMBER} we do comparisons
+  ! after dividing by 2**(n+1)
+  function biteq_Boolean ( i, Booleans, bitnum ) result (relation)
+    integer, intent(in)                :: i
+    logical, dimension(0:), intent(in) :: Booleans
+    integer, optional, intent(in)      :: bitnum
+    logical                            :: RELATION
+
+    ! Internal variables
+    integer :: probe
+    !----------Executable part----------!
+    relation = .FALSE.
+    call BooleansToBits ( Booleans, probe )
+    relation = biteq_bits ( i, probe, bitnum )
+  end function biteq_Boolean
+
+  elemental function biteq_bits ( i, probe, bitnum ) result (relation)
+    integer, intent(in)                 :: i
+    integer, intent(in)                 :: probe
+    integer, optional, intent(in)       :: bitnum
+    logical                             :: RELATION
+
+    ! Internal variables
+    integer :: mybitnum
+    !----------Executable part----------!
+    relation = .FALSE.
+    if ( present(bitnum) ) then
+      if ( abs(bitnum) >= MAXBITNUMBER ) then
+        ! illegal bitnum, so let relation = .false.
+      elseif ( bitnum >= 0 ) then
+        relation = ( mod(i, BitValues(bitnum+1)) == mod(probe, BitValues(bitnum+1)) )
+      elseif ( bitnum < 0 ) then
+        relation = ( i/BitValues(-bitnum+1) == probe/BitValues(-bitnum+1) )
+      endif
+    else
+      call MaxBitNumberSet( probe, mybitnum )
+      relation = ( mod(i, BitValues(mybitnum+1)) == mod(probe, BitValues(mybitnum+1)) )
+    endif
+    
+  end function biteq_bits
+
+  ! ------------------------------------------------  BitsToBooleans  -----
+  subroutine BitsToBooleans ( i, Booleans )
+    ! Convert an integer to an array of booleans, treating
+    ! the integer as a bit pattern
+    ! E.g., given 41 (101001 in binary) returns (/ T, F, F, T, F, T /)
+    ! Note that the first element of the array Booleans
+    ! corresponds to bit number 0
+    ! That's why we begin its index number with 0 instead of 1
+    integer, intent(in)                 :: i
+    logical, dimension(0:), intent(out) :: Booleans
+    ! Local variables
+    integer :: bitNumber
+    ! Executable
+    Booleans = .false.
+    do bitNumber = 0, min(size(Booleans) - 1, MAXBITNUMBER)
+      Booleans(bitNumber) = isBitSet( i, bitNumber )
+    enddo
+  end subroutine BitsToBooleans
+
+  ! ------------------------------------------------  BooleansToBits  -----
+  subroutine BooleansToBits ( Booleans, i )
+    ! Convert an an array of booleans to an integer, treating
+    ! the integer as a bit pattern
+    ! E.g., given (/ T, F, F, T, F, T /) returns 41 (101001 in binary) 
+    ! Note that the first element of the array Booleans
+    ! corresponds to bit number 0
+    ! That's why we begin its index number with 0 instead of 1
+    logical, dimension(0:), intent(in)  :: Booleans
+    integer, intent(out)                :: i
+    ! Local variables
+    integer :: bitNumber
+    ! Executable
+    i = 0
+    do bitNumber = 0, min( ubound(Booleans, 1), bit_size(i) - 1 )
+      if ( Booleans(bitNumber) ) i = ibset( i, bitNumber )
+    enddo
+  end subroutine BooleansToBits
+
+  ! ------------------------------------------------  CountBits_0  -----
+  integer function CountBits_0 ( Word )
+    ! Count the number of nonzero bits in all the bytes of an integer.
+    ! Replace by POPCNT when Fortran 2008 is sufficiently widely available.
+    integer, intent(in) :: Word
+    integer :: I
+
+    countBits_0 = counts(iand(word,255))
+    do i = 8, bit_size(word)-8, 8
+      countBits_0 = countBits_0 + counts(iand(ishft(word,-i),255))
+    end do
+  end function CountBits_0
+
+  ! ------------------------------------------------  CountBits_1  -----
+  integer function CountBits_1 ( Array )
+    integer, intent(in) :: Array(:)
+    ! Count the number of nonzero bits in all of the elements of Array.
+    integer :: I
+    countBits_1 = countBits(array(1))
+    do i = 2, size(array)
+      countBits_1 = countBits_1 + countBits(array(i))
+    end do
+  end function CountBits_1
+
+  ! ------------------------------------------------  CountBits_2  -----
+  integer function CountBits_2 ( Array )
+    integer, intent(in) :: Array(:,:)
+    ! Count the number of nonzero bits in all of the elements of Array.
+    integer :: I
+    countBits_2 = countBits(array(:,1))
+    do i = 2, size(array,2)
+      countBits_2 = countBits_2 + countBits(array(:,i))
+    end do
+  end function CountBits_2
+
+  ! --------------------------------------------  CountCharBits_0  -----
+  integer function CountCharBits_0 ( Char, What )
+    ! Count the number of nonzero bits in iand(ichar(char),what).
+    ! Replace by POPCNT when Fortran 2008 is sufficiently widely available.
+    character(len=1), intent(in) :: Char
+    integer, intent(in), optional :: What ! mask of which bits to count
+    countCharBits_0 = counts(ichar(char))
+    if ( present(what) ) countCharBits_0 = counts(iand(ichar(char),what))
+  end function CountCharBits_0
+
+  ! --------------------------------------------  CountCharBits_1  -----
+  integer function CountCharBits_1 ( Array, What )
+    character(len=1), intent(in) :: Array(:)
+    integer, intent(in), optional :: What ! mask of which bits to count
+    ! Count the number of nonzero bits in all of the elements of Word.
+    integer :: I
+    countCharBits_1 = countBits(array(1),what)
+    do i = 2, size(array)
+      countCharBits_1 = countCharBits_1 + countBits(array(i),what)
+    end do
+  end function CountCharBits_1
+
+  ! --------------------------------------------  CountCharBits_2  -----
+  integer function CountCharBits_2 ( Array, What )
+    character, intent(in) :: Array(:,:)
+    integer, intent(in), optional :: What ! mask of which bits to count
+    ! Count the number of nonzero bits in all of the elements of Word.
+    integer :: I
+    countCharBits_2 = countBits(array(:,1),what)
+    do i = 2, size(array,2)
+      countCharBits_2 = countCharBits_2 + countBits(array(:,i),what)
+    end do
+  end function CountCharBits_2
+
+  ! ------------------------------------------------  dumpBitCounts  -----
+  subroutine dumpBitCounts ( array, itemName, itemBitnames, showPct )
+    integer, dimension(:), intent(in)           :: array
+    character(len=*), optional, intent(in)      :: itemName
+    character(len=*), optional, intent(in)      :: itemBitnames
+    logical, optional, intent(in)               :: showPct
+    ! Local variables
+    integer, parameter              :: MAXNUMBITSUSED = 10 !9
+    integer, dimension(MAXNUMBITSUSED, 2)       :: bitCounts
+    integer                                     :: bitindex
+    character(len=*), parameter     :: bitNames = &
+      & '  dontuse,   bewary,     info,postprocd,' // &
+      & '    hicld,    locld,   nogmao,abandoned,   toofew,    crash'
+    !   01234567890123456789012345678901234567890123456789012345678901234567890123456789
+    character(len=32)                            :: myName
+    integer                                      :: NumBits
+    logical                                      :: Pct
+    ! Executable
+    myName = 'bits'
+    if( present(itemName) ) myName = itemName
+    Pct = .false.
+    if ( present(showPct) ) Pct = showPct
+    bitCounts(:,1) = 0
+    bitCounts(:,2) = size(array)
+    NumBits = MAXNUMBITSUSED
+    if ( present(itemBitnames) ) &
+      & NumBits = NumStringElements( itemBitnames, countEmpty=.true. )
+    do bitindex=1, NumBits
+      bitCounts(bitindex, 1) = bitCounts(bitindex, 1) + &
+             & count( isBitSet( array, bitindex-1) )
+    enddo
+    call output( '% values with bits set', advance='yes' )
+    call output( 'bit' )
+    call blanks(4)
+    call output( 'desc' )
+    call blanks(4)
+    call output( 'count' )
+    call blanks(4)
+    call output( 'total' )
+    if ( Pct ) then
+      call blanks(4)
+      call output( '%', advance='no' )
+    endif
+    call NewLine
+    do bitindex=1, NumBits
+      call output( bitindex - 1 )
+      call blanks(2)
+      if ( present(itemBitnames) ) then
+        call output( trim( stringElement( itemBitnames, bitIndex, &
+          & countEmpty=.true. ) ) )
+      else
+        call output( trim( stringElement( bitNames, bitIndex, &
+          & countEmpty=.true. ) ) )
+      endif
+      call blanks(4)
+      call output( bitCounts(bitindex, 1) )
+      call blanks(4)
+      call output( bitCounts(bitindex, 2) )
+      if ( Pct ) then
+        call blanks(4)
+        call output( (100.*bitCounts(bitindex, 1)) / max(1, bitCounts(bitindex, 2) ) )
+      endif
+      call newline
+    enddo
+  end subroutine dumpBitCounts
+
+  ! ------------------------------------------------  dumpBitNames  -----
+  ! This family shows which bits are set by name
+  ! Obviously this requires that an array of names be passed in
+  ! Say i = 41
+  ! This means that i = 1 + 8 + 32 
+  ! so the bits set are {0, 3, 5} which would be indexes {1, 4, 6}
+  ! in the array names; so we would print:
+  !    bit names set
+  !  itemName   names(1)
+  !  itemName   names(4)
+  !  itemName   names(6)
+  ! Optionally, we can try to print this all on one line
+  !  itemName   names(1) names(4) names(6)
+  ! If we wish to show which bits are set for an array, we
+  ! could easily do the same for each array element. That is the default.
+  ! Optionally, we can sort the results by bit name, printing instead:
+  !   array elements with bit set
+  !  names(1)  n1, n2, ..
+  !  names(2)  m1, m2, ..
+  !    .   .   .
+  ! (see also DUMP_1D_BIT in the dump_0 module)
+  subroutine dumpBitNames_sca ( i, names, itemName, oneLine )
+    integer, intent(in)                         :: i
+    character(len=*), dimension(0:), intent(in) :: names
+    character(len=*), optional, intent(in)      :: itemName
+    logical, optional, intent(in)               :: oneLine
+    ! Local variables
+    integer :: bitNumber
+    integer :: bitSet
+    integer :: bitValue
+    integer :: howMany
+    character(len=*), parameter :: hexFormat = '("0x",z4.4)'
+    character(len=8)  :: hexTag
+    character(len=64) :: iTag
+    character(len=32) :: myName
+    logical :: myOneLine
+    integer, dimension(0:MAXBITNUMBER) :: which
+    ! Executable
+    myOneLine = .false.
+    if ( present(oneLine) ) myOneLine = oneLine
+    write( hexTag, hexFormat ) i
+    write( iTag, *) i
+    if ( myOneLine) then
+      myName = 'Bit names set by ' // trim(adjustl(hexTag)) // &
+        &  '(' // trim(adjustl(iTag)) // ')'
+    else
+      myName = trim(adjustl(hexTag)) // &
+        &  '(' // trim(adjustl(iTag)) // ')'
+    endif
+    if( present(itemName) ) myName = itemName
+    call WhichBitsAreSet ( i, which, howMany )
+    if ( howMany < 1 ) then
+      call output( 'No bits set in ' // trim(myName), advance='yes' )
+    elseif( myOneLine ) then
+      call output( trim(myName), advance='no' )
+      do bitSet=0, howMany-1
+        call blanks( 2 )
+        bitNumber = which(bitSet)
+        write( iTag, *) bitNumber
+        iTag = 'bit(' // adjustl(iTag) // ')'
+        if ( size(names) > bitNumber ) iTag = names(bitNumber)
+        call output( trim(iTag), advance='no' )
+      enddo
+      call newline
+    else
+      call output( 'bit value      names', advance='no' )
+      call output( '      all set by ', advance='no' )
+      call output( trim(myName), advance='yes' )
+      call output( '(hex)   (dec)', advance='yes' )
+      do bitSet=0, howMany-1
+        bitNumber = which(bitSet)
+        bitValue = 2**bitNumber
+        call output( bitValue, format=hexFormat, advance='no' )
+        call blanks( 2 )
+        call output( bitValue, format='(i4)', advance='no' )
+        call blanks( 3 )
+        write( iTag, *) bitNumber
+        iTag = 'bit(' // adjustl(iTag) // ')'
+        if ( size(names) > bitNumber ) iTag = names(bitNumber)
+        call output( trim(iTag), advance='yes' )
+        bitValue = 2*bitValue
+      enddo
+    endif
+  end subroutine dumpBitNames_sca
+
+  subroutine dumpBitNames_array ( array, names, itemName, sortByName )
+    integer, dimension(:), intent(in)           :: array
+    character(len=*), dimension(0:), intent(in) :: names
+    character(len=*), optional, intent(in)      :: itemName
+    logical, optional, intent(in)               :: sortByName
+    ! Local variables
+    integer :: bitNumber
+    integer :: n ! how many array elements with this bit set
+    integer :: i
+    integer, dimension(size(array)) :: indWithBitSet
+    character(len=64) :: iTag
+    character(len=32) :: myName
+    logical :: mysortByName
+    character(len=32) :: myTaggedName
+    ! Executable
+    myName = 'bits'
+    if( present(itemName) ) myName = itemName
+    mysortByName = .false.
+    if ( present(sortByName) ) mysortByName = sortByName
+    if ( .not. mySortByName ) then
+      do i=1, size(array)
+        write( iTag, *) i
+        iTag = adjustl(iTag)
+        myTaggedName = trim(myName) // '(' // trim(iTag) // ')'
+        call dumpBitNames_sca( i, names, myTaggedName, oneLine=.true. )
+      enddo
+    else
+      call output( 'bit names set', advance='yes' )
+      do bitNumber=0, MAXBITNUMBER
+        write( iTag, *) bitNumber
+        iTag = 'bit(' // trim(adjustl(iTag)) // ')'
+        if ( size(names) > bitNumber ) iTag = names(bitNumber)
+        call output( trim(iTag), advance='no' )
+        call blanks(2)
+        indWithBitSet = 0
+        n = 0
+        do i=1, size(array)
+          if ( IsBitSet ( array(i), bitNumber ) ) then
+            n = n + 1
+            indWithBitSet(n) = array(i)
+          endif
+        enddo
+        if ( n < 1 ) then
+          call output( 'No array elements have this bit set', advance='yes' )
+        else
+          call output( indWithBitSet(1:n), advance='no' )
+          call newline
+        endif
+      enddo
+    endif
+  end subroutine dumpBitNames_array
+
+  ! --------------------------------------------  IsBitPatternSet  -----
+  elemental function IsBitPatternSet ( i, bitPattern ) result(SooDesu)
+    ! Are any of the bitNumbers in bitPattern set in i?
+    ! E.g., if bitPattern=1 bitNumber is 0 and we
+    ! simply test whether i is odd
+    integer, intent(in) :: i
+    integer, intent(in) :: bitPattern
+    logical             :: SooDesu
+    ! Executable
+    SooDesu = ( iand(i, bitPattern) /= 0 )
+  end function IsBitPatternSet
+
+  ! --------------------------------------------  IsBitSet  -----
+  elemental function IsBitSet ( i, bitNumber ) result(SooDesu)
+    ! Is the bitNumber bit of i set?
+    ! if omitted, bitNumber is assumed 0 and we
+    ! simply test whether i is odd
+    integer, intent(in) :: i
+    integer, intent(in), optional :: bitNumber
+    logical             :: SooDesu
+    integer :: myBit
+    ! Executable
+    myBit = 0
+    if ( present(bitNumber) ) myBit = bitNumber
+    SooDesu = btest(i, myBit)
+  end function IsBitSet
+
+  ! --------------------------------------------  NegativeIfBitPatternSet  -----
+  ! This family of functions returns the negative abs. val.
+  ! of value if any of the bitNumbers in bitPattern set in i
+  ! This may be useful if precisions for certain radiances are to be
+  ! set negative (which means don't use them) when a certain bright object
+  ! is in the field of view
+  elemental function NegativeIfBitPatternSet_int ( value, i, bitPattern ) &
+    & result(res)
+    integer, intent(in) :: value
+    integer, intent(in) :: i
+    integer, intent(in) :: bitPattern
+    integer             :: res
+    ! Executable
+    res = value
+    if ( IsBitPatternSet(i, bitPattern) ) res = - abs(value)
+  end function NegativeIfBitPatternSet_int
+
+  elemental function NegativeIfBitPatternSet_sng ( value, i, bitPattern ) &
+    & result(res)
+    real, intent(in)    :: value
+    integer, intent(in) :: i
+    integer, intent(in) :: bitPattern
+    real                :: res
+    ! Executable
+    res = value
+    if ( IsBitPatternSet(i, bitPattern) ) res = - abs(value)
+  end function NegativeIfBitPatternSet_sng
+
+  elemental function NegativeIfBitPatternSet_dbl ( value, i, bitPattern ) &
+    & result(res)
+    double precision, intent(in) :: value
+    integer, intent(in) :: i
+    integer, intent(in) :: bitPattern
+    double precision    :: res
+    ! Executable
+    res = value
+    if ( IsBitPatternSet(i, bitPattern) ) res = - abs(value)
+  end function NegativeIfBitPatternSet_dbl
+
+  ! --------------------------------------------  NegativeIfBitSet  -----
+  ! This family of functions returns the negative abs. val.
+  ! of value if the bitNumber of i is set
+  ! This may be useful if precisions for certain radiances are to be
+  ! set negative (which means don't use them) when a certain bright object
+  ! is in the field of view
+  elemental function NegativeIfBitSet_int ( value, i, bitNumber ) result(res)
+    integer, intent(in) :: value
+    integer, intent(in) :: i
+    integer, intent(in) :: bitNumber
+    integer             :: res
+    ! Executable
+    res = value
+    if ( isBitSet(i, bitNumber) ) res = - abs(value)
+  end function NegativeIfBitSet_int
+
+  elemental function NegativeIfBitSet_sng ( value, i, bitNumber ) result(res)
+    real, intent(in)    :: value
+    integer, intent(in) :: i
+    integer, intent(in) :: bitNumber
+    real                :: res
+    ! Executable
+    res = value
+    if ( isBitSet(i, bitNumber) ) res = - abs(value)
+  end function NegativeIfBitSet_sng
+
+  elemental function NegativeIfBitSet_dbl ( value, i, bitNumber ) result(res)
+    double precision, intent(in) :: value
+    integer, intent(in) :: i
+    integer, intent(in) :: bitNumber
+    double precision    :: res
+    ! Executable
+    res = value
+    if ( isBitSet(i, bitNumber) ) res = - abs(value)
+  end function NegativeIfBitSet_dbl
+
+  ! --------------------------------------------  Reverse  -----
+  function Reverse ( i ) result(anti)
+    ! Return the integer reversing the bit order of i
+    ! E.g., if set(i) = (/ 0, 2, 4 /) set(result) will be (/N, N-2, N-4/)
+    ! where N = MAXBITNUMBER(i)
+    
+    ! Because the 31st bit is the sign bit, the zeroth bit would be discarded
+    ! Therefore we multiply by 2 before reversing
+    
+    ! Restrictions:
+    ! i >= 0
+    ! 2*i < huge(i)
+    
+    ! Always returns 0 if restrictions violated
+    integer, intent(in) :: i
+    integer :: anti
+    ! Local variables
+    integer :: howmany
+    integer :: N
+    integer, dimension(bit_size(1)) :: set
+    ! Executable
+    anti = 0
+    ! Error checks
+    if ( i < 0 .or. i > huge(i)/2 ) return
+    N = bit_size(i) - 1 ! Because bit numbers start with 0, 31st is sign
+    call WhichBitsAreSet ( 2*i, set, howmany )
+    if ( howmany == 0 ) return
+    set = N - set
+    anti = SetBits(set)
+  end function Reverse
+
+  ! --------------------------------------------  SetBits  -----
+  function SetBits ( set ) result(i)
+    ! Return the integer represented by setting the bitNumbers
+    ! in the array set
+    ! E.g., if set = (/ 0, 2, 4 /) result will be 21 (= b'10101')
+    integer, intent(in), dimension(:) :: set
+    integer :: i
+    integer :: indx
+    integer :: iset
+    ! Executable
+    i = 0
+    if ( size(set) < 1 ) return
+    do iset = 1, size(set)
+      indx = set(iset)
+      if ( indx < 0 .or. indx > MAXBITNUMBER ) cycle
+      i = ibset(i, indx)
+    enddo
+  end function SetBits
+
+  ! --------------------------------------------  WhichBitsAreSet  -----
+  subroutine WhichBitsAreSet ( i, set, howmany, unset )
+    ! Which bitNumbers of i are set? Returned in array "set"
+    ! E.g., given 41 (101001 in binary) returns (/ 0,3,5 /)
+    ! If present, unset is filled with bit numbers not set (/ 1,2,4,6,7,.. /)
+    ! Note: because 0 is an actual bit number, we prefill
+    ! arrays with -1. So when returned array has count(set > -1)
+    ! elements you will know how to proceed. (No, how?)
+    
+    ! NAG has caused us to employ unsightly array constructors
+    ! because it failed to properly elementalize the logical function
+    ! IsBitSet
+    integer, intent(in)                          :: i
+    integer, intent(out), dimension(:) :: set
+    integer, intent(out), optional               :: howmany
+    integer, intent(out), dimension(:), optional :: unset
+    integer :: N, indx
+    ! Executable
+    if ( present(unset) ) then
+      N = max( size(set), size(unset) )
+      N = min( N, MAXBITNUMBER+1 )
+      set = -1
+      unset = -1
+      call FindAll( &
+        & (/ (IsBitSet(i, indx), indx=0, N) /), &
+        & set, howmany, unset )
+      ! The first bit number is 0, not 1
+      set = set - 1
+      unset = unset - 1
+    else
+      N = min( size(set), MAXBITNUMBER+1 )
+      set = -1
+      call FindAll( &
+        & (/ (IsBitSet(i, indx), indx=0, N) /), &
+        & set, howmany )
+      set = set - 1
+    endif
+  end subroutine WhichBitsAreSet
+
+! Private
+  elemental subroutine MaxBitNumberSet( i, bitnumber )
+    ! Find max bit number set by integer i interpreted as bits
+    ! Returns -1 if i == 0
+    ! Arguments
+    integer, intent(in)  :: i
+    integer, intent(out) :: bitnumber
+    bitnumber = -1
+    if ( i == 0 ) return
+    do bitnumber=0, MAXBITNUMBER-1
+      if ( abs(i) <= BitValues(bitnumber+1) ) return
+    enddo
+  end subroutine MaxBitNumberSet
+
+!--------------------------- end bloc --------------------------------------
+  logical function not_used_here()
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+    not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, Id ! .mod files sometimes change if PRINT is added
+  end function not_used_here
+!---------------------------------------------------------------------------
+
+end module BitStuff
+
+! $Log$
+! Revision 2.23  2018/05/16 22:23:55  pwagner
+! Added DumpBitCounts
+!
+! Revision 2.22  2013/08/12 23:47:25  pwagner
+! FindSomethings moved to MLSFinds module
+!
+! Revision 2.21  2013/06/12 02:09:16  vsnyder
+! Cruft removal
+!
+! Revision 2.20  2012/07/04 02:11:28  vsnyder
+! Simplify bit counting
+!
+! Revision 2.19  2012/05/25 20:36:52  pwagner
+! Prints both hex and decimal dumped bit values (not everyone can read hex)
+!
+! Revision 2.18  2012/03/28 02:36:38  vsnyder
+! Cannonball polishing
+!
+! Revision 2.17  2012/03/28 00:55:39  vsnyder
+! Dump bit values in hex
+!
+! Revision 2.16  2010/04/28 00:11:26  pwagner
+! Added biteq to generalize bitwise '=='
+!
+! Revision 2.15  2010/02/04 23:08:00  vsnyder
+! Remove USE or declaration for unused names
+!
+! Revision 2.14  2009/06/23 18:25:42  pwagner
+! Prevent Intel from optimizing ident string away
+!
+! Revision 2.13  2009/05/08 00:38:13  pwagner
+! Added dumpBitNames
+!
+! Revision 2.12  2008/12/02 23:08:10  pwagner
+! Added a print to not_used_here
+!
+! Revision 2.11  2007/01/31 00:06:23  pwagner
+! Made MAXBITNUMBER public
+!
+! Revision 2.10  2006/02/06 22:40:11  pwagner
+! Added Reverse function
+!
+! Revision 2.9  2006/02/01 23:41:05  pwagner
+! Can convert bits <-> booleans
+!
+! Revision 2.8  2005/11/15 00:17:20  pwagner
+! Changes to workaround NAG failure to elemntalize properly
+!
+! Revision 2.7  2005/11/11 21:42:17  pwagner
+! Added bit setting, retrieval, and conditional sign-changing procedures
+!
+! Revision 2.6  2005/06/22 17:25:48  pwagner
+! Reworded Copyright statement, moved rcs id
+!
+! Revision 2.5  2003/05/10 00:56:31  livesey
+! Bug fix in CountCharBits_1/2
+!
+! Revision 2.4  2002/10/08 00:09:08  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
+! Revision 2.3  2002/02/13 20:52:26  vsnyder
+! Added a 'what' mask to count_bits_char...
+!
+! Revision 2.2  2002/02/05 02:39:59  vsnyder
+! Change mask from 1-bit per to 8-bits per (using character)
+!
+! Revision 2.1  2001/10/03 17:36:15  vsnyder
+! Initial commit
+!

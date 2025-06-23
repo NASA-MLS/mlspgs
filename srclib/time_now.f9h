@@ -1,0 +1,87 @@
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! Include file for TIME_M.
+
+! $Id$
+
+  real(rk), intent(out) :: T    ! Time, arbitrary units for CPU time,
+                                ! seconds since midnight for wall-clock time.
+
+  integer :: VALUES(8)          ! For DATE_AND_TIME
+  character (len=8) :: date
+  character (len=4) :: yyyy
+  character (len=2) :: mm, dd
+  integer :: daysoff
+
+  if ( time_config%use_wall_clock ) then
+    call date_and_time ( date=date, values=values )
+    if ( present(inValues) ) then
+      values = inValues
+      write(yyyy, '(i4)') values(1)
+      write(mm, '(i2)') values(2)
+      write(dd, '(i2)') values(3)
+      date = yyyy // mm // dd
+    endif
+    if ( any(time_config%startTime == -1) ) then
+      time_config%startTime = values
+      ! call yyyymmdd_to_dai(date, startdaysoff)
+      call yyyymmdd_to_dai(values(1), values(2), values(3), time_config%startdaysoff)
+      if ( time_config%wallClockIsElapsedFromStart ) then
+        t = 0.
+      else
+        t = values(8)/1000.0_rk + (values(7) + 60*(values(6) + 60*values(5)))
+      endif
+    else
+      if ( any(time_config%startTime(1:3) /= values(1:3)) ) then
+        ! call yyyymmdd_to_dai(date, daysoff)
+        call yyyymmdd_to_dai(values(1), values(2), values(3), daysoff)
+        daysoff = daysoff - time_config%startdaysoff
+      else
+        daysoff = 0
+      endif
+      if ( time_config%wallClockIsElapsedFromStart ) then
+        t = (values(8)-time_config%startTime(8))/1000.0_rk + &
+        & (values(7) - time_config%startTime(7) &
+        & + 60*(values(6) - time_config%startTime(6) + &
+        & 60*(values(5) - time_config%startTime(5) + 24*daysoff)))
+      else
+        t = values(8)/1000.0_rk + (values(7) + 60*(values(6) + &
+        & 60*(values(5) + 24*daysoff)))
+      endif
+    endif
+  else
+    call cpu_time ( t )
+  end if
+  t = t / time_config%time_divisor
+
+!$Log$
+!Revision 1.6  2005/09/22 23:37:05  pwagner
+!time_config and retry_config now hold config settings
+!
+!Revision 1.5  2005/06/22 20:03:56  pwagner
+!Reworded Copyright statement, moved rcs id
+!
+!Revision 1.4  2003/12/11 23:04:01  pwagner
+!Passes values from date_and_time, not date to yyyymmdd_to_dai
+!
+!Revision 1.3  2003/12/07 23:13:10  pwagner
+!wall clock is now time elapsed from start
+!
+!Revision 1.2  2003/12/05 00:55:07  pwagner
+!Tries to avoid cyling back to 0 when crossing midnight if using wall clock
+!
+!Revision 1.1  2001/11/10 00:32:56  vsnyder
+!Moved from lib
+!
+!Revision 2.1  2001/11/09 22:45:30  vsnyder
+!Initial commit
+!

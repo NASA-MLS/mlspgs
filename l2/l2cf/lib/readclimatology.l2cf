@@ -1,0 +1,44 @@
+!divert(-1)
+;; $Id$
+
+;; This l2cf fragment reads the climatological information into
+;; a gridded data type
+
+  ;; This macro reads one entry from grid format file into the gridded
+  ;; quantity grid<x>
+  !define(readGrid,{grid$1: gridded,field='$1', origin=climatology, $
+       file='!climatologyFile'!nl})
+!divert!dnl
+begin ReadApriori
+
+  ;; List the species for which we currently have climatologies  
+  !ifdef(flagPrecisionEstimates,{
+  ;; PEs have all the species, (need to add back O2 and N2 which vary in the
+  ;; mesosphere / thermosphere)
+  !ifdef(allClimatologicalSpecies,{},{
+    !define(allClimatologicalSpecies,{BRO,CH3CL,CH3CN,CLO,CO,H2O,H2O2,HCL,HCN,HNO3,HO2,HOCL,N2O,NO,NO2,O3,OCS,OH,SO2,TEMPERATURE})})
+  },{
+  !ifdef(allClimatologicalSpecies,{},{
+    !define(allClimatologicalSpecies,{TEMPERATURE,H2O,O3,N2O,HNO3,HCL,CLO,CO,HCN,CH3CL,CH3CN,OH})
+    !ifelse(!version,{v1.3.6},{!define(allClimatologicalSpecies,{Temperature,H2O,O3,N2O,HNO3,HCl,ClO,CO,HCN,CH3CN,OH})})
+    })
+  })
+  ;; Now invoke our macro for all species defined above.
+  !forall(readGrid,!allClimatologicalSpecies)
+
+end ReadApriori
+!divert(-1)
+  ;; Put up a macro to indicate we have the climatology
+  !define(flagGotClimatology,1)
+
+;;$Log$
+;;Revision 1.16  2010/01/27 22:50:29  pwagner
+;;Added CH3CL to allClimatologicalSpecies
+;;
+;;Revision 1.15  2006/10/12 20:22:30  lambert
+;;really removed HO2 from allClimatologicalSpecies to set apriori.HO2=0
+;;
+;;Revision 1.14  2006/10/04 20:03:50  lambert
+;;removed HO2 from allClimatologicalSpecies to set apriori.HO2=0
+;;
+!divert!dnl

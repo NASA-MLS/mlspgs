@@ -1,0 +1,299 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{wvs-094r2}
+\newcommand{\docdate}{20 May 2010}
+
+\usepackage{alltt}
+\usepackage{longtable}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Paul, Dong, Nathaniel\\
+Subject: \>Usage of {\tt Mie\_Tables} program\\
+From: \>Van Snyder\\
+Reference: \>wvs-065, wvs-066, wvs-067, wvs-068, wvs-070, wvs-071
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\section{Introduction}
+
+The {\tt Mie\_Tables} program
+computes the emission cross section
+         $\beta_{c\_e} = 2\pi \int_0^\infty n(r) r^2 \xi_e(r)\, \text{d}D$,
+the scattering cross section
+         $\beta_{c\_s} = 2\pi \int_0^\infty n(r) r^2 \xi_s(r)\, \text{d}D$,
+where $\xi_e(r)$ and $\xi_s(r)$ are computed by {\tt Mie\_Efficiencies}, q.v.,
+their derivatives w.r.t. temperature and IWC, the total Ice Water Content
+        IWC$_{\text{total}}$ =
+          $\frac83 \pi \rho_{\text{ice}} \int_0^\infty n(r)\, r^3 \text{d}D$,
+the integrated phase function
+$P(\theta) =
+ \frac{\lambda^2}{2\pi\beta_{c\_s}} \int_0^\infty n(r) p_0(\theta,r) \text{d} r$,
+and the derivatives of all of these quantities w.r.t. temperature and IWC.
+
+The program is in the CVS archive in \dots/{\tt Mie}.
+
+\section{Input}
+
+All input uses Fortran NAMELIST, with name IN.  Each namelist block begins
+on a new line, with an ampersand followed by the namelist name (case
+insensitive), i.e., in this case {\tt \&in}, followed by \emph{name =
+value} fields preceded by blanks and an optional comma, terminated by
+slash (/).  The program can process several input blocks in a single
+invocation.
+
+Namelist input can occupy as many lines as desired, the only restriction
+being that end-of-line cannot appear within a name or value.
+
+The \emph{value} part can be a single value, or several values, each
+followed by blanks and an optional comma if \emph{name} is an array.
+\emph{name} can also be an array element or array section designator. If
+\emph{name} designates an array (or array section) and \emph{value}
+specifies fewer values than \emph{name} designates, those values are
+transferred in array element order and remaining elements of the array
+are not affected.
+
+If a \emph{name = value} field does not appear for a Namelist name, the
+variable value is not changed.
+
+Anything after an exclamation point (!) not part of a character value, up
+to the end of the line upon which it appears, is a comment.  Blank lines
+are allowed before and within a namelist block.
+
+Names are not case sensitive.  The names that can appear in the {\tt
+\&in} namelist and their use in the program are explained in the
+following table.  Names are scalars unless otherwise specified.
+
+\begin{longtable}{|l|p{0.95in}|p{4in}|}
+\hline
+Name & Default value & Usage \\
+\hline
+\endfirsthead
+\hline
+Name & Default value & Usage \\
+\hline
+\endhead
+IWC\_Min   & -4.0   & Minimum value for $\log_{10}$ of IWC. \\
+IWC\_Max   & 0.0    & Maximum value for $\log_{10}$ of IWC. \\
+N\_IWC     & 5      & Number of equally spaced values of $\log_{10}$ of IWC. \\
+T\_Min     & -100.0 & Minimum temperature in degrees Celsius (not Kelvin!). \\
+T\_Max     & -15.0  & Maximum temperature in degrees Celsius (not Kelvin!). \\
+N\_T       & 5      & Number of equally spaced values of temperature. \\
+F\_s       & all -1.0 & A 100-element array of frequencies in GHz.  This
+                      is reset to all -1.0 before reading each input. 
+                      Calculations are carried out starting with the first
+                      frequency, and continuing until a negative one is
+                      found. \\
+R\_Min     & 1.0    & Minimum ice particle size in $\mu$m. \\
+R\_Max     & 2000.0 & Maximum ice particle size in $\mu$m. \\
+Theta\_Min & 10.0   & Minimum value for $\theta$ in degrees. \\
+Theta\_Max & 170.0  & Maximum value for $\theta$ in degrees. \\
+N\_Theta   & 2      & Number of equally spaced values of $\theta$. \\
+Half       & {\tt .false.} or {\tt F}
+                    & The range of $\theta$ covers a half circle; used for
+                      blunder testing. \\
+N\_Cut     & 100    & Maximum order for Bessel functions. \\
+File       & blank  & Output to this file if not blank.  Enclose value
+                      between quotes or apostrophes.  Maximum 1023
+                      characters.  See {\tt HDF}. \\
+HDF        & {\tt .true.} or {\tt T}
+                    & Output using HDF if true, else output to a Fortran
+                      unformatted file.  See {\tt File}. \\
+IOPT       & 0, 6, 2, 0, 10, 0, 9, 2000000, 0, 0, 10*0
+                    & A 20-element array used to provide options to the
+                      {\tt DINT} quadrature routine from Math77.  Ask me
+                      for details if you need them. \\
+NFMAX      & 2000000 & Maximum number of integrand values for any
+                      integrand.  Equivalenced to {\tt IOPT(8)}. \\
+WORK       & Undefined & 20-element array.  First element is the variable
+                      of integration.  Other elements are used in
+                      conjunction with {\tt IOPT}.  Ask me for details if
+                      you need them. \\
+Warn       & {\tt .false.} or {\tt F}
+                    & Print warnings from {\tt DINT}. \\
+Level      & 2      & Print level for the {\tt CADRE} quadrature routine.
+                      Ask me for details if you need them. \\
+Tan\_u     & {\tt .false.} or {\tt F}
+                    & Do $x = \tan(u)$ change of variable in integrals. 
+                      Ask me for details if you need them. \\
+Only       & blank  & If not blank, only do this integral.  Meaningful
+                      values are {\tt P}, {\tt dP\_dIWC}, {\tt dP\_dT},
+                      enclosed between quotes or apostrophes.
+                      These values are case sensitive. \\
+Capture    & 0      & Write values of integrands on this Fortran output
+                      unit if $>$ zero. \\
+Derivs     & {\tt .false.} or {\tt F}
+                    & Calculate derivatives. \\
+Details    & 0      & Printing level.  $<$0 means print nothing. \newline
+                      0 Means totals only. \newline
+                      $>$0 Means error estimates and numbers of function values
+                          for each integral. \newline
+                      $>$1 Means orders of Bessel functions. \newline
+                      $>$2 Means coefficients $\alpha$, $\mu$, $\sigma$, etc. \\
+Diffs      & {\tt .false.} or {\tt F}
+                    & Print differences, for checking derivatives. \\
+Norm       & {\tt .false.} or {\tt F}
+                    & Report quantities divided by total IWC. \\
+Progress   & {\tt .false.} or {\tt F}
+                    & Print summary after each integral. \\
+WantBeta   & {\tt .true.} or {\tt T} & Compute $\beta_{c\_e}$ and
+                      $\beta_{c\_s}$. \\
+WantIWC    & {\tt .true.} or {\tt T} & Compute total IWC. \\
+WantP      & {\tt .true.} or {\tt T} & Compute $P(\theta)$. \\
+Test\_Tol  & 3.0    & Number of standard deviations for blunder testing. \\
+Blunder\_Details &  0 & Print level for blunder detection.
+                        $<$1 means no printing. \newline
+                      $>0$ means print outliers. \newline
+                      $>1$ means print {\tt avg}, {\tt avg2}, {\tt
+                      stdev2}, {\tt maxloc}, replacements. \newline
+                      $>2$ means print differences. \\
+Blunder\_Order  & 5 & Order of least-squares polynomial fit to use for
+                      blunder detection. \\
+\hline
+\end{longtable}
+
+Here are sample inputs:
+
+\begin{alltt}
+&in
+    r_max = 1250
+    f_s       = 118, 190, 240, 640, 2500           ! GHz
+    n_cut     = 200 ! Max order for Bessel functions
+    n_iwc     = 10 iwc_min = -4.0 iwc_max = 0.0    ! Log10 IWC
+    n_t       = 10 t_min = -100.0 t_max = -15.0    ! Celsius
+    n_theta   = 361 theta_min = 0 theta_max = 180  ! Degrees
+    half      = t ! theta covers a half circle
+    derivs    = t ! Need derivatives
+    file      = 'runs/Mie-2009-08-04.hdf5'
+    HDF       = t ! Output is HDF, not Fortran unformatted
+    details   = 0 ! Minimal stdout output
+    progress  = t ! More verbose stdout
+    iopt(9:10) = 5, 8 ! Specify integrand relative error in WORK(8)
+    work(8) = 1.0e-9 ! Integrand relative error
+    blunder_details=0
+    blunder_order=7
+/
+\end{alltt}
+
+\begin{alltt}
+&in f=63   theta_min=0 theta_max=180 n_theta=19 half=t derivs=t /
+&in f=118  /
+&in f=190  /
+&in f=203  /
+&in f=240  /
+&in f=640  /
+&in f=2500 /
+\end{alltt}
+
+\section{Output}
+
+Output quantities include those shown in the following table.  Quantities
+that are not requested do not appear in the output.
+
+\begin{longtable}{|l|p{4in}|}
+\hline
+Quantity & Description \\
+\hline
+\endhead
+R\_Max  & From input. \\
+R\_Min  & From input. \\
+N\_Cut  & From input. \\
+IWC\_s(:) & As specified by input. \\
+T\_s(:) & As specified by input. \\
+Theta\_s(:) & As specified by input. \\
+F\_s(:) & From input.  Size is the number of positive frequencies before
+          the first negative one. \\
+Beta(:,:,:,:) & $\beta_{c\_e}$ and $\beta_{c\_s}$.  Dimensions are
+Temperature $\times$ IWC $\times$ Frequency $\times$ 2.  Final subscript =
+1 for $\beta_{c\_e}$ and 2 for $\beta_{c\_s}$.\\
+Eest(:,:,:,:) & Error estimates for $\beta$ integrals; same dimensions as
+          {\tt Beta}. \\
+nFunc(:,:,:,:,:) & Quadrature status flags and numbers of integrand values.
+          Dimensions are 2 $\times$ Temperature $\times$ IWC $\times$
+          Frequency $\times$ 6.  Subscripts for the first dimension are 1
+          for the number of integrand values and 2 for the quadrature
+          status flag.  Subscripts for the final dimension are for
+          $\beta_{c\_e}$, $\beta_{c\_s}$,
+          $\partial\beta_{c\_e}/\partial$IWC,
+          $\partial\beta_{c\_s}/\partial$IWC,
+          $\partial\beta_{c\_e}/\partial T$ and
+          $\partial\beta_{c\_s}/\partial T$. \\
+MaxOrd(:,:,:,:) & Maximum order of Bessel functions used; same dimensions
+          as {\tt nFunc}.\\
+P(:,:,:,:) & Phase function.  Dimensions are Temperature $\times$ IWC
+          $\times$ $\theta$ $\times$ Frequency.\\
+E\_P(:,:,:,:) & Error estimates for {\tt P}.  Same dimensions as {\tt P}.\\
+nFuncP(:,:,:,:,:,:) & Quadrature status flags and numbers of integrand
+          values for computing $P(\theta)$.  Dimensions are 2 $\times$
+          Temperature $\times$ IWC $\times$ $\theta$ $\times$ Frequency
+          $\times$ 3.  Subscripts for the first dimension are as for {\tt
+          nFunc}.  Subscripts for the last dimension are $P$, $\partial
+          P/\partial T$ and $\partial P/\partial$IWC. \\
+MaxOrdP(:,:,:,:,:) & Maximum order of Bessel functions used in computing
+          {\tt P}.  Dimensions are Temperature $\times$ IWC $\times$
+          $\theta$ $\times$ Frequency $\times$ 3.  Subscripts for the last
+          dimension are the same as for {\tt nFuncP}. \\
+WantBeta & From input. \\
+WantIWC  & From input. \\
+WantP    & From input. \\
+dBeta\_dIWC(:,:,:,:) & $\partial\beta/\partial$IWC.  Dimensions are
+         the same as for {\tt Beta}. \\
+E\_dBeta\_dIWC(:,:,:,:) & Error estimate in computing
+         $\partial\beta/\partial$IWC.  Dimensions are the same as for {\tt
+         Beta}. \\
+dBeta\_dT(:,:,:,:) & $\partial\beta/\partial T$.  Dimensions are
+         the same as for {\tt Beta}. \\
+E\_dBeta\_dT(:,:,:,:) & Error estimate in computing 
+         $\partial\beta/\partial T$.  Dimensions are the same as for {\tt
+         Beta}. \\
+dP\_dIWC(:,:,:,:) & $\partial P/\partial$IWC.  Dimensions are the same as
+         for {\tt P}. \\
+E\_dP\_dIWC(:,:,:,:) & Error estimate in computing $\partial
+         P/\partial$IWC.  Dimensions are the same as for {\tt P}. \\
+dP\_dT(:,:,:,:) & $\partial P/\partial T$.  Dimensions are the same as
+         for {\tt P}. \\
+E\_dP\_dT(:,:,:,:) & Error estimate in computing $\partial
+         P/\partial T$.  Dimensions are the same as for {\tt P}. \\
+\hline
+\end{longtable}
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.2  2010/05/21 00:02:19  vsnyder
+% State that the program can handle several input blocks
+%
+% Revision 1.1  2010/05/20 23:49:17  vsnyder
+% Initial commit

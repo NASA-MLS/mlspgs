@@ -1,0 +1,46 @@
+! pure integer function PnPoly ( PX, PY, XX, YY ) result ( In_or_Out )
+!   ! Result: -1 => (px,py) outside
+!   !         +1 => (px,py) inside,
+!   !          0 => (px,py) on an edge or at a vertex
+
+!   real(rk), intent(in) :: PX, PY        ! Coordinates of point in question
+!   real(rk), intent(in) :: XX(:), YY(:)  ! Vertices of the polygon, in order
+
+    real(rk) :: T, XI, XJ, YI, YJ
+    integer :: I, J, N
+    logical :: MX, MY, NX, NY
+
+    n = min(size(xx), size(yy))
+
+    In_or_Out = -1           ! Initial assumption (px,py) is outside
+    do i = 1, n
+      j = mod(i,n) + 1
+      xi = xx(i) - px
+      xj = xx(j) - px
+      yi = yy(i) - py
+      yj = yy(j) - py
+      mx = xi >= 0.0
+      nx = xj >= 0.0
+      my = yi >= 0.0
+      ny = yj >= 0.0
+      if ( .not.((my.or.ny).and.(mx.or.nx)) .or. mx.and.nx ) cycle
+      if ( my.and.ny.and.(mx.or.nx) .and. .not.(mx.and.nx) ) then
+        In_or_Out = -In_or_Out   ! Crossed a boundary
+        cycle
+      end if
+      t = yi*xj - xi*yj
+      if ( t == 0 ) then
+        In_or_Out = 0        ! (px,py) at a vertex or on an edge
+        return
+      end if
+      if ( t * sign(1.0_rk,xj-xi) > 0.0_rk ) In_or_Out = -In_or_Out ! Crossed a boundary
+    end do
+
+! end function PnPoly
+
+! $Id$
+
+! $Log$
+! Revision 2.1  2015/11/13 19:41:32  vsnyder
+! Initial commit
+!

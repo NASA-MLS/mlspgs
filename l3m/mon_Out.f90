@@ -1,0 +1,495 @@
+
+! Copyright 2005, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+!==============================================================================
+MODULE mon_Out
+!==============================================================================
+
+   USE L3DZData, ONLY: L3DZData_T, OutputL3DZ, DestroyL3DZDatabase, &
+        & WriteMetaL3DZ
+   USE L3MMData, ONLY: L3MMData_T, OutputMMGrids, DeallocateL3MM, WriteMetaL3MM
+   USE L3MZData, ONLY: L3MZData_T, OutputL3MZ, DeallocateL3MZ, &
+        & WriteMetaL3MZ
+   USE MLSCF, ONLY: MLSCF_T
+   USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4
+   USE MLSL3Common, ONLY: INVENTORYMETADATA, OutputFiles_T
+   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_DeAllocate, &
+        & MLSMSG_Warning
+   USE mon_Open, ONLY: PCFMData_T
+
+   IMPLICIT NONE
+   private
+   PUBLIC :: CreateFlags_T, &
+     & WriteMetaLogM, OutputStd, OutputDg, OutputMON
+
+
+!---------------------------- RCS Module Info ------------------------------
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+  private :: not_used_here 
+!---------------------------------------------------------------------------
+
+! Contents:
+
+! Definition -- CreateFlags_T
+! Subroutines -- WriteMetaLogM
+!                OutputStd
+!                OutputDg
+!                OutputMON
+
+! Remarks:  This is a module for the routines needed for the L3
+! Monthly Output/Close task.
+
+! Parameters
+
+! This data type is used to store the flags indicating whether output files 
+! have been created
+
+   TYPE CreateFlags_T
+
+     LOGICAL :: createMS, createMD
+        ! monthly map files, standard & diagnostic
+
+     LOGICAL :: createZS, createZD
+        ! monthly zonal mean files, standard & diagnostic
+
+     LOGICAL :: createDZS, createDZD
+        ! Daily zonal mean files, standard & diagnostic
+
+   END TYPE CreateFlags_T
+
+CONTAINS
+
+!--------------------------------
+   SUBROUTINE WriteMetaLogM (pcf)
+!--------------------------------
+   USE MLSPCF3
+   USE PCFModule, ONLY: ExpandFileTemplate
+   USE SDPToolkit, ONLY: PGS_S_SUCCESS, WARNIFCANTPGSMETREMOVE, &
+        & PGSD_MET_GROUP_NAME_L, PGSD_MET_NUM_OF_GROUPS
+
+! Brief description of subroutine
+! This subroutine writes metadata for the log file to a separate ASCII file.
+
+! Arguments
+
+      TYPE( PCFMData_T ), INTENT(IN) :: pcf
+
+! Parameters
+
+      INTEGER, PARAMETER :: ASCII_FILE = 101
+
+! Functions
+
+      INTEGER, EXTERNAL :: pgs_met_init, pgs_met_remove, pgs_met_setAttr_d, &
+           & pgs_met_setAttr_s, pgs_met_write
+
+! Variables
+
+      CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
+      CHARACTER (LEN=480) :: msg, msr
+      CHARACTER (LEN=45) :: sval
+      CHARACTER (LEN=32) :: mnemonic
+      CHARACTER (LEN=1) :: nullStr
+
+      INTEGER :: result
+
+      nullStr = ''
+
+! Initialize the MCF file
+
+      result = pgs_met_init(mlspcf_mcf_l3log_start, groups)
+      IF (result /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+           & 'Initialization error.  See LogStatus for details.')
+
+! Set PGE values
+
+      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalGranuleID", &
+           & pcf%logGranID)
+
+      CALL ExpandFileTemplate('$cycle', sval, cycle=pcf%cycle)
+      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalVersionID", &
+           & sval)
+
+      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
+           & "RangeBeginningDate", pcf%startDay)
+      sval= '00:00:00.000000'
+      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
+           & "RangeBeginningTime", sval)
+      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
+           & "RangeEndingDate", pcf%endDay)
+      sval= '23:59:59.999999'
+      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
+           & "RangeEndingTime", sval)
+
+      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "PGEVersion", &
+           & pcf%outputVersion)
+
+      IF (result /= PGS_S_SUCCESS) THEN
+         call Pgs_smf_getMsg(result, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Write the metadata and their values to an ASCII file
+
+      result = pgs_met_write(groups(1), nullStr, ASCII_FILE)
+
+      IF (result /= PGS_S_SUCCESS) THEN
+         call Pgs_smf_getMsg(result, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      result = pgs_met_remove()
+      !if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+      !  write(msr, *) result
+      !  CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+      !        "Calling pgs_met_remove() failed with value " // trim(msr) )
+      !endif          
+
+!------------------------------
+   END SUBROUTINE WriteMetaLogM
+!------------------------------
+
+!---------------------------------------------------------------------------
+   SUBROUTINE OutputStd(pcf, type, mode, dzA, dzD, mzA, mzD, mm, mmA, mmD, &
+        & sFiles, flag, hdfVersion)
+!---------------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine performs the Output/Close task within the standard product 
+! loop of the L3 Monthly subprogram.
+
+! Arguments
+
+
+      TYPE( PCFMData_T ), INTENT(IN) :: pcf
+
+      CHARACTER (LEN=*), INTENT(IN) :: mode, type
+
+      TYPE( L3DZData_T ), POINTER :: dzA(:), dzD(:)
+
+      TYPE( L3MMData_T ), INTENT(INOUT) :: mm, mmA, mmD
+
+      TYPE( L3MZData_T ), INTENT(INOUT) :: mzA, mzD
+
+      TYPE( OutputFiles_T ), INTENT(OUT) :: sFiles
+
+      TYPE( CreateFlags_T ), INTENT(OUT) :: flag
+
+      INTEGER, INTENT(IN) :: hdfVersion
+
+! Parameters
+
+! Functions
+
+! Variables
+
+! Daily Zonal Mean output
+
+      CALL OutputL3DZ(type, dzA, sFiles, flag%createDZS, hdfVersion)
+      CALL DestroyL3DZDatabase(dzA)
+
+      CALL OutputL3DZ(type, dzD, sFiles, flag%createDZS, hdfVersion)
+      CALL DestroyL3DZDatabase(dzD)
+
+! Monthly Zonal Mean output
+
+      CALL OutputL3MZ(pcf%zsName, mzA, flag%createZS, hdfVersion)
+      CALL DeallocateL3MZ(mzA)
+
+      CALL OutputL3MZ(pcf%zsName, mzD, flag%createZS, hdfVersion)
+      CALL DeallocateL3MZ(mzD)
+
+! If required for this mode, output the monthly map
+
+      IF ( (mode == 'com') .OR. (mode == 'all') ) THEN
+         CALL OutputMMGrids(pcf%msName, mm, flag%createMS, hdfVersion)
+      ENDIF
+      CALL DeallocateL3MM(mm)
+
+! Ascending
+
+      IF ( INDEX(mode,'a') /= 0) THEN
+         CALL OutputMMGrids(pcf%msName, mmA, flag%createMS, hdfVersion)
+      ENDIF
+      CALL DeallocateL3MM(mmA)
+
+! Descending
+
+      IF ( (INDEX(mode,'d') /= 0) .OR. (mode == 'all') )THEN
+         CALL OutputMMGrids(pcf%msName, mmD, flag%createMS, hdfVersion)
+      ENDIF
+      CALL DeallocateL3MM(mmD)
+
+!--------------------------
+   END SUBROUTINE OutputStd
+!--------------------------
+
+!------------------------------------------------------------------------------
+   SUBROUTINE OutputDg(pcf, type, dzA, dzD, mzA, mzD, mm,mmA,mmD,dFiles,flag,&
+        & hdfVersion)
+!------------------------------------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine performs the Output/Close task within the diagnostic product 
+! loop of the L3 Monthly subprogram.
+
+! Arguments
+
+      TYPE( PCFMData_T ), INTENT(IN) :: pcf
+
+      CHARACTER (LEN=*), INTENT(IN) :: type
+
+      TYPE( L3DZData_T ), POINTER :: dzA(:), dzD(:)
+
+      TYPE( L3MMData_T ), INTENT(INOUT) :: mm, mmA, mmD
+
+      TYPE( L3MZData_T ), INTENT(INOUT) :: mzA, mzD
+
+      TYPE( OutputFiles_T ), INTENT(OUT) :: dFiles
+
+      TYPE( CreateFlags_T ), INTENT(OUT) :: flag
+
+      INTEGER, INTENT(IN) :: hdfVersion
+
+! Parameters
+
+! Functions
+
+! Variables
+
+! Deallocate unused databases
+
+      CALL DeallocateL3MM(mmA)
+      CALL DeallocateL3MM(mmD)
+
+! Daily Zonal Mean output
+
+      CALL OutputL3DZ(type, dzA, dFiles, flag%createDZD, hdfVersion)
+      CALL DestroyL3DZDatabase(dzA)
+
+      CALL OutputL3DZ(type, dzD, dFiles, flag%createDZD, hdfVersion)
+      CALL DestroyL3DZDatabase(dzD)
+
+! Monthly Zonal Mean output
+
+      CALL OutputL3MZ(pcf%zdName, mzA, flag%createZD, hdfVersion)
+      CALL DeallocateL3MZ(mzA)
+
+      CALL OutputL3MZ(pcf%zdName, mzD, flag%createZD, hdfVersion)
+      CALL DeallocateL3MZ(mzD)
+
+! Output the monthly map (combined mode)
+
+      CALL OutputMMGrids(pcf%mdName, mm, flag%createMD, hdfVersion)
+      CALL DeallocateL3MM(mm)
+
+!-------------------------
+   END SUBROUTINE OutputDg
+!-------------------------
+
+!-----------------------------------------------------------------------------
+   SUBROUTINE OutputMON (sFiles, dFiles, flags, pcf, cfProd, cfDg, cf, anText,&
+        & hdfVersion)
+!-----------------------------------------------------------------------------
+   USE MLSPCF3
+   USE mon_L3CF, ONLY: L3CFMProd_T
+
+! Brief description of subroutine
+! This subroutine performs the monthly Output/Close task for a product.
+
+! Arguments
+
+      TYPE( CreateFlags_T ), INTENT(IN) :: flags
+
+      TYPE( OutputFiles_T ), INTENT(IN) :: dFiles, sFiles
+
+      TYPE( PCFMData_T), INTENT(IN) :: pcf
+
+      TYPE( Mlscf_T ), INTENT(INOUT) :: cf
+
+      TYPE( L3CFMProd_T ), POINTER :: cfDg(:), cfProd(:)
+
+      CHARACTER (LEN=1), POINTER :: anText(:)
+
+      INTEGER, INTENT(IN), OPTIONAL :: hdfVersion
+
+! Parameters
+
+! Functions
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: err, MyHDFVersion
+
+      LOGICAL :: writeLog = .false.
+
+      ! Initialize MyHDFVersion
+
+      IF (PRESENT(hdfVersion)) THEN 
+         MyHDFVersion = hdfVersion
+      ELSE
+         MyHDFVersion = HDFVERSION_4 ! Default 
+      ENDIF
+
+! Write the metadata to any L3DZ Standard files created
+
+      IF (sFiles%nFiles == 0) THEN
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, & 
+              & 'No L3DZ Standard files were created.')
+      ELSE
+         CALL WriteMetaL3DZ(pcf, mlspcf_mcf_l3dzs_start, sFiles, anText, &
+              & hdfVersion=MyHDFVersion)
+      ENDIF
+
+! L3DZ Diagnostic files
+
+      IF (dFiles%nFiles == 0) THEN
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, & 
+              & 'No L3DZ Diagnostic files were created.')
+      ELSE
+         CALL WriteMetaL3DZ(pcf, mlspcf_mcf_l3dzd_start, dFiles, anText, &
+              & hdfVersion=MyHDFVersion)
+      ENDIF
+
+! If a Standard L3MZ file was created, write the metadata & annotation
+
+      IF (flags%createZS) THEN
+         CALL WriteMetaL3MZ (pcf%zsName, mlspcf_mcf_l3mzs_start, pcf, anText,&
+              & sFiles%nFiles, hdfVersion=MyHDFVersion)
+      ELSE
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+              & 'No monthly zonal mean std file was produced.')
+      ENDIF
+
+! L3MZ Dg file
+
+      IF (flags%createZD) THEN
+         CALL WriteMetaL3MZ (pcf%zdName, mlspcf_mcf_l3mzd_start, pcf, anText,&
+              & dFiles%nFiles, hdfVersion=MyHDFVersion)
+      ELSE
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+              & 'No monthly zonal mean dg file was produced.')
+      ENDIF
+
+! L3MM Std file
+
+      IF (flags%createMS) THEN
+         CALL WriteMetaL3MM (pcf%msName, mlspcf_mcf_l3mms_start, pcf, anText, &
+              & sFiles%nFiles, hdfVersion=MyHDFVersion)
+      ELSE
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+              & 'No monthly map std file was produced.')
+      ENDIF
+
+! L3MM Dg file
+
+      IF (flags%createMD) THEN
+         CALL WriteMetaL3MM (pcf%mdName, mlspcf_mcf_l3mmd_start, pcf, anText,&
+              & dFiles%nFiles, hdfVersion=MyHDFVersion)
+      ELSE
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+              & 'No monthly map dg file was produced.')
+      ENDIF
+
+! Write the log file metadata
+      if (writeLog) CALL WriteMetaLogM(pcf)
+
+! Deallocations
+
+      DEALLOCATE(cfProd, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // ' cfProd'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      DEALLOCATE(cfDg, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // ' cfDg'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      DEALLOCATE(anText, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // ' anText'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      DEALLOCATE (cf%Sections, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // '  cf section pointers.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+!--------------------------
+   END SUBROUTINE OutputMON
+!--------------------------
+
+!=================
+  logical function not_used_here()
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), save :: Id = idParm
+!---------------------------------------------------------------------------
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+END MODULE mon_Out
+!=================
+
+!$Log$
+!Revision 1.14  2006/05/03 14:35:16  cvuu
+!Remove call OutputMMDiag, move datasets to Grid group
+!
+!Revision 1.13  2006/02/28 20:39:04  cvuu
+!V2.00 commit
+!
+!Revision 1.12  2005/06/23 19:17:59  pwagner
+!Reworded Copyright statement, moved rcs id
+!
+!Revision 1.11  2004/05/04 15:57:38  cvuu
+!Fixed bug
+!
+!Revision 1.10  2004/01/08 21:21:37  cvuu
+!version 1.4 commit
+!
+!Revision 1.9  2003/09/16 16:37:14  cvuu
+!Add parameter nFiles to the call WriteMetaL3MM and WriteMetaL3MZ
+!
+!Revision 1.8  2003/04/30 18:16:29  pwagner
+!Work-around for LF95 infinite compile-time bug
+!
+!Revision 1.7  2003/04/06 02:31:09  jdone
+!added hdfVersion
+!
+!Revision 1.6  2003/03/15 00:20:03  pwagner
+!May warn if pgs_met_remove returns non-zero value
+!
+!Revision 1.5  2001/12/12 17:48:43  nakamura
+!Added dg fields.
+!
+!Revision 1.4  2001/09/26 19:49:13  nakamura
+!Removed com ZM output; added cfDg deallocate.
+!
+!Revision 1.3  2001/09/06 18:51:45  nakamura
+!Added subroutine OutputDg; moved database deallocation back down into Output subroutines.
+!
+!Revision 1.2  2001/08/01 18:30:03  nakamura
+!Added OutputStd subroutine; updated WriteMetaLogM for separation from Daily.
+!
+!Revision 1.1  2001/07/18 15:44:27  nakamura
+!Module for the Monthly Output/Close task.
+!

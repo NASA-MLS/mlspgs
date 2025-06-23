@@ -1,0 +1,297 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{floatflt}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[strings]{underscore}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9in
+
+\newcommand{\docname}{wvs-132r3}
+\newcommand{\docdate}{15 April 2020}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+\fi
+\ifnum\pdfoutput>0
+  \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+  \hypersetup{%
+    hypertexnames=false,%
+    colorlinks=true,%
+    linktocpage=true,%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{pdftex}
+\else
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\fi
+
+\hyperbaseurl{}
+\newcommand\hr[1]{\href{#1.dvi}{dvi}, \href{#1.pdf}{pdf}}
+\newcommand\h[1]{#1 (\hr{#1})}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\bf\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\bf\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\newcommand{\TS}{T_\text{scat}}
+\newcommand{\TSs}[1]{T_{\text{scat}_{#1}}}
+\newcommand{\DB}{\Delta B}
+\newcommand{\oDB}{\overline{\DB}}
+\newcommand{\MT}{\mathcal{T}}
+\newcommand{\hMT}{\MT^s}
+\newcommand{\IF}[1]{\,\mathcal{A}_n\!\left(#1\right)} % Interpolation Function
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Van\\
+Subject: \>Center of a sphere (or circle) defined by three (or two) points
+ and its radius\\
+From: \>Van Snyder\\
+Reference: \> \h{wvs-128}, \h{wvs-146}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\section{Circumcenter}
+
+Consider three points defined by ECR vectors $\mathbf{A}$, $\mathbf{B}$,
+and $\mathbf{C}$.
+
+The circumcenter $\mathbf{v}$ of a triangle is where the perpendicular
+bisectors of the sides meet.
+
+The vector from the midpoint of side $\mathbf{AB}$ to $\mathbf{v}$ is
+$\mathbf{v} - \frac12\, ( \mathbf{A} + \mathbf{B} )$.  The condition that it
+is perpendicular to the side $\mathbf{AB}$ is
+%
+\begin{equation}
+\left( \mathbf{v} - \frac12\, ( \mathbf{A} + \mathbf{B} ) \right)
+  \cdot ( \mathbf{B}-\mathbf{A} ) = 0 \,,
+\end{equation}
+
+and similarly for the sides $\mathbf{AC}$ and $\mathbf{BC}$.  This does
+not give three conditions to determine the components of $\mathbf{v}$,
+because they are dependent.  An additional condition is that $\mathbf{v}$
+is coplanar with $\mathbf{A}$, $\mathbf{B}$, and $\mathbf{C}$, \emph{viz.}
+%
+\begin{equation}
+( \mathbf{v} - \mathbf{A} ) \cdot \left(
+( \mathbf{B}-\mathbf{A} ) \times ( \mathbf{C}-\mathbf{A} ) \right) = 0
+\,.
+\end{equation}
+
+Arbitrarily choose $\mathbf{A}$ as a reference point, and define two
+vectors
+%
+\begin{equation}\begin{split}
+\mathbf{b} =\,& \mathbf{B} - \mathbf{A} \\
+\,& \\
+\mathbf{c} =\,& \mathbf{C} - \mathbf{A} \,. \\
+\end{split}\end{equation}
+
+Then
+%
+\begin{equation}
+\mathbf{n} = 
+( \mathbf{B}-\mathbf{A} ) \times ( \mathbf{C}-\mathbf{A} )
+= \mathbf{b} \times \mathbf{c}
+\end{equation}
+
+is normal to the plane defined by $\mathbf{A}$, $\mathbf{B}$,
+and $\mathbf{C}$.
+
+If we choose $\mathbf{A}$ as the origin, i.e., $\mathbf{A} = 0$, we have
+three equations, \emph{viz.}
+
+\begin{equation}\begin{split}
+\mathbf{v} \cdot \mathbf{b} = \,& \frac12\, \mathbf{b} \cdot \mathbf{b}
+                            = |\mathbf{b}|^2 \\
+\mathbf{v} \cdot \mathbf{c} = \,& \frac12\, \mathbf{c} \cdot \mathbf{c}
+                            = |\mathbf{c}|^2 \\
+\mathbf{v} \cdot \mathbf{n} = \,& 0 \\
+\end{split}\end{equation}
+
+The solution of these equations gives the vector from $\mathbf{A}$ to the
+circumcenter, \emph{viz.}
+%
+\begin{equation}
+\mathbf{v} = \frac{(|\mathbf{b}|^2 \mathbf{c} - |\mathbf{c}|^2 \mathbf{b})
+            \times \mathbf{n}}
+           {2 | \mathbf{n} |^2 }\,.
+\end{equation}
+%
+The ECR vector to the circumcenter of the three points is therefore
+$\mathbf{p}(0) = \mathbf{A} + \mathbf{v}$.
+
+% ======================================================================
+\section{Sphere}
+
+The centers $\mathbf{p}(t)$ of the two spheres defined by$\mathbf{A}$,
+$\mathbf{B}$, and $\mathbf{C}$, and the radius $r$, are on the line
+passing through the circumcenter of the three points, and normal to the
+plane containing the three points, \emph{viz.}
+%
+\begin{equation}
+\mathbf{p}(t) = \mathbf{p}(0) + t \, \mathbf{n} =
+ \mathbf{A} + \mathbf{v} + t \, \mathbf{n}\,\,
+\end{equation}
+%
+at a value of $t$ to be computed.  The distance from any of the three
+points, say $\mathbf{A}$, to the center of the sphere is $r$.  Therefore
+%
+\begin{equation}
+| \mathbf{p}(t) - \mathbf{A} | ^2 = | \mathbf{v} + t \, \mathbf{n} |^2 =
+  |\mathbf{n}|^2 \, t^2 +
+   2 \, \mathbf{v} \cdot \mathbf{n} \, t +
+  | \mathbf{v} | ^2 =
+ r^2 \,.
+\end{equation}
+%
+The vector $\mathbf{n}$ is (by definition) orthogonal to $\mathbf{v}$
+because $\mathbf{v}$ is in the plane defined by $\mathbf{A}$,
+$\mathbf{B}$, and $\mathbf{C}$.  Therefore the second term above is zero,
+i.e., $|\mathbf{n}|^2 \, t^2 +| \mathbf{v} | ^2 = r^2$ and
+%
+\begin{equation}\label{six}
+t = \pm \sqrt{ \frac{r^2 - | \mathbf{v} | ^2}
+               { | \mathbf{n} |^2 } }\,.
+\end{equation}
+%
+Since $\mathbf{A}$, $\mathbf{B}$, and $\mathbf{C}$ are given in ECR
+co\"ordinates, to select a center of the sphere nearer to the center of
+the Earth, choose the sign of $t$ to minimize $|\mathbf{p}(t)|$, which
+will depend upon the direction of $\mathbf{n}$, which will in turn depend
+upon the order in which the points are considered.
+
+\section{Circle}
+
+The centers of two circles defined by ECR vectors $\mathbf{A}$ and
+$\mathbf{B}$ to two points, and the radius $r$,  are on a line
+perpendicular to $\mathbf{B}-\mathbf{A}$ at $\mathbf{p}(0) =
+\frac12(\mathbf{B}+\mathbf{A})$ and in the plane containing $\mathbf{A}$
+and $\mathbf{B}$.
+
+The vector normal to the plane containing $\mathbf{A}$ and $\mathbf{B}$ is
+$\mathbf{n}_1 = \mathbf{A} \times \mathbf{B}$.  The vector perpendicular
+to $\mathbf{B}-\mathbf{A}$ and in the plane is $\mathbf{n} = \mathbf{n}_1
+\times ( \mathbf{B}-\mathbf{A})$.  The vector from $\mathbf{A}$ to
+$\mathbf{p}(0)$ is $\mathbf{v} = \frac12(\mathbf{B}-\mathbf{A})$.
+
+The centers of the circles defined by $\mathbf{A}$, $\mathbf{B}$, and $r$
+are on the line
+%
+\begin{equation}
+\mathbf{p}(t) = \mathbf{p}(0) + t\,\mathbf{n}
+= \frac12(\mathbf{A} + \mathbf{B}) + t\,\mathbf{n}\,,
+\end{equation}
+%
+at a value of $t$ to be computed.  The distance from either point, say
+$\mathbf{A}$, to the center of the circle is $r$.  Therefore
+%
+\begin{equation}
+|\mathbf{p}(t) - \mathbf{A}|^2
+= \left|\,\frac12(\mathbf{B}-\mathbf{A}) + t\mathbf{n}\,\right|^2
+= |\mathbf{v} + t\mathbf{n}|^2
+= |\mathbf{n}|^2\,t^2 + 2\, \mathbf{v} \cdot \mathbf{n}\, t + |\mathbf{v}|^2
+= r^2 \,.
+\end{equation}
+%
+The vector $\mathbf{n}$ is (by definition) orthogonal to $\mathbf{v}$. 
+Therefore the second term above is zero, i.e., $|\mathbf{n}|^2 \, t^2 +|
+\mathbf{v} | ^2 = r^2$ and
+%
+\begin{equation}\label{nine}
+t = \pm \sqrt{ \frac{r^2 - | \mathbf{v} | ^2}
+               { | \mathbf{n} |^2 } }\,.
+\end{equation}
+%
+Since $\mathbf{A}$ and $\mathbf{B}$ are given in ECR co\"ordinates, to
+select a center of the circle nearer to the center of the Earth, choose
+the sign of $t$ to minimize $|\mathbf{p}(t)|$, which will depend upon the
+direction of $\mathbf{n}$, which will in turn depend upon the order in
+which the points are considered.
+
+\section{Application to forward model metrics}
+
+The purpose of forward model metrics is to compute the geometric positions
+of intersections of a line of sight with surfaces of constant pressure. 
+Heights of points of constant pressure are given on profiles.  If the
+height within a region defined by points at the same pressure on three
+profiles, or between two such points in a plane, is approximated by a
+plane or a line, a small error is introduced.  A more accurate scheme is
+to approximate the height between such points by a spherical triangle, or
+a circular arc.  Computing the intersection of a line with a sphere or
+circle involves a square root, not a Newton iteration as used in
+\h{wvs-048}.
+
+If the surface of the sphere is meant to approximate a surface above the
+Earth reference ellipsoid within the triangle defined by $\mathbf{ABC}$,
+compute the geodetic latitude of $\mathbf{p}(0)$, and use the method
+described in \h{wvs-146} to compute $R^{\,\oplus}_{\text{eq}_s}$, either
+the radius of Gaussian curvature or the radius of mean curvature of the
+Earth's surface at the geocentric latitude $\phi$ at the surface below
+$\mathbf{p}(0)$ (which is not the same as the geocentric latitude of
+$\mathbf{p}(0)$).  Then in Equation (\ref{six}), use $r =
+R^{\,\oplus}_{\text{eq}_s} + \hat{h}$, where $\hat{h}$ is the geodetic
+height interpolated from the geodetic heights at $\mathbf{A}$,
+$\mathbf{B}$, and $\mathbf{C}$ to $\mathbf{p}(0)$, using barycentric
+interpolation as described in \h{wvs-128}.
+
+If the circle is meant to approximate a surface above the Earth reference
+ellipsoid within the plane defined by $\mathbf{A}$, $\mathbf{B}$, and the
+Earth's center (presumably the orbit plane inclined at the angle $\beta$),
+compute the radius of curvature of the Earth in the orbit plane $N(\phi) =
+a^2 / \sqrt{a^2 \cos^2 \phi + c^2 \sin^2 \phi}$ at the orbit geodetic angle
+$\phi$, midway between the orbit geodetic angles at $\mathbf{A}$ and
+$\mathbf{B}$, as described in section 5.2 of the ATBD, where $c$ is given
+by Equation (5.3) in the ATBD, and use $r = N(\phi) + \hat{h}$ in Equation
+(\ref{nine}), where $\hat{h}$ is the average of the geodetic heights at
+$\mathbf{A}$ and $\mathbf{B}$.
+
+\label{lastpage}
+\vspace*{-0.1in} % Somehow, this causes lastpage to be defined
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.3  2017/10/13 19:05:10  vsnyder
+% Add derivation for circle.  Explain application to forward model metrics.
+%
+% Revision 1.2  2016/02/24 01:33:36  vsnyder
+% Correct a typo
+%
+% Revision 1.1  2016/02/19 01:22:38  vsnyder
+% Initial commit
+%

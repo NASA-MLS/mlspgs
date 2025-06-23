@@ -1,0 +1,160 @@
+#	Makefile
+#
+# Copyright 2005, by the California Institute of Technology. ALL
+# RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+# commercial use must be negotiated with the Office of Technology Transfer
+# at the California Institute of Technology.
+
+# This software may be subject to U.S. export control laws. By accepting this
+# software, the user agrees to comply with all applicable U.S. export laws and
+# regulations. User has the responsibility to obtain export licenses, or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
+#
+# "$Id$"
+
+MakeFName = Makefile
+
+# where to store .configure
+CONFDIR=../..
+
+# where configure and makemakedep.sh are stored
+MLSBIN=../../util
+
+# where the platforms directory is
+PLATFORMS = .
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+# This will set our MLS platform, compiler. etc.
+# w/o complaining if it does not exist yet
+-include $(CONFDIR)/$(MLSCFILE)
+
+# All the implicit pattern-matching involving suffixes
+# will be done in the uniquely-named sub-directories, not here--so
+.SUFFIXES:
+
+# This will filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+REECHO=$(MLSBIN)/reecho.sh
+UNIQUE_NAME=$(MLSBIN)/unique_name.sh
+
+# This is in case tar doesn't summon GNU tar, you may still use it via
+# something like
+#    make tar_sips TAR=/usr/local/gnu/bin/tar
+TAR=tar
+
+SHELL = /bin/sh
+
+#--------------- Target definitions
+# $PROG          -- automatic; built when no target is specified
+# lib            -- test w/o its driver, i.e. any subroutines/functions
+#                   these are built into an object named libmisc.a
+
+#                           (functional)
+# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                  also (re)creates uniquely-named sub-sub-directories
+#                  with custom Makefiles where *.o, *.mod, etc. built
+# depends        -- runs makemakedep.sh to calculate dependencies
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
+# tar            -- creates a directory archive suitable for distribution
+#
+
+#----------------------------------------------------------
+
+PROG=test
+
+#----------------------- Build instructions
+
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG)
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+
+lib:
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) libmisc.a
+
+.PHONY: configure depends clean ghostbuster lib mostlyclean tar tarz targ test update
+
+tar:
+
+configure:
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
+
+$(CONFDIR)/$(MLSCFILE):
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
+
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
+
+depends:
+	temp_name_1=`${UNIQUE_NAME} 1` ;\
+	$(MLSBIN)/makemakedep.sh -p $$temp_name_1 ; \
+     mv $$temp_name_1 Makefile.dep
+
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./
+
+update:
+	@cd ../.. ; \
+   $(MAKE) update SUBDIRS= tests_sub_dirs=tests/misc
+
+mostlyclean:
+	@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
+	fi ; \
+	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
+	fi
+	rm -f Make.dep.*
+
+clean:
+	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
+	fi
+	rm -f Make.dep.*
+
+tar:
+	rm -f ../$(PROG).tar
+	@echo "tar-ing misc"; \
+	$(TAR) hcvf ../$(PROG).tar * --exclude CVS\
+	--exclude Make.dep\* --exclude NAG.\* --exclude LF95.\*
+
+tarz: tar
+	@echo "... then gzipping it"; \
+	cd ..; rm -f $(PROG).tgz; gzip $(PROG).tar; mv $(PROG).tar.gz $(PROG).tgz
+
+targ:
+	rm -f ../$(PROG).tgz
+	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
+
+# $Log$
+# Revision 1.5  2005/06/23 22:10:41  pwagner
+# Reworded Copyright statement
+#
+# Revision 1.4  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
+# Revision 1.3  2002/09/25 23:25:43  pwagner
+# Uses unique names for temp files
+#
+# Revision 1.2  2002/04/26 23:37:47  pwagner
+# Changes to allow building libs, too
+#
+# Revision 1.1  2001/06/14 22:18:42  pwagner
+# First commit
+#

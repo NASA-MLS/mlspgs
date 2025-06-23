@@ -1,0 +1,18 @@
+; ------------------------------------------ Chunk divide  ----
+!ifdef(flagDoingSnoop,
+{
+!include(chunkdivide1s.l2cf)
+begin Construct
+  hGridStandard: hGrid, type=regular, spacing=1.5 degrees, origin=0 degrees, $
+    module=GHz, /forbidOverspill, /insetOverlaps, /single
+end Construct
+},
+{
+!include(chunkdivide15degreesxlu.l2cf)
+begin Construct
+  hGridStandard: hGrid, type=regular, spacing=1.5 degrees, origin=0 degrees, $
+    module=GHz, /forbidOverspill, /insetOverlaps
+end Construct
+})
+
+!include(constructstandardspecies.l2cf)

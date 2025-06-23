@@ -1,0 +1,103 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9.0in
+
+\newcommand{\docname}{\bf wvs-074}
+\newcommand{\docdate}{27 March 2008}
+
+\usepackage{graphicx}
+
+\usepackage{floatflt}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill\\
+Subject: \>Tangent heights and angles for scattering calculations\\
+From: \>Van Snyder\\
+\end{tabbing}
+
+\parindent 0pt \parskip 10pt
+\vspace{-20pt}
+
+{\includegraphics[width=474pt,height=563pt,clip]{./wvs-074-scatter.eps}}
+
+\newpage
+
+Assume a set of points are given, each one specified by its height and
+angle from a reference line.
+
+We wish to calculate the tangent heights and angles to produce radiative
+transfer through each of the points P at specified coordinates
+$(H,\phi)$, where $H$ is height measured from the center of the
+equivalent circular earth and $\phi$ is the angle measured anti-clockwise
+from the reference (red) line, at specified angles $-\pi \leq \xi \leq 0$,
+i.e., below the horizon, where the horizon is defined to be perpendicular
+to the reference line.  In the figure, radiation is considered to be
+transferred from below the horizon if $\xi \geq \xi_c$ or $\xi \leq
+\xi_c-\pi$, and above the horizon followed by reflection from the surface
+otherwise.  The other segment of the path, i.e., the part above the
+horizon, can be used to calculate radiative transfer from opposite
+directions.
+
+Ultimately, we wish to calculate the radiance scattered from the source
+to an observer at the right on the horizon.
+
+The critical angle $\xi_c$ is the angle at which a ray reaching
+the point P from the source is just tangent to the earth's surface.
+
+\begin{equation}
+\xi_c = \phi - \cos^{-1} \frac{R}H
+\end{equation}
+
+Case 1: The given angle is $\xi = \xi_2 \geq \xi_c$ or $\xi_2 \leq -\xi_c
+- \pi$
+
+The tangent height is $Ht_2$ and the tangent angle is $\xi_2$, where
+
+\begin{equation}
+Ht_2 = H | \cos (\phi - \xi_2) |
+\end{equation}
+
+Case 2: The given angle is $\xi = \xi_3$ and $-\pi - \xi_c < \xi_3 < \xi_c$
+
+The tangent height is $Ht_3$ and the tangent angle is $\xi_4$, where
+
+\begin{equation}\begin{split}
+Ht_3 =\,& H | \cos (\phi - \xi_3) | = R \cos \theta \\
+\theta =\,& \cos^{-1} \frac{Ht_3}R =
+            \cos^{-1} \left| \frac{\cos(\phi-\xi_3)}{\cos(\phi-\xi_c)}
+                     \right| \\
+\xi_4 =\,&\left\{ \begin{array}{ll}
+  2 \theta + \xi_3 & \xi_3 > \phi-\frac\pi2 \\
+  -2\theta - \xi_3 & \text{otherwise} \\
+  \end{array} \right.
+\end{split}\end{equation}
+
+\label{lastpage}
+\end{document}
+% $Id$

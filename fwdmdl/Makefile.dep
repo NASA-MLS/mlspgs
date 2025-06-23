@@ -1,0 +1,11 @@
+#Makefile.dep -- a file to be included by a Makefile
+#to compile a Fortran 9x program or library
+OBJS = \
+Add_Points_m.o   AntennaPatterns_m.o   BaselineForwardModel_m.o   cloud_extinction.o   CloudySkyModule.o   comp_eta_docalc_no_frq_m.o   comp_sps_path_frq_m.o   Compute_GL_Grid_m.o   Compute_Z_PSIG_m.o   Convolve_All_m.o   Create_PFAData_m.o   cs_expmat_m.o   cs_getev_m.o   cs_zerofix_m.o   dcspline_der_m.o   d_cspline_m.o   dexdt_m.o   d_hunt_m.o   d_lintrp_m.o   do_delta_m.o   do_t_script_m.o   d_pcspl_m.o   dsimpson_module.o   d_solve_quad_m.o   d_stat_temp_m.o   d_t_script_dtnp_m.o   Dump_NZ_m.o   eval_spect_path_m.o   FilterShapes_m.o   ForwardModelConfig.o   ForwardModelIntermediate.o   ForwardModelVectorTools.o   FOV_Convolve_m.o   freq_avg_m.o   FullForwardModel_m.o   GasAbsorption.o   get_beta_path_m.o   get_chi_angles_m.o   get_chi_out_m.o   Get_D_Deltau_Pol_M.o   get_drad_m.o   get_drad_notder_m.o   get_eta_matrix_m.o   get_lun.o   Get_Species_Data_m.o   glnp.o   HybridForwardModel.o   hydrostatic_intrp.o   hydrostatic_m.o   igrf_int.o   i_hunt_m.o   Init_Spectroscopy_m.o   Interpack.o   LinearizedForwardModel_m.o   load_sps_data_m.o   make_z_grid_m.o   mcrt_m.o   metrics_m.o   MieTheory.o   Min_Zeta_m.o   non_scat_ext.o   o2_abs_cs_m.o   opacity_m.o   path_contrib_m.o   PFADataBase.o   PhaseFunction.o   Phi_Refractive_Correction_m.o   piq_int_m.o   PointingGrid_m.o   PolarLinearModel_m.o   rad_tran_m.o   refraction_m.o   RefractiveIndex.o   RHIFromH2O.o   ScanAverage_m.o   ScatSourceFunc.o   ScatteringAngle.o   scrt_dn_m.o   scspline.o   s_cspline_m.o   s_hunt.o   sinhz_z_m.o   SizeDistribution.o   slabs_sw_m.o   s_pcscl.o   SpectraLines.o   SpectroscopyCatalog_m.o   strings.o   SwitchingMirrorModel_m.o   Tau_m.o   testfield_m.o   two_d_hydrostatic_m.o   Voigt.o   WaterVapor.o  \
+\
+\
+ 
+# using f90makedep.pl to calculate dependencies 
+ 
+#End of Makefile.dep
+ 

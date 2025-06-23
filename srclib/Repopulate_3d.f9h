@@ -1,0 +1,48 @@
+! Copyright 2008, by the California Institute of Technology. ALL
+! RIGHTS RESERVED. United States Government Sponsorship acknowledged. Any
+! commercial use must be negotiated with the Office of Technology Transfer
+! at the California Institute of Technology.
+
+! This software may be subject to U.S. export control laws. By accepting this
+! software, the user agrees to comply with all applicable U.S. export laws and
+! regulations. User has the responsibility to obtain export licenses, or other
+! export authority as may be required before exporting such information to
+! foreign countries or providing access to foreign persons.
+
+! $Id$
+
+    ! Dummy args
+    real(rk), dimension(:,:,:), intent(inout) :: array ! The full array
+    integer, dimension(:), intent(in)     :: i
+    integer, dimension(:), intent(in)     :: j
+    integer, dimension(:), intent(in)     :: k
+    integer, intent(in)                   :: n
+    real(rk), dimension(:), intent(in)    :: values
+    character(len=*), intent(in), optional:: options
+    ! Local variables
+    integer :: elm
+    character(len=4) :: myOptions
+    ! Executable
+    myOptions = ' ' ! Defaults to replacing elements in full array
+    if ( present(options) ) myOptions = options
+    if ( n < 1 .or. any(shape(array) < 1) ) return
+    do elm = 1, n
+      select case(myOptions)
+      case(' ') ! replace
+        array( i(elm), j(elm), k(elm) ) = values(elm)
+      case('+') ! add
+        array( i(elm), j(elm), k(elm) ) = array( i(elm), j(elm), k(elm) ) + values(elm)
+      case('-') ! subtract
+        array( i(elm), j(elm), k(elm) ) = array( i(elm), j(elm), k(elm) ) - values(elm)
+      case('>') ! max
+        array( i(elm), j(elm), k(elm) ) = max( array( i(elm), j(elm), k(elm) ), values(elm) )
+      case('<') ! min
+        array( i(elm), j(elm), k(elm) ) = min( array( i(elm), j(elm), k(elm) ), values(elm) )
+      case default
+        call MLSMessage ( MLSMSG_Error, &
+        & ModuleName // "/Repopulate_3d", &
+        & "Unexpected option: " &
+        & // myOptions )
+      end select
+    enddo
+! $Log$

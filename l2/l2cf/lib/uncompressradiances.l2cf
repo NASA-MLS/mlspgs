@@ -1,0 +1,147 @@
+; This L2CF fragment deals with the uncompression of radiances
+; $Id$
+
+;;; Assumes that you have already defined appropriate triples for each
+;;; radiometer you want to uncompress
+;;; Do this by defining an array as the string value for the macro n amed
+;;; for that particular radiometer
+;;; e.g.
+;;; !define(R1Aterms,{[0.01,250.0,3.0]})
+;;;
+;;;   macro        radiometer    Bands
+;;;  R1Aterms        R1A       1,32,34,22
+;;;  R2terms         R2        2,3,4,5,6
+;;;  R3terms         R3        8,33
+;;;  R4terms         R4        10,11,12,13,14
+;;;  R5terms         R5        15,16,17
+
+
+
+begin Construct
+  !define(constructTotalPowerWeight,{band$1weight: Quantity, type=totalPowerWeight, signal=!signal($1)!nl})
+  !forall(constructTotalPowerWeight,!allBands)
+  !define(allTotalPowerWeights, {!makelist({band},{weight},!allBands)})
+  totalPowerWeightsTemplate: VectorTemplate, quantities=[!allTotalPowerWeights]
+
+  !define(constructTotalPower,{power$1: Quantity, type=baseline, fGrid=fGridBaseline$1, radiometer=$1!nl})
+  !forall(constructTotalPower,!allRadiometers)  ; !allRadiometers)
+  !define(allTotalPowers, {!makelist({power},{},!allRadiometers)}) ;!allRadiometers)})
+  totalPowerTemplate: VectorTemplate, quantities=[!allTotalPowers]
+end Construct
+
+;; Compute the total power
+begin fill
+  totalPowerWeights: Vector, template=totalPowerWeightsTemplate
+  totalPower: Vector, template=totalPowerTemplate
+
+  !define(zeroTotalPowerWeight, {Fill, quantity=totalPowerWeights.band$1weight, method=explicit, explicitvalues=0, /spread !nl})
+  !forall(zeroTotalPowerWeight, !allBands)
+
+   Fill, quantity=totalPowerWeights.band1weight, method=explicit, explicitvalues = [ 596, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 64, 64, 64, 96, 96, 596]
+   Fill, quantity=totalPowerWeights.band32weight, method=explicit, explicitvalues = [750, 1250,  1350, 850]
+
+   Fill, quantity=totalPowerWeights.band2weight, method=explicit, explicitvalues = [ 96, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 64, 64, 64, 96, 96, 96]
+   Fill, quantity=totalPowerWeights.band3weight, method=explicit, explicitvalues = [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0,  0,  0, 24, 36, 48, 64, 64, 64, 96, 96,  0]
+   Fill, quantity=totalPowerWeights.band4weight, method=explicit, explicitvalues = [ 446, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 64, 64, 64, 96, 96, 96]
+   Fill, quantity=totalPowerWeights.band5weight, method=explicit, explicitvalues = [ 246, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 64, 64, 64, 96, 96, 446]
+   Fill, quantity=totalPowerWeights.band6weight, method=explicit, explicitvalues = [ 246, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 64, 64, 64, 96, 96, 96]
+
+
+   Fill, quantity=totalPowerWeights.band7weight, method=explicit, explicitvalues = [ 96, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 64, 64, 64, 96, 96, 96]
+   Fill, quantity=totalPowerWeights.band8weight, method=explicit, explicitvalues = [ 96, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 64, 64, 64, 96, 96, 96]
+   Fill, quantity=totalPowerWeights.band9weight, method=explicit, explicitvalues = [ 96, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 64, 64, 64, 96, 96, 96]
+
+   Fill, quantity=totalPowerWeights.band33weight, method=explicit, explicitvalues = [750, 750,  750, 750]
+
+;R4 (these do not agree with Jarnot/perun because of normalization)
+Fill, quantity=totalPowerWeights.band10weight, method=explicit, explicitvalues =[ 96, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 64, 64, 64, 96, 96, 96]
+Fill, quantity=totalPowerWeights.band11weight, method=explicit, explicitvalues =[ 746, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+Fill, quantity=totalPowerWeights.band12weight, method=explicit, explicitvalues =[ 5496, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 64, 64, 64, 96, 96, 746]
+Fill, quantity=totalPowerWeights.band13weight, method=explicit, explicitvalues =[ 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0]
+Fill, quantity=totalPowerWeights.band14weight, method=explicit, explicitvalues =[ 96, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 64, 64, 64, 96, 96, 96]
+
+;for R5
+Fill, quantity=totalPowerWeights.band15weight, method=explicit, explicitvalues =[ 96, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 1164, 1164, 1164, 1196, 1196, 96]
+Fill, quantity=totalPowerWeights.band16weight, method=explicit, explicitvalues =[ 96, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 64, 1164, 1164, 1196, 96, 96]
+Fill, quantity=totalPowerWeights.band17weight, method=explicit, explicitvalues =[ 96, 96, 96, 64, 64, 64, 48, 36, 24, 16, 12, 8, 6, 8, 12, 16, 24, 36, 48, 64, 64, 64, 96, 96, 96]
+
+
+  ComputeTotalPower, measurements=measurement, totalPowerVector=totalPower, weightsVector=totalPowerWeights
+
+;DEBUG
+dump, details=2, quantity=state.systemTemperature32
+end fill
+
+;; Uncompress the radiances
+!ifdef(R1Aterms,{
+;; R1 radiances
+begin fill
+
+  Fill, quantity=measurement.band1, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR1A, $
+    terms=!R1Aterms, systemTemperature=state.systemTemperature1
+  Fill, quantity=measurement.band32, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR1A, $
+    terms=!R1Aterms, systemTemperature=state.systemTemperature32
+  Fill, quantity=measurement.band34, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR1A, $
+    terms=!R1Aterms, systemTemperature=state.systemTemperature34
+  Fill, quantity=measurement.band22, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR1A, $
+    terms=!R1Aterms, systemTemperature=state.systemTemperature22
+end fill
+})
+
+;; Uncompress the radiances
+!ifdef(R2terms,{
+;; R2 radiances
+begin fill
+
+  Fill, quantity=measurement.band2, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR2, $
+    terms=!R2terms, systemTemperature=state.systemTemperature2
+  Fill, quantity=measurement.band3, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR2, $
+    terms=!R2terms, systemTemperature=state.systemTemperature3
+  Fill, quantity=measurement.band4, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR2, $
+    terms=!R2terms, systemTemperature=state.systemTemperature4
+  Fill, quantity=measurement.band5, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR2, $
+    terms=!R2terms, systemTemperature=state.systemTemperature5
+  Fill, quantity=measurement.band6, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR2, $
+    terms=!R2terms, systemTemperature=state.systemTemperature6
+end fill
+})
+
+!ifdef(R3terms,{
+;; R3 radiances
+begin fill
+  Fill, quantity=measurement.band8, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR3, $
+    terms=!R3terms, systemTemperature=state.systemTemperature8
+  Fill, quantity=measurement.band33, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR3, $
+    terms=!R3terms, systemTemperature=state.systemTemperature33
+end fill
+})
+
+!ifdef(R4terms,{
+;; R4 radiances
+begin fill
+  Fill, quantity=measurement.band10, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR4, $
+    terms=!R4terms, systemTemperature=state.systemTemperature10
+  Fill, quantity=measurement.band11, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR4, $
+    terms=!R4terms, systemTemperature=state.systemTemperature11
+  Fill, quantity=measurement.band12, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR4, $
+    terms=!R4terms, systemTemperature=state.systemTemperature12
+  Fill, quantity=measurement.band13, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR4, $
+    terms=!R4terms, systemTemperature=state.systemTemperature13
+  Fill, quantity=measurement.band14, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR4, $
+    terms=!R4terms, systemTemperature=state.systemTemperature14
+end fill
+})
+
+!ifdef(R5terms,{
+;; R5 radiances
+begin fill
+  Fill, quantity=measurement.band15, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR5, $
+    terms=!R5terms, systemTemperature=state.systemTemperature15
+  Fill, quantity=measurement.band16, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR5, $
+    terms=!R5terms, systemTemperature=state.systemTemperature16
+  Fill, quantity=measurement.band17, method=uncompressRadiance, totalPowerQuantity=totalPower.powerR5, $
+    terms=!R5terms, systemTemperature=state.systemTemperature17
+end fill
+})
+
+; $Log$

@@ -1,0 +1,8 @@
+! Read spectroscopy file and populate the spectroscopy
+! data base.
+subroutine Read_Spectroscopy (filename, fileType)
+   ! The name of the file
+   character(len=*), intent(in) :: filename
+   ! Only 'HDF5' is supported currently
+   character(len=*), intent(in) ::filetype
+end subroutine

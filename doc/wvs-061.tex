@@ -1,0 +1,118 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.4in
+
+\newcommand{\docname}{\bf wvs-061}
+\newcommand{\docdate}{7 November 2007}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Alyn, Dong\\
+Subject: \>Trouble with path length in the forward model\\
+From: \>Van Snyder\\
+Reference: \>wvs-060
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+As noted in wvs-060, the expressions
+%
+\begin{equation}
+\frac{\int \text{d}s}
+     {\int \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+      \,\text{d} \zeta}
+\text{ and }
+\frac{\int \frac{\text{d}s}{\text{d}h} \,\text{d}h}
+     {\int \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+      \,\text{d} \zeta}
+\end{equation}
+%
+integrated along each segment of the line of sight, are exactly 1, but the
+approximation
+%
+\begin{equation}\label{two}
+\frac{\delta s}{\delta \zeta \sum_{i=1}^{n_{\text{GL}}} \frac{\text{d}s}{\text{d}h}
+\frac{\text{d}h}{\text{d}\zeta}\, \omega_i}\,,
+\end{equation}
+%
+which ought to
+be 1, is computationally usually not.  In a few short tests I ran, this ratio
+varies between 0.7 and 1.9.
+
+The rectangular and trapezoidal approximations to the line-of-sight integral
+$\int \alpha(s)\, \text{d}s$ are carried out in $s$ coordinates, while the GL
+corrections are carried out in $\zeta$ coordinates.  The GL corrections include
+a scheme to reduce the strength of a singularity at the tangent point that
+involves subtracting the rectangular estimate.  Since the ratio in Equation
+(\ref{two}) is not a good approximation to 1.0, the rectangular and GL
+estimates are not consistent.
+
+I've added a switch {\tt /pathNorm} to the {\tt forwardModel} specification,
+which normalizes path lengths in the forward model so that when computing
+%
+\begin{equation}
+\int \alpha(\zeta) \frac{\text{d}s}{\text{d}h} \frac{\text{d}h}{\text{d}\zeta}
+\,\text{d} \zeta
+\text{ and }
+\int \alpha(s)\, \text{d}s
+\end{equation}
+%
+the path length is the same.  I.e., I have introduced the compensation
+%
+\begin{equation}\begin{split}
+\int \frac{\text{d}s}{\text{d}h}
+\frac{\text{d}h}{\text{d}\zeta}\,( \alpha(\zeta) - \alpha(s_j) )\,
+\text{d}\zeta +\,&
+\int \alpha(s_j)\, \text{d}s =
+\left[
+\frac{\int \text{d}s}
+     {\int \frac{\text{d}s}{\text{d}h}\frac{\text{d}h}{\text{d}\zeta}
+     \,\text{d} \zeta}
+\right]
+\int \frac{\text{d}s}{\text{d}h}
+\frac{\text{d}h}{\text{d}\zeta}\,( \alpha(\zeta) - \alpha(s_j) )\,
+\text{d}\zeta +
+\int \alpha(s_j)\, \text{d}s\\
+\approx\,&
+\left[
+\frac{\delta s}{\delta \zeta \sum_{i=1}^{n_{\text{GL}}} \frac{\text{d}s}{\text{d}h}
+\frac{\text{d}h}{\text{d}\zeta}\, \omega_i}
+\right]\,
+\delta \zeta \sum_{i=1}^{n_{\text{GL}}} \frac{\text{d}s}{\text{d}h}
+\frac{\text{d}h}{\text{d}\zeta}\, \omega_i ( \alpha(\zeta_i) - \alpha(s_j) ) +
+\alpha(s_j) \delta s\,.
+\end{split}\end{equation}
+%
+described in wvs-060 when this switch is set. Setting this switch makes
+profound changes in L2PC and SIDS results.  I haven't run any retrievals with
+it set.  I leave it to you to experiment with it, and decide whether to use it.
+
+\label{lastpage}
+\end{document}
+% $Id$

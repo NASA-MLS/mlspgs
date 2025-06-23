@@ -1,0 +1,275 @@
+\documentclass[11pt]{article}
+\usepackage{alltt}
+\usepackage[fleqn]{amsmath}
+\usepackage{longtable}
+\usepackage{xr}
+\externaldocument[100-]{\logdir/wvs-100}
+\externaldocument[095-]{\logdir/wvs-095}
+
+\textwidth 6.5in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.25in
+\textheight 9in
+
+\newcommand{\docname}{\bf wvs-102r4}
+\newcommand{\docdate}{24 May 2011}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 (\hr{#1})}
+\newcommand\hh[2]{#1 \hr{#2}}
+\newcommand\hrpdf[1]{\href{#1.pdf}{pdf}}
+\newcommand\hpdf[1]{#1 \hrpdf{#1}}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\hfill\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\renewcommand{\d}{\text{d}}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Van, Bill, Igor\\
+Subject: \>Derivatives of $\alpha$\\
+From: \>Van Snyder\\
+Reference: \>\h{wvs-100}
+\end{tabbing}
+
+\parindent 0pt \parskip 6pt
+\vspace{-10pt}
+
+\section{$\alpha(s)$}
+
+For most species $k$ we think of $\alpha$ as
+
+\begin{equation}
+\alpha(s) = \sum_k f^k(s)\, \beta^k(s) \text{ where }
+ f^k(s) = \sum_{lm} \eta^k_{lm}(s) f^k_{lm}
+\end{equation}
+
+where $\eta^k_{lm}(s)$ is the interpolation factor from the solution grid
+$(\phi^k_l,\zeta^k_m)$ to the path.
+
+For some species, $k$, $\beta^k$ depends upon $f^k$.
+
+For some species, we interpolate $f^k$ logarithmically from the grid to
+the path, i.e.,
+
+\begin{equation}
+\alpha(s) = \sum_k \hat{f}^k(s)\, \beta^k(s) \text{ where }
+ \hat{f}^k(s) =
+ \exp\left( \sum_{lm} \eta^k_{lm}(s) \ln f^k_{lm} \right)
+\end{equation}
+
+\section{$\frac{\partial\alpha(s)}{\partial f^k_{lm}}$}
+
+In Equation (\ref{100-dI_dfklm}) in \h{wvs-100}, the expression for the
+derivative of the solution of the radiative-transfer equation with
+respect to mixing ratio, the integral
+
+\begin{equation}
+\int_s^{s_m} \frac{\partial \alpha(\sigma)}{\partial f^k_{lm}}
+ \d \sigma
+\end{equation}
+
+appears.  To incorporate TScat into the forward model, we will need
+$\frac{\partial \omega_{0_{ij}}}{\partial f^k_{lm}}$ (see Equation
+(\ref{095-twelve}) in \h{wvs-095}).  Since $\omega_{0_{ij}}$ depends upon
+$\alpha(s)$, we need its derivatives for this purpose as well.
+
+The combination of linear or logarithmic interpolation, and $\beta^k$
+depending or not depending upon $f^k$, leads to four possibilities. 
+Suppressing the superscript $k$ for clarity,
+
+\begin{equation}
+ \begin{array}{l|l}
+ \alpha(s) & \frac{\partial \alpha(s)}{\partial f^k_{lm}}
+\\[10pt]
+ \hline
+& \\[-5pt]
+ \sum_k f(s)\, \beta(s) & 
+ \beta(s) \eta_{lm}(s)
+\\
+ \sum_k f(s)\, \beta(s,f(s)) &
+  \left( \beta(s,f(s)) + f(s) \frac{\partial \beta(s,f(s))}
+                                         {\partial f(s)}
+  \right) \eta_{lm}(s)
+\\
+ \sum_k \hat{f}(s)\, \beta(s) &
+ \hat{f}(s)\, \beta(s)
+    \frac{\eta_{lm}(s)}{f_{lm}}
+\\
+ \sum_k \hat{f}(s)\, \beta(s,\hat{f}(s)) &
+ \hat{f}(s) \left( \beta(s,\hat{f}(s)) +
+      \hat{f}(s)\frac{\partial \beta(s,\hat{f}(s))}
+                       {\partial \hat{f}(s)} \right)
+     \frac{\eta_{lm}(s)}{f_{lm}}
+ \end{array}
+\end{equation}
+
+\section{$\frac{\partial^2\alpha(s)}
+               {\partial f^k_{lm}\partial f^{\tilde k}_{\tilde l \tilde m}}$}
+
+If $k \neq \tilde k$,
+   $\frac{\partial^2\alpha(s)}
+               {\partial f^k_{lm}\partial f^{\tilde k}_{\tilde l \tilde m}} =
+               0$.
+
+Suppressing the superscript $k$ and arguments of $\beta$ for clarity,
+
+\begin{equation}
+ \begin{array}{l|l}
+ \alpha(s) & \frac{\partial^2\alpha(s)}
+                  {\partial f^k_{lm}\partial f^k_{\tilde l \tilde m}}
+\\[10pt]
+ \hline
+& \\[-5pt]
+ \sum_k f(s)\, \beta(s) & 
+ 0
+\\
+ \sum_k f(s)\, \beta(s,f(s)) &
+  \left( 2 \frac{\partial \beta}{\partial f(s)} +
+         f(s) \frac{\partial^2 \beta}{\partial f(s)^2}
+  \right) \eta_{lm}(s) \eta_{\tilde l \tilde m}(s)
+\\
+ \sum_k \hat{f}(s)\, \beta(s) &
+ \beta \hat{f}(s)
+  \frac{\eta_{lm}(s)}{f_{lm}}
+  \frac{\eta_{\tilde l \tilde m}(s)}{f_{\tilde l \tilde m}} =
+ \frac{\partial \alpha(s)}{\partial f_{lm}}
+  \frac{\eta_{\tilde l \tilde m}(s)}{f_{\tilde l \tilde m}}
+\\
+ \sum_k \hat{f}(s)\, \beta(s,\hat{f}(s)) &
+ \hat{f}(s) \left( \beta +
+      3 \hat{f}(s)\frac{\partial \beta}
+                       {\partial \hat{f}(s)} +
+      (\hat{f}(s))^2 \frac{\partial^2 \beta}
+                       {\partial \hat{f}(s)^2} \right)
+     \frac{\eta_{lm}(s)}{f_{lm}}
+     \frac{\eta_{\tilde l \tilde m}(s)}{f_{\tilde l \tilde m}} =
+\\[7pt] &
+ \left[
+  \frac{\partial\alpha(s)}{\partial f_{lm}} +
+  \hat{f}(s)^2 \left(
+       2 \frac{\partial \beta}
+             {\partial \hat{f}(s)} +
+       \hat{f}(s) \frac{\partial^2 \beta}
+                       {\partial \hat{f}(s)^2} \right)
+     \frac{\eta_{lm}(s)}{f_{lm}}
+ \right]
+     \frac{\eta_{\tilde l \tilde m}(s)}{f_{\tilde l \tilde m}}
+ \end{array}
+\end{equation}
+
+So far, we don't have any species for which
+$\frac{\partial^2 \beta}{\partial \hat{f}(s)^2} \neq 0$.
+
+\newcommand{\T}{\mathcal{T}}
+\renewcommand{\d}{\,\text{d}}
+\section{$\frac{\partial\T}{\partial f^k_{lm}}$}
+
+\begin{equation}
+\T(s_1,s_2) = \exp\left( -\int_{s_1}^{s_2} \alpha(s) \d s \right)\,.
+\end{equation}
+
+Suppressing the integral limits for clarity,
+
+\begin{equation}
+\frac{\partial\T}{\partial f^k_{lm}} =
+ -\T \int \frac{\partial \alpha(s)}{\partial f^k_{lm}} \d s
+\end{equation}
+
+\section{$\frac{\partial^2\T}
+               {\partial f^k_{lm}\partial f^{\tilde k}_{\tilde l \tilde m}}$}
+
+\begin{equation}\begin{split}
+\frac{\partial^2\T}{\partial f^k_{lm}\partial f^{\tilde k}_{\tilde l \tilde m}}
+=\,&
+\T \left( \int \frac{\partial \alpha(s)}{\partial f^k_{lm}} \d s
+          \int \frac{\partial \alpha(s)}
+                    {\partial f^{\tilde k}_{\tilde l \tilde m}} \d s -
+          \int \frac{\partial^2 \alpha(s)}
+                    {\partial f^k_{lm}
+                     \partial f^{\tilde k}_{\tilde l \tilde m}} \d s
+   \right) \\
+=\,& \frac1{\T} \frac{\partial\T}{\partial f^k_{lm}}
+                \frac{\partial\T}{\partial f^{\tilde k}_{\tilde l \tilde m}}
+    -\T \int \frac{\partial^2 \alpha(s)}
+                    {\partial f^k_{lm}
+                     \partial f^{\tilde k}_{\tilde l \tilde m}} \d s
+\end{split}\end{equation}
+
+\label{lastpage}
+\end{document}
+
+% $Id$
+
+% $Log$
+% Revision 1.5  2011/05/24 01:33:26  vsnyder
+% Correct missing factor of 2
+%
+% Revision 1.4  2011/03/04 04:16:33  vsnyder
+% More cannonball polishing
+%
+% Revision 1.3  2011/03/04 04:04:22  vsnyder
+% Undo oversimplification, some cannonball polishing
+%
+% Revision 1.2  2011/03/04 03:17:42  vsnyder
+% Second derivatives
+%
+% Revision 1.1  2011/02/05 01:32:32  vsnyder
+% Initial commit
+%

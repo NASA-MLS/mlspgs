@@ -1,0 +1,77 @@
+\documentclass[11pt]{article}
+\textwidth 6.25in
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.25in
+
+\begin{document}
+
+%\tracingcommands=1
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    28 June 2001\hfill Page \thepage\ of \pageref{lastpage}\hfill{\bf
+    wvs-014}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-20pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dave, Nathaniel\\
+Subject: \>More remarks on solving the linear system during retrieval\\
+From: \>Van Snyder\\
+References: \>wvs-011
+\end{tabbing}
+
+\parindent 0pt \parskip 5pt
+
+Consider the least-squares problem ${\bf Ax} = {\bf b+r}$, where $|| {\bf
+r} ||_2$ is minimal at the solution.  This is frequently written as 
+${\bf A x} \simeq {\bf b}$.  It can be shown that a condition for $||
+{\bf r} ||_2$ to be minimal at the solution is that it is not in the
+column space of ${\bf A}$, i.e. ${\bf A^T r} = {\bf 0}$.  (This
+demonstration is beyond the scope of this memorandum.)
+
+A method was shown in wvs-011 to compute the quantity $r^2 = {\bf
+b^T}({\bf b}-{\bf Ax})$, which is of interest to the nonlinear solver,
+without keeping ${\bf A}$ until ${\bf x}$ is computed.  That method
+introduced substantial complication into the software.  An alternative
+formulation is presented here.
+
+Using ${\bf Ax = b+r}$, we have ${\bf b^T} ({\bf b - Ax}) = -{\bf b^Tr}$.
+We also have ${\bf x^T A^T A x} = ({\bf b+r})^{\bf T}( {\bf b+r}) = {\bf
+b^T b} + 2{\bf b^T r} + {\bf r^T r}$ and ${\bf x^T A^T A x} =  {\bf x^T
+A^T} ( {\bf b+r} ) = {\bf x^T A^T b}$ (remember that ${\bf A^T r} = {\bf
+0}$).  Expanding the last result, we have ${\bf x^T A^T A x} = {\bf b^T b
++ b^T r}$.  Equating these two expansions of ${\bf x^T A^T A x}$, we have
+$-{\bf b^T r} = {\bf r^T r}  = r^2$.
+
+To solve ${\bf A x} \simeq {\bf b}$ exploit ${\bf A^T r} = {\bf 0}$
+giving ${\bf A^T A x} = {\bf A^T b}$ (this is called the \emph{normal
+equations} system of the least-squares problem).  Let ${\bf U}$ be the
+Cholesky factor of ${\bf A^T A}$, i.e. ${\bf U^T U} = {\bf A^T A}$ and
+${\bf U}$ is upper triangular. Then we can solve ${\bf A^T A x} = {\bf
+A^T b}$ in two steps by letting ${\bf y} = {\bf U x}$, solving ${\bf U^T
+y} = {\bf A^T b}$ for ${\bf y}$, and then solving ${\bf U x} = {\bf y}$
+for ${\bf x}$.
+
+We can therefore compute $r$ at low cost by noticing that  $r^2 = {\bf
+r^T r} = {\bf b^T b} - {\bf x^T A^T A x} = {\bf b^T b} - {\bf x^T U^T U
+x} = {\bf b^T b} - {\bf y^T y}$.  I.e., we do not need to keep ${\bf A}$
+until ${\bf x}$ is computed in order to compute $r$.  The final
+consideration is the entire point of this exercise:  We form the normal
+equations little by little, and discard parts of ${\bf A}$ as they are
+incorporated into ${\bf A^T A x} = {\bf A^T b}$.  If we needed to keep
+${\bf A}$ until ${\bf x}$ was computed, it would increase our memory
+requirements about ten fold.
+
+\label{lastpage}
+\end{document}
+% $Id$

@@ -1,0 +1,192 @@
+\documentclass[11pt]{article}
+
+\usepackage[fleqn]{amsmath}
+\usepackage{longtable}
+\usepackage{multirow}
+
+\ifx\pdfoutput\undefined
+  \pdfoutput=0
+  \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+  \hypersetup{%
+    hypertexnames=false%
+  }
+  % Specify the driver for the color package
+  \ExecuteOptions{dvips}
+  %\ExecuteOptions{xdvi}
+\else
+  \ifnum\pdfoutput>0
+    \usepackage[pdftex,plainpages,hyperindex=true,pdfpagelabels]{hyperref}
+    \hypersetup{%
+      hypertexnames=false,%
+      colorlinks=true,%
+      linktocpage=true,%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{pdftex}
+  \else
+    \usepackage[hypertex,plainpages,hyperindex=true]{hyperref}
+    \hypersetup{%
+      hypertexnames=false%
+    }
+    % Specify the driver for the color package
+    \ExecuteOptions{dvips}
+    %\ExecuteOptions{xdvi}
+  \fi
+\fi
+
+\hyperbaseurl{}
+\ifx\dvidir\undefined
+  \newcommand\hr[1]{\href{#1.dvi}{dvi} \href{#1.pdf}{pdf}}
+\else
+  \newcommand\hr[1]{\href{\dvidir/#1.dvi}{dvi} \href{\pdfdir/#1.pdf}{pdf}}
+\fi
+\newcommand\h[1]{#1 \hr{#1}}
+
+\textwidth 6.25in
+
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-028r4}
+\newcommand{\docdate}{10 October 2011}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Dave, Bill, Nathaniel, Alyn, Mike\\
+Subject: \>Summary of line-by-line and PFA radiance and derivatives\\
+From: \>Van Snyder\\
+References: \>\h{wvs-024}, \h{wvs-025}, \h{wvs-026}, \h{wvs-027}\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-21pt}
+
+{\bfseries Notations}
+
+$N_f$ is the number of points in the pointing frequency grid.\\
+$n$ is an index in the pointing frequency grid.\\
+$N_p$ is the number of points in the line-of-sight path.\\
+$i$ is an index in the line-of-sight path.  $c$ is a channel index.\\
+$s$ indicates a strong-line (LBL) result.
+  $w$ indicates a weak-line (PFA) result.\\
+$\delta I^\sigma_{iq} = \Delta B_{iq} \tau^\sigma_{iq}$ is the incremental
+ radiance contribution at the $i^{\text{th}}$ point along the line-of-sight
+ path, for $\sigma$ either $s$  or $w$ and $q$ either $c$ or $n$.
+
+There are four possible combinations of LBL, PFA and
+frequency-averaging.
+
+{\bfseries Frequency averaged, LBL only}
+     \begin{equation*}\begin{split}
+      I^s_c = \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc}
+            \sum_{i=1}^{N_p} \delta I^s_{in}
+      \text{\phantom{xxxx}}
+%
+      \frac{\partial I^s_n}{\partial x_k} =& 
+       \sum_{i=1}^{N_p} \left(
+        \tau^s_{in} \frac{\partial \Delta B_{in}}{\partial x_k}
+        - \delta I^s_{in}
+         \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k}
+         \right) \\
+%
+      \frac{\partial I_c}{\partial x_k} =&
+      \frac{\partial I^s_c}{\partial x_k} =
+       \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc}
+       \frac{\partial I^s_n}{\partial x_k}
+     \end{split}\end{equation*}
+
+{\bfseries Monochromatic, LBL only}
+     \begin{equation*}
+      I^s_c = \sum_{i=1}^{N_p} \delta I^s_{ic}
+      \text{\phantom{xxxx}}
+%
+      \frac{\partial I^s_c}{\partial x_k} =
+       \sum_{i=1}^{N_p} \left(
+        \tau^s_{ic} \frac{\partial \Delta B_{ic}}{\partial x_k}
+        - \delta I^s_{ic}
+         \sum_{j=1}^i \frac{\partial \delta^s_{jc}}{\partial x_k}
+         \right)
+      \text{\phantom{xxxx}}
+%
+      \frac{\partial I_c}{\partial x_k} =
+      \frac{\partial I^s_c}{\partial x_k}
+     \end{equation*}
+
+{\bfseries PFA only}
+     \begin{equation*}
+      I_c = \sum_{i=1}^{N_p} \delta I^w_{ic}
+      \text{\phantom{xxxx}}
+%
+      \frac{\partial I_c}{\partial x_k} =
+       \sum_{i=1}^{N_p} \left(
+        \tau^w_{ic} \frac{\partial \Delta B_{ic}}{\partial x_k}
+          - \delta I^w_{ic}
+           \sum_{j=1}^i \frac{\partial \delta^w_{jc}}{\partial x_k}
+           \right)
+     \end{equation*}
+
+{\bfseries Frequency averaged, LBL and PFA}
+     \begin{equation*}
+%
+      \overline{\delta I^s_{ic}} =
+       \sum_{n=1}^{N_f} \phi_{nc} \Delta\nu_{nc} \delta I^s_{in}
+      \text{\phantom{xxxx}}
+%
+      I_{ic} = \overline{\delta I^s_{ic}} \tau^w_{ic}
+      \text{\phantom{xxxx}}
+%
+      I_c = \sum_{i=1}^{N_p} I_{ic}
+      \text{\phantom{xxxx}}
+%
+      \frac{\partial I_c}{\partial x_k} =
+      \frac{\partial I^s_c}{\partial x_k}
+       - \sum_{i=1}^{N_p} I_{ic}
+         \sum_{j=1}^i \frac{\partial \delta^w_{jc}}{\partial x_k}
+     \end{equation*}
+
+{\bfseries Program variables}
+
+\begin{tabular}{llll}
+$\Delta B_{in}$ is {\tt T\_Script\_LBL} &
+$\Delta B_{ic}$ is {\tt T\_Script\_PFA} &
+$\tau^s_{in}$ is {\tt Tau\_LBL} &
+$\tau^w_{ic}$ is {\tt Tau\_PFA}
+\\
+$\delta I^\sigma_{iq}$ is {\tt Inc\_Rad\_Path} &
+$\overline{\delta I^s_{ic}}$ is {\tt Rad\_Avg\_Path} & 
+$I_{ic}$ is also {\tt Rad\_Avg\_Path} &
+\\
+$\sum_{i=1}^{N_p} \delta I^\sigma_{iq}$ is {\tt RadV} & 
+$I_c$ or $I^s_c$ is {\tt Radiances} &
+$\frac{\partial I^\sigma_q}{\partial x_k}$ is {\tt K\_}$x${\tt\_FRQ} &
+$\frac{\partial I_c}{\partial x_k}$ is {\tt K\_}$x$
+\\
+\end{tabular}
+
+\label{lastpage}
+\end{document}
+% $Id$

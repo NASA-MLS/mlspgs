@@ -1,0 +1,58 @@
+; This l2cf fragment is for defining the fGrids for baseline
+fGridBaselineR1A: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineR1B: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineR2: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineR3:  fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineR4:  fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineR5H: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineR5V: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineDACS22: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineDACS23: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineDACS24: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineDACS25:  fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineDACS26:  fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineMB27: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineMB28: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineMB29: fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineMB30:  fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+fGridBaselineMB31:  fGrid, coordinate=IntermediateFrequency, $
+  values = [ 0 GHz ]
+
+; add spectral baseline grids
+
+fGridSpecBaselineBand7:  fGrid, coordinate=IntermediateFrequency, $
+  values = [4.52000 GHz, 4.42400 GHz, 4.32800 GHz, 4.24800 GHz, 4.18400 GHz, $
+            4.12000 GHz, 4.06400 GHz, 4.02400 GHz, 3.99600 GHz, 3.97600 GHz, $
+            3.96200 GHz, 3.95200 GHz, 3.94500 GHz, 3.93800 GHz, 3.92800 GHz, $
+            3.91400 GHz, 3.89400 GHz, 3.86600 GHz, 3.82600 GHz, 3.77000 GHz, $
+            3.70600 GHz, 3.64200 GHz, 3.56200 GHz, 3.46600 GHz, 3.37000 GHz]
+fGridSpecBaselineBand8:  fGrid, coordinate=IntermediateFrequency, $
+  values = [5.13357 GHz, 5.22957 GHz, 5.32557 GHz, 5.40557 GHz, 5.46957 GHz, $
+            5.53357 GHz, 5.58957 GHz, 5.62957 GHz, 5.65757 GHz, 5.67757 GHz, $
+            5.69157 GHz, 5.70157 GHz, 5.70857 GHz, 5.71557 GHz, 5.72557 GHz, $
+            5.73957 GHz, 5.75957 GHz, 5.78757 GHz, 5.82757 GHz, 5.88357 GHz, $
+            5.94757 GHz, 6.01157 GHz, 6.09157 GHz, 6.18757 GHz, 6.28357 GHz]
+fGridSpecBaselineBand9:  fGrid, coordinate=IntermediateFrequency, $
+  values = [9.69167 GHz, 9.59567 GHz, 9.49967 GHz, 9.41967 GHz, 9.35567 GHz, $
+            9.29167 GHz, 9.23567 GHz, 9.19567 GHz, 9.16767 GHz, 9.14767 GHz, $
+            9.13367 GHz, 9.12367 GHz, 9.11667 GHz, 9.10967 GHz, 9.09967 GHz, $
+            9.08567 GHz, 9.06567 GHz, 9.03767 GHz, 8.99767 GHz, 8.94167 GHz, $
+            8.87767 GHz, 8.81367 GHz, 8.73367 GHz, 8.63767 GHz, 8.54167 GHz]
+fGridSpecBaselineBand33:  fGrid, coordinate=IntermediateFrequency, $
+  values = [3.0 GHz, 4.8 GHz, 7.2 GHz, 7.8 GHz]

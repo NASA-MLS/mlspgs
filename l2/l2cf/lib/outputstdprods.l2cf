@@ -1,0 +1,52 @@
+!divert(-1)
+; $Id$
+;; For special sids or l2pc runs, Output Joined standard products 
+;; to individual files.
+!divert!dnl
+
+begin Output
+
+;; We might make up a bunch of m4 flags to control the next two things
+Sleep, time=10000us
+Catenate
+;; --------------------------------- Standard product L2GP files ---
+;; First those with columns
+!define(outputStandardProductWithColumn, {Output, $
+  quantities=[joined_$1,joined_$1_column], type=l2gp, $
+  hdfVersion=!hdfVersion, $
+  file='!l2gpFileName($1)'!nl})
+!forall(outputStandardProductWithColumn,!allStandardProductsWithColumns)
+
+;; Now those without columns
+!define(outputStandardProductWithoutColumn, {Output, $
+  quantities=[joined_$1], type=l2gp, $
+  hdfVersion=!hdfVersion, $
+  file='!l2gpFileName($1)'!nl})
+!forall(outputStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
+
+;; --------------------------------- Other files ---
+;; The IWC file is a somewhat special case
+;;;Output, quantities=[joined_iwc, joined_iwp, joined_iwcFine], type=l2gp, $
+Output, quantities=[joined_iwc, joined_iwp], type=l2gp, $
+  hdfVersion=!hdfVersion, $
+  file='!l2gpFileName(IWC)'
+
+;; Now output the joined DGG file.
+!ifdef(flagGotJoinedDGGs,{
+Output, quantities=[ !undivert(!joinedDGGDivert) ], type=l2dgg, $
+  hdfVersion=!hdfVersion, $
+  file='!DGGFileName'})
+
+;; Now output the joined DGM file
+!ifdef(flagGotJoinedDGMs,{
+Output, quantities=[ !undivert(!joinedDGMDivert) ], type=l2aux, $
+  hdfVersion=!hdfVersion, $
+  file='!DGMFileName'})
+
+end Output
+!divert(-1)
+; $Log$
+; Revision 1.1  2013/10/18 22:49:38  pwagner
+; Split outputstate.l2cf into 3 files
+;
+!divert!dnl

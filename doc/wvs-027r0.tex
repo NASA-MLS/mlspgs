@@ -1,0 +1,134 @@
+\documentclass[11pt]{article}
+\usepackage[fleqn]{amsmath}\textwidth 6.25in
+
+\oddsidemargin -0.25in
+%\evensidemargin -0.5in
+\topmargin -0.5in
+\textheight 9.00in
+
+\newcommand{\docname}{\bf wvs-027}
+\newcommand{\docdate}{17 October 2005}
+
+\begin{document}
+
+%\tracingcommands=1
+\newlength{\hW} % heading box width
+\newlength{\pW} % page number field width
+\settowidth{\hW}{\docname}
+\settowidth{\pW}{Page \pageref{lastpage}\ of \pageref{lastpage}}
+\ifdim \pW > \hW \setlength{\hW}{\pW} \fi
+\makeatletter
+\def\@biblabel#1{#1.}
+\newcommand{\ps@twolines}{%
+  \renewcommand{\@oddhead}{%
+    \docdate\hfill\parbox[t]{\hW}{{\docname}\newline
+                          Page \thepage\ of \pageref{lastpage}}}%
+\renewcommand{\@evenhead}{}%
+\renewcommand{\@oddfoot}{}%
+\renewcommand{\@evenfoot}{}%
+}%
+\makeatother
+\pagestyle{twolines}
+
+\vspace{-10pt}
+\begin{tabbing}
+\phantom{References: }\= \\
+To: \>Bill, Nathaniel, Mike\\
+Subject: \>Revised method to combine line-by-line and PFA\\
+From: \>Van Snyder\\
+References: \>wvs-024r2, wvs-025, wvs-026r2\\
+\end{tabbing}
+
+\parindent 0pt \parskip 3pt
+\vspace{-20pt}
+
+\section{Introduction}
+
+The radiative transfer equation used for line-by-line (LBL) calculations
+is
+
+\begin{equation}\label{basic}
+I_c = \int \text{d}\nu\, \phi_c(\nu)
+      \int \text{d} z\, \Delta B(z,\nu) \tau(z,\nu)
+ \approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc}
+               \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{in}
+\end{equation}
+
+where $\tau^s_{in}$ is the incremental transmittance due to strong
+spectral lines.  Recall from wvs-024r2 that incremental transmittances
+from strong and weak (pre-frequency-averaged or PFA) lines are combined
+using
+
+\begin{equation}\label{combined}
+I_c \approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc}
+               \sum_{i=1}^{N_p} \Delta B_{ic} \tau^s_{in} \tau^w_{ic}\,.
+\end{equation}
+
+Memo wvs-026r2 developed a frequency-averaged incremental radiance in
+each channel at each point along the path by exchanging the order of
+summation in Equation (\ref{basic}) and then postponing the outer sum
+
+\begin{equation}\label{rad}
+\overline{I^s_{ic}} =
+ \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \Delta B_{in} \tau^s_{in}
+ \approx
+ \Delta B_{ic} \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc}
+  \tau^s_{in}\,.
+\end{equation}
+
+Exchanging the order of summation in Equation (\ref{combined}) we have
+
+\begin{equation}\label{exchanged}
+I_c \approx \sum_{i=1}^{N_p} \tau^w_{ic} \Delta B_{ic}
+             \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \tau^s_{in}
+    = \sum_{i=1}^{N_p} \overline{I^s_{ic}} \tau^w_{ic} \,.
+\end{equation}
+
+Equation (\ref{basic}) is not exactly representative because of special
+treatment needed at the zero-thickness tangent-point layer.  Subroutine
+{\tt scrt} in module {\tt scrt\_dn\_m} evaluates the inner sum in
+Equation (\ref{basic}) while applying the necessary special treatment. 
+The same treatment is necessary in Equation (\ref{exchanged}).  Observing
+that if in Equation (\ref{basic}) $\Delta B_{in}$ is replaced by
+$\overline{I^s_{ic}}$ and $\tau^s_{in}$ is replaced by $\tau^w_{ic}$,
+{\tt scrt} can evaluate Equation (\ref{exchanged}) correctly.
+
+Memo wvs-026r2 developed the approximation 
+
+\begin{equation}\label{deriv}
+\frac{\partial I_c}{\partial x_k}
+\approx \sum_{n=1}^{N_f} \phi_{nc} \Delta \nu_{nc} \sum_{i=1}^{N_p}
+ \left(
+  \frac{\partial \Delta B_{in}}{\partial x_k} -
+  \Delta B_{in}
+   \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k}
+  \right) \tau^s_{in}
+ -
+ \sum_{i=1}^{N_p} \overline{I^s_{ic}} \tau^w_{ic}
+  \sum_{j=1}^i\frac{\partial \delta^w_{jc}}{\partial x_k}
+\end{equation}
+
+to combine LBL and PFA derivatives.
+
+Neglecting frequency averaging in Equation (\ref{deriv}) and setting
+$\frac{\partial \Delta B_{in}}{\partial x_k} \equiv 0$ gives
+
+\begin{equation}\label{final}
+- \sum_{i=1}^{N_p} \Delta B_{in} \tau^s_{in}
+  \sum_{j=1}^i \frac{\partial \delta^s_{jn}}{\partial x_k}\,.
+\end{equation}
+
+As was the case for radiance, special care must be taken for the
+zero-thickness tangent-point layer, both in evaluating this sum and the
+sum in the second term in Equation (\ref{deriv}).  Subroutine {\tt
+dscrt\_dx} takes this special care in evaluating Equation (\ref{final}).
+
+By replacing $\Delta B_{in}$ by $\overline{I^s_{ic}}$ and $\frac{\partial
+\delta^s_{jn}}{\partial x_k}$ by $\frac{\partial \delta^w_{jc}}{\partial
+x_k}$, Equation (\ref{final}) becomes the second term in Equation
+(\ref{deriv}).  Therefore, {\tt dscrt\_dx} can evaluate the second term
+in Equation (\ref{deriv}).
+
+\label{lastpage}
+\end{document}
+% $Id$

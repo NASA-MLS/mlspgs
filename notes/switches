@@ -1,0 +1,562 @@
+$Id$
+
+Switches (set by -S option in mlsl2's command line):
+
+========================= mlsl2 =========================
+ (if [n] appears, you may optionally suffix an integer specifying how much
+  extra you want printed: the higher the n, the more printed; default is zero)
+ 0sl     => Warn about no lines or continuua, else silently ignored
+ 42      => Print to unit 42 when doing TScat
+ alg     => Show work in Algebra module (hoping for partial credit)
+ alloc   => Report on memory usage while tracing execution
+ ant     => Dump antenna patterns
+ apr[n]  => Dump apriori file info 
+ atb     => Dump ATb vector during Newton iteration
+ binsel  => L2PC bin selection motivation
+ bool[n] => Dump runtime Boolean flags when used or defined
+ cab     => Column Abundance-containing l2gp swaths dumped
+ cgrid   => Check Fills done by grid method
+ chi     => chi-related diagnostic quantities dumped; chi1 for 1st chunk only
+ chktr   => Diagnose tracing problems by extra internal checks
+ chu[n]  => How the data is divided into chunks
+ clean   => Turn on the CLEAN option in some dumps in the forward model
+ col     => Dump column scale vector for Newton iteration
+ column  => Extra diagnostics while integrating column abundances
+ cov     => Report details of a posteriori covariance calculation
+ dacsfil => Dump DACS filter shapes after reading them
+ debug   => Turn on debugging in certain modules (so far only l2PC_m)
+ destroy => Warn before each destroy
+ diag    => Dump diagonal of factored normal equations
+ direct  => Show automatic assignments to split directwrite files
+ dmiss   => Don't quit, just warn if derivative requested for qty missing
+            from state
+ dozm    => Do minimum zeta only if requested
+ dpri    => Dump rad pol if overflow
+ Dpri    => Dump rad pol always
+ DPRI    => Dump rad pol then stop
+ dres    => Dump forward model - measurement residual with dres detail level
+ drfc[n] => Dump reason why refractive correction failed, stop if n > 0
+ drmc    => Dump Retriever Matrices Clean
+ dsct    => Dump TScat
+ dtsct   => Dump TScat derivatives
+ dvec    => Dump 'DX' vector during Newton iteration
+ dwreq[n]=> Dump directwrite requests processed by master
+              *Warning--may use more memory
+ dwtime  => Show how long each directwrite takes
+ dxfc    => Do dxfq dump clean
+ dxfq    => Dump extinction transformation in ForwardModelWrappers
+ dxn     => Residual norm if 0, separately for quantities if > 0
+ fac     => L_infty norms of blocks of factors of normal equations
+            during Newton iterations
+ FAC     => Factors of normal equations during Newton iterations
+ ffrq    => Dump frequencies to be averaged in forward model
+ fgrid   => Dump frequency grids after creating them
+ fill    => Dump intermediate details during certain Fill operations
+ filt    => Dump filter shapes after reading them
+ fiw[n]  => Dump instance windows for each forward model
+ fmconf  => Dump configuration used in forward model
+ fmnan   => Check forward model output for NaN and print if level > 0,
+              print values if level > 1, stop if level > 2
+ fmt2    => Mean & standard deviation for timing FullForwardModel at each chunk
+ fmt1    => Mean & standard deviation for timing FullForwardModel at last chunk
+ fnmin   => Dump the fnmin terms
+ fnorm   => Dump the individual contributions to fnorm
+ fwmd[n] => Dump Forward model config whenever 'derived' part is computed
+            low-order digit of n is spectroscopy catalog dump level
+            stop if n > 9
+ geom    => Show geometry of chunks/hGrids
+ geos5   => Show geos5_7 meteorology fields as they are read
+ glo[n]  => Global settings, info on l1b files 
+ glob    => Show when Bright Object in FOV affects radiance precision
+ gMag[n] => Print generated magnetic field quantity with detail level n
+ grid    => Announce as mlsl2 Creates, Destroys, Merges gridded data
+ gridd   => Dump gridded database
+ Grids   => Dump Forward Model grids
+ gvec    => Dump gradient vector during Newton iteration
+ help    => Display this screen (or "?")
+ hess    => Intermediate steps while computing Hessians
+ hgrid   => Information on HGrid construction (at least for regular)
+ hndp[n] => Dump arrays during refractive correction iteration, bits of
+            n = 1 => Dump the arrays if trouble
+            n = 2 => Dump the arrays and stop
+            n = 4 => Dump the iterates
+ hphi    => Trace H/Phi iteration in metrics
+ jac     => L_infty norms of Jacobian blocks during Newton iterations
+ JAC[n]  => Jacobian during Newton iterations with detail level n
+ join    => Intermediate steps while joining l2aux quantities
+ l1bfill => l1b quantities dumped (only when filled from)
+ l1bread => note which l1b quantity names we read
+ l2aux   => l2aux quantities (all) dumped
+ l2gp    => l2gp swaths (all) dumped
+ l2pc    => l2pc reading progress dumped
+ l2q     => Report on communications between master and l2q
+ lblb[n] => Units digit >0 -> dump line-by-line Betas, >1 also T, tanh, P
+            tens digit >0 dump zeta instead of P, n>99 stop after first dump 
+ log[n]  => Print most Log file messages only to stdout, not toolkit log
+ mag[n]  => Print magnetic field and its coordinates in full forward model
+            and(n,1) /= 0 prints all components; and(n,2) /= 0 prints Eta
+ MagGrid => Magnetic field grid structure as loaded into forward model
+ mach    => Machine names (that can be enslaved by master task)
+ mas     => Activities between the PVM master task and slave task
+ mcf     => Dump lines read from MCF to create metadata control group db or
+             show steps in creating group db
+ mem[units] => Show system memory usage [in units; default is kB]
+ merra_2 => Show merra_2 meteorology fields as they are read
+ mess[n] => How to prefix log messages: with (0) none, (1) severity,
+            (2) module names, (3) both (actually the default)
+ metd[n] => Dump nonoptional outputs from metrics, stop if n > 0
+ mhpx[n] => Dump information about H/Phi failure, stop if n > 0
+ msk     => Mask set up by subset command in Retrieve
+ mst     => Dump interesting stuff if normal equations cannot be factored
+ ndb[n]  => 0 => Dump 12 interesting Newton method internal variables after
+                 every SOLVE step
+            1 => Dump all the Newton method's internal variables after
+                 every SOLVE step
+            2 => Dump all the Newton method's internal variables before
+                 every call
+ neq     => =0 => L_infty norms of blocks of normal equations during Newton
+                  iterations
+            >0 => Normal equations during Newton iterations (if you dare!)
+ nin     => Turn on Newton Method's internal output
+ nl2cf   => Don't assume there was an l2cf; e.g.  when dumping quantity
+            templates
+ nodb    => Subvert the DumpBlocks command
+ node[n] => Trace Next_Tree_Node at level n
+ norf    => Default for Phi refractive correction in forward model is .false.
+ nwt     => Action flag at each return from Newton solver
+ opt[n]  => Print command line options 
+ parent  => use parent name when prefixing log with module name
+ pcf[n]  => open init params obtained from pcf, info on l1b files 
+ pfab[n] => Dump PFA Betas, with temperature and pressure grids if n > 0
+             stop if n > 1, also works during PFA table generation
+ pfag    => Show PFA table generation progress
+ pguess  => Iterations of the pressure guesser
+ phase[n]=> Announce phases (e.g., Core) as they begin
+             n = 1 => make the announcement as a banner
+ plane[n]=> Compute viewing plane n>1 ECR, n>2 reference MIF, n>3 heights and
+             tangent point vectors rotated in viewing plane, n>4 input template
+ point   => Pointing grids
+ polr[n] => Print polarized radiances,
+             n>0 => print pointing #, n>1 print frequency
+ pro[n]  => Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
+             and each file l2gp, l1brad, ncep, dao input; dump filedatabase
+ profiled=> Print a grepable list of lower and upper overlaps vs chunk number
+ psct[n] => Print TScat table generation
+ ptb     => Show perturbed quantities if used in Sids for Jacobean, Hessian
+ qtmp    => Quantity templates being constructed, destroyed
+ rad     => Radiances in ForwardModelInterface
+ rcfx[n] => Print RefCor fixup details, stop if n > 0
+ red[n]  => Reduce dumpCommand details level by n (n=2 by default)
+ reg     => Dump regularization matrix
+ rtv     => Dump retrieval configuration
+ sca     => Scalars of interest to the Newton method
+ seez    => Turn on some of Zvi's debugging output in FullForwardModel
+ sig     => MLS Signals
+ skipdgg => Don't direct write dgg files
+ skipdgm => Don't direct write dgm files
+ slv     => Show output of slaves using pvmfcatchout
+ snoop   => Show work done by fortran end of snooper
+ spa     => Sparsity structure of fac, jac, neq
+ spec    => Spectroscopy catalog
+ speC    => Just dump Spectroscopy catalog, then stop
+ sps     => Species data in Get_Species_Data
+ stat    => Dump results when a manipulation fill uses a statistical function
+ strb    => Dump state vector if retriever sees trouble
+ subset  => Intermediate steps while creating subsetting mask
+ svec    => Final state vector after Newton iteration
+ taul    => Print LBL Tau in FullForwardModel
+ taup    => Print PFA Tau in FullForwardModel
+ time    => Summarize time consumed by each code section
+ tps     => Test_Parse_Signals
+ trmem   => Report memory allocates/deallocates during traces
+ TScat   => Print TScat matrix
+ vir     => Dump 'virgin' matrix (before forming KTK)
+ xvec    => 'X' vector during Newton iteration
+ walk    => trace call stack walkback on every warning message
+ walker  => dump more in tree_walker
+ zdet    => Print while determining min(zeta)
+ zmor    => Add more zeta points
+ ZMOR    => Print while adding more zeta points
+========================= end mlsl2 =========================
+
+Programmers' notes:
+The general pattern is to use upper-case letters for single-letter ones,
+and lower-case letters for strings. Switches are case-sensitive.
+
+The -S option sets the "switches" array in toggles_core.f90.
+`
+You can separate them either by preceding each with its own "-S" prefix or
+else by commas in a single string. Thus to turn on both 'abc' and 'def',
+either use -Sabc -Sdef or -S"abc,def". Among other good things, this
+prevents accidentally turning on an unwanted 'cde' switch.
+
+An alternate way to turn on switches is via the --setf opts-file mechanism
+Include a line in your opts-file like this
+ switches=abc,def
+to turn on the 2 switches 'abc' and 'def'.
+
+The MLSStringLists module contains a function SwitchDetail; assuming it
+was called as SwitchDetail(switches, 'foo') it returns 
+-1  means foo was not among switches
+0   means foo or foo0 was one of the comma-separated switches
+1   means foo1
+2   means foo2
+    .   .   .
+Note that use of SwitchDetail requires separating the switches. It also
+requires that you match the switch name precisely; e.g. if the switch is
+"ab" but you forget, and so try to set "abc", you won't set "ab" after
+all. The advantage is that by using SwitchDetail each switch is now
+unique: you can have "foo", "bar", and "foobar" as three distinct
+switches, confident that setting "foobar" won't inadvertently set the
+other two.
+
+Here's a trick for finding all the switches referred to by switchdetail in
+our code so far:
+cd ~/mlspgs
+grep -i switchdetail */*.[fF]9* | grep -i 'switches' | sed 's/.*switches,//' \
+ | awk '{print $1}' | sed 's/)//' | sort | uniq
+
+The same command, but replacing "switchdetail" with "index" will show all the 
+switches referred to by the "index(switches, .." method. 
+
+Two alternate commands
+grep -i beverbose */*.[fF]9* | grep -v -i highoutput | sed 's/.*BeVerbose//' \
+ | sed 's/(/( /' | awk '{print $2}' | sed 's/,//' | sort | uniq
+can be used to handle the instances of BeVerbose.
+
+grep -i letsdebug */*.[fF]9* | grep -v -i highoutput | sed 's/.*BeVerbose//' \
+ | sed 's/(/( /' | awk '{print $2}' | sed 's/,//' | sort | uniq
+can be used to handle the instances of LetsDebug.
+
+The resulting lists have grown too large to keep updating this list. We need
+a better tool to organize it.
+
+(Add any more that are relevant to mlsl2,
+or separate sections for mlsl1 or mlsl3)
+
+(The equal signs in the section dividers above are to help
+sed dynamically update mlsl2 to show changes in the switch
+usage automatically. Thus you only need to edit this file,
+not MLSL2.f90. Add your changes inside the space book-ended
+by the equal-signs -- stuff outside that space, like these
+comments, will be ignored when responding to mlsl2 -S"?")
+
+ $Log$
+ Revision 1.106  2021/07/23 20:46:36  pwagner
+ Added -Sprofiled
+
+ Revision 1.105  2020/05/01 20:37:00  pwagner
+ Added -S'trmem' switch to track memory allocates/deallocates
+
+ Revision 1.104  2019/04/11 23:41:08  pwagner
+ Correctd sp. error; clarified role of bookending equal-signs
+
+ Revision 1.103  2018/02/28 20:02:16  pwagner
+ Explain how to use -setf opts_file to turn on switches
+
+ Revision 1.102  2017/03/10 17:20:45  pwagner
+ Added -Smerra_2
+
+ Revision 1.101  2017/01/25 17:26:51  pwagner
+ Changed switch setting for tree_walker to '-Swalker'
+
+ Revision 1.100  2016/05/02 23:30:20  vsnyder
+ Remove ptg, which is not used in FullForwardModel
+
+ Revision 1.99  2016/01/23 03:00:23  vsnyder
+ Add polr
+
+ Revision 1.98  2015/10/28 19:22:25  vsnyder
+ Add plane
+
+ Revision 1.97  2015/10/28 00:33:21  vsnyder
+ Add description of levels for mag.  Add MagGrid.
+
+ Revision 1.96  2015/10/27 23:04:01  vsnyder
+ Replace gmag with gMag to avoid conflict with forward model
+
+ Revision 1.95  2015/08/26 00:48:06  vsnyder
+ Change Forward Model grids dump from grids to Grids
+
+ Revision 1.94  2015/08/12 20:55:05  pwagner
+ Expands role of -Swalk switch
+
+ Revision 1.93  2015/03/28 02:57:10  vsnyder
+ Added gmag and mag
+
+ Revision 1.92  2015/02/05 21:37:20  vsnyder
+ Add 'node'
+
+ Revision 1.91  2014/09/29 23:21:13  pwagner
+ Correct meaning of n in phase[n]
+
+ Revision 1.90  2014/09/11 18:22:39  pwagner
+ Brought partly up tp date
+
+ Revision 1.89  2013/07/26 22:41:22  vsnyder
+ Fiddling with some forward model and retriever switches
+
+ Revision 1.88  2013/07/26 00:08:42  pwagner
+ -Smcf switch makes reading or parsing MCFs verbose
+
+ Revision 1.87  2013/06/29 00:19:08  pwagner
+ Divide l1b switch into l1bfill and l1bread
+
+ Revision 1.86  2013/06/28 18:17:06  pwagner
+ Added -Sparent and -Smess[n]
+
+ Revision 1.85  2013/06/21 17:37:39  pwagner
+ /crashIfPhiNotMono flag added to ChunkDivide config; default is to just warn; removed -Snmono switch
+
+ Revision 1.84  2013/06/20 22:39:45  pwagner
+ -Snmono lets us warn, not quit if phi not monotonic
+
+ Revision 1.83  2013/05/21 23:53:21  vsnyder
+ Revise hphi, metd, and mhpx
+
+ Revision 1.82  2013/05/17 22:53:21  vsnyder
+ Revise beta dump switches
+
+ Revision 1.81  2013/05/15 03:09:29  vsnyder
+ Revise processing of fwmd and fwmg dump switches
+
+ Revision 1.80  2013/03/01 01:20:45  pwagner
+ 'fiw' switch dumps instance window
+
+ Revision 1.79  2013/02/04 22:05:53  pwagner
+ Added dmiss switch to downgrade severity when qty missing from state
+
+ Revision 1.78  2012/08/16 19:55:34  pwagner
+ log[n] explained more fully
+
+ Revision 1.77  2012/08/01 00:18:58  pwagner
+ Updated; removed outdated stuff
+
+ Revision 1.76  2012/07/02 20:59:30  pwagner
+ Attempt to claridy what -Sphase[n] does
+
+ Revision 1.75  2012/04/20 01:44:07  vsnyder
+ Add dxfc, dxn
+
+ Revision 1.74  2012/03/14 22:15:57  pwagner
+ grid method, debug, and no l2cf added
+
+ Revision 1.73  2012/03/12 20:04:49  vsnyder
+ add drmc, dxfq, change fmnan
+
+ Revision 1.72  2010/08/06 23:14:28  pwagner
+ Added 'hess' switch
+
+ Revision 1.71  2010/05/05 18:08:46  pwagner
+ Brought up-to-date with TScat and other stuff
+
+ Revision 1.70  2008/06/12 23:53:27  pwagner
+ Can print direct write timings
+
+ Revision 1.69  2007/10/04 00:37:42  vsnyder
+ Add erh, some cannonball polishing
+
+ Revision 1.68  2007/10/02 22:38:47  vsnyder
+ Add FMNAN etc
+
+ Revision 1.67  2007/08/23 22:19:06  pwagner
+ 'walk' switch prints walkback fo calling stack even for warnings
+
+ Revision 1.66  2007/03/23 00:06:40  pwagner
+ Mentions desstroy switch
+
+ Revision 1.65  2006/09/21 18:52:52  pwagner
+ red[n] switch reduces details level of some dumps (turning some off altogether)
+
+ Revision 1.64  2006/08/25 19:36:52  vsnyder
+ add hphi and hphI switches
+
+ Revision 1.63  2006/06/29 19:36:56  vsnyder
+ Add metd and metD switches
+
+ Revision 1.62  2006/06/02 23:29:05  vsnyder
+ Complete descriptions of retriever's switches
+
+ Revision 1.61  2006/05/31 21:01:19  vsnyder
+ Add 0sl switch description
+
+ Revision 1.60  2006/04/05 19:16:27  vsnyder
+ Add 'clean' switch
+
+ Revision 1.59  2006/03/22 20:47:00  vsnyder
+ Add rtv
+
+ Revision 1.58  2006/03/03 23:07:15  pwagner
+ May dump runtime Boolean flags
+
+ Revision 1.57  2006/02/16 21:51:30  pwagner
+ Add phase[n]; reveal switchDetail function
+
+ Revision 1.56  2006/01/04 21:55:39  vsnyder
+ Describe 'grids' and 'norf' switches
+
+ Revision 1.55  2005/11/15 21:49:58  pwagner
+ Added l2q
+
+ Revision 1.54  2005/06/14 18:29:37  pwagner
+ pro now takes details; runxxx removed
+
+ Revision 1.53  2005/03/28 22:14:07  vsnyder
+ Add pfag
+
+ Revision 1.52  2005/03/28 20:31:24  vsnyder
+ Add taul and taup
+
+ Revision 1.51  2005/03/24 21:04:55  pwagner
+ Dropped column abundance method; added directWrite reqs
+
+ Revision 1.50  2004/12/31 02:44:42  vsnyder
+ Removed vgrid switch
+
+ Revision 1.49  2004/12/14 21:30:12  pwagner
+ mach switch dumps machine names
+
+ Revision 1.48  2004/11/04 03:46:24  vsnyder
+ Correct spec, add fwmg and fwmG
+
+ Revision 1.47  2004/08/05 22:46:04  pwagner
+ New --chunkRange option to run selected chunks in parallel mode
+
+ Revision 1.46  2004/08/05 20:24:11  livesey
+ Added ptg to dump ptg_angles
+
+ Revision 1.45  2004/08/03 23:23:56  pwagner
+ Unseemly switch to allow running first last, or first and last chunks only
+
+ Revision 1.44  2004/07/17 02:40:09  vsnyder
+ Add fwmd
+
+ Revision 1.43  2004/07/08 21:02:11  vsnyder
+ Replace 'bgrp' switch with 'sps' switch
+
+ Revision 1.42  2004/06/17 22:50:34  pwagner
+ Details for dumping VGrids determined by switch setting
+
+ Revision 1.41  2004/05/06 20:43:29  pwagner
+ phase announced as each is begun
+
+ Revision 1.40  2004/02/20 00:44:45  pwagner
+ Column-abundance-related; also skipdgg/m
+
+ Revision 1.39  2004/01/27 23:45:22  vsnyder
+ Add 'dacsfil'
+
+ Revision 1.38  2003/10/09 23:29:56  pwagner
+ Changed grid to gridd; ,-separated switches recommended
+
+ Revision 1.37  2003/10/09 21:03:40  vsnyder
+ Add the 'nodb' (no dump blocks) switch
+
+ Revision 1.36  2003/06/30 22:56:16  cvuu
+ Print mean, std dev for fullForwardModel timing
+
+ Revision 1.35  2003/05/21 22:17:49  vsnyder
+ Add 'bgrp' switch
+
+ Revision 1.34  2003/05/10 22:23:19  livesey
+ Tidied up some of the dumps
+
+ Revision 1.33  2003/02/06 01:13:21  livesey
+ Added binsel
+
+ Revision 1.32  2003/01/29 22:43:55  livesey
+ Added fnorm
+
+ Revision 1.31  2003/01/16 04:09:17  vsnyder
+ Add some output to DNWT
+
+ Revision 1.30  2003/01/15 01:48:02  vsnyder
+ Stuff about Newton-method-dumping switches
+
+ Revision 1.29  2002/10/02 23:07:50  vsnyder
+ Added 'seez' switch
+
+ Revision 1.28  2002/09/14 02:48:47  vsnyder
+ Added NDB
+
+ Revision 1.27  2002/09/06 00:46:47  livesey
+ Added ATb
+
+ Revision 1.26  2002/08/28 20:42:52  livesey
+ Added l2pc
+
+ Revision 1.25  2002/08/15 22:47:04  livesey
+ Added snoop
+
+ Revision 1.24  2002/08/08 22:04:48  vsnyder
+ Add 'reg' to description of -S
+
+ Revision 1.23  2002/06/29 05:56:20  livesey
+ Added geom and pGuess
+
+ Revision 1.22  2002/06/12 17:57:37  livesey
+ Added hGrid
+
+ Revision 1.21  2002/03/20 00:49:44  pwagner
+ chi1 dumps only 1st chunk, unlike chi
+
+ Revision 1.20  2002/02/12 00:26:39  pwagner
+ Added -opt[n] to print runtime settings
+
+ Revision 1.19  2002/02/05 00:40:31  pwagner
+ garbage collecting switch
+
+ Revision 1.18  2002/01/24 00:16:13  pwagner
+ pro scope widened to include input files, too
+
+ Revision 1.17  2001/12/01 01:01:41  livesey
+ Documented vir switch
+
+ Revision 1.16  2001/11/09 23:40:27  vsnyder
+ OOPS! --wall is an option, not a switch
+
+ Revision 1.15  2001/11/09 23:35:53  vsnyder
+ Add 'wall' switch
+
+ Revision 1.14  2001/10/30 00:31:15  pwagner
+ Replaced O with pcf[n] to dump parameters set by pcf during open_init
+
+ Revision 1.13  2001/10/26 23:03:36  pwagner
+ glo[bal] now glo[n]; add apr[n] and grid
+
+ Revision 1.12  2001/10/25 23:29:21  pwagner
+ Added global and l1b
+
+ Revision 1.11  2001/10/16 23:31:20  pwagner
+ Added msk qtmp switches
+
+ Revision 1.10  2001/09/28 18:07:18  pwagner
+ Added time switch
+
+ Revision 1.9  2001/09/21 17:37:00  pwagner
+ New chi switch
+
+ Revision 1.8  2001/08/06 23:14:03  pwagner
+ cab, chu, diag, l2gp, l2aux added
+
+ Revision 1.7  2001/05/24 18:12:43  vsnyder
+ Add ndb switch
+
+ Revision 1.6  2001/05/24 16:37:55  livesey
+ Added comments on mas and slv switches
+
+ Revision 1.5  2001/05/23 22:26:19  pwagner
+ Added section dividers; notes on automatic use
+
+ Revision 1.4  2001/05/22 21:58:50  vsnyder
+ Add several switches for Newton iteration
+
+ Revision 1.3  2001/05/18 01:12:11  vsnyder
+ Add some explanation
+
+ Revision 1.2  2001/05/17 22:41:26  pwagner
+ Added log, pro, and glo
+
+ Revision 1.1  2001/05/11 21:41:33;  author: vsnyder
+ First commit
+
