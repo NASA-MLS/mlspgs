@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 # This is a program that generates an EOS MLS Level 1 fragment
+# Users will need access to database and will need to supply 
+# credentials at line 127.
 # PCF file for the requested day.
 # i.e., just the ML0ENG{1-6} and ML0SCI{1-2} and AURATTH and AUREPHMH files
 # Author Ryan Fuller; May 11, 2004
@@ -124,12 +126,11 @@ my $dayEnd=$date->printf("%Y-%m-%d 23:59:59");
 
 
 # Open a connection to the database - Is global
-#$db = "mlsgate.jpl.nasa.gov";
-#$db = "mlspc.jpl.nasa.gov";
-$db = "cactus.jpl.nasa.gov";
-#$connectString = "DBI:mysql:ncep_dao;$db";
-$connectString = "DBI:mysql:ncep_dao;hostname=$db:port=5124";
-($username, $password) = ("scientist", "atgod");
+# You will need import your database connection
+# credentials here
+$db = "";
+$connectString = "";
+($username, $password) = ("", "");
 $dbh = DBI->connect($connectString, $username, $password);
 
 # Now go through each APID and collect the available files over the 
