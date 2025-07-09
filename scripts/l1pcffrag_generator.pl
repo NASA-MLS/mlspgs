@@ -124,12 +124,11 @@ my $dayEnd=$date->printf("%Y-%m-%d 23:59:59");
 
 
 # Open a connection to the database - Is global
-#$db = "mlsgate.jpl.nasa.gov";
-#$db = "mlspc.jpl.nasa.gov";
-$db = "cactus.jpl.nasa.gov";
-#$connectString = "DBI:mysql:ncep_dao;$db";
-$connectString = "DBI:mysql:ncep_dao;hostname=$db:port=5124";
-($username, $password) = ("scientist", "atgod");
+# You will need import your database connection
+# credentials here
+$db = "";
+$connectString = "";
+($username, $password) = ("", "");
 $dbh = DBI->connect($connectString, $username, $password);
 
 # Now go through each APID and collect the available files over the 
