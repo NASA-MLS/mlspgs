@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-import  sys, os, re
+import  sys, os
+from glob import glob
 
 # mlsqlog-scan-sips.py
 # Prints informative table of how chunks of mlsl2 job are progressing
@@ -29,16 +30,22 @@ TidDict = {}
 PhaseDict = {'Completed':('Completed',0,0)}
 StatusDict = {'Completed':'XXXX', 'Total':'XXXX', 'Underway':'XXXX', 'Abandoned':'XXXX', 'Remaining':'XXXX'}
 
-cmd = 'grep "died, try again" ' + dirin + "*.log"
-lines = os.popen(cmd).readlines()
+lines = []
+with open(dirin + '*.log', 'r') as f:
+    for line in f:
+        if 'died, try again' in line:
+            lines.append(line)
 for line in lines:
     line = line[:-1]
     chunkno = line.split("run of chunk ")[1].split(" ")[0]
     ChunkDict[chunkno] = 'Died'
 
-cmd = 'grep -n "= Phase:" ' + l2cf 
+lines = []
 #print "Phases"
-lines = os.popen(cmd).readlines()
+with open(l2cf, 'r') as f:
+    for lineNumber, line in enumerate(f, start=1):
+        if '= Phase:' in line:
+            lines.append(lineNumber + ': ' + line)
 for line in lines:
     line = line[:-1]
 #    print (line.split(':'))[0], (line.split(':'))[2]
@@ -80,7 +87,7 @@ f.close()
 
 #   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #   #start search in log file directory
-cmd = 'find ' + dirin + ' -name "*.log" -print -maxdepth 1'
+fileList = glob(dirin + '/*/*.log')
 #   
 #   nlogfiles = len(os.popen(cmd).readlines())
 #   
@@ -102,7 +109,7 @@ cmd = 'find ' + dirin + ' -name "*.log" -print -maxdepth 1'
 
 # print 'xxxxxxxxxxxxx'
 
-for file in os.popen(cmd).readlines():
+for file in fileList:
     filein = file[:-1] 
 #    print filein
     f = open(filein)
@@ -181,7 +188,7 @@ for i in PhaseStartLineNos :
 
     
 print("LineNumbers")
-for file in os.popen(cmd).readlines():
+for file in fileList:
     filein = file[:-1] 
     
     f = open(filein)
