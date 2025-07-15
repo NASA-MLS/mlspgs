@@ -1,17 +1,22 @@
-head	1.2;
+head	1.3;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
 
+1.3
+date	2002.05.13.17.24.25;	author livesey;	state dead;
+branches;
+next	1.2;
+
 1.2
-date	2002.05.08.15.14.07;	author bill;	state dead;
+date	2002.05.08.15.46.07;	author bill;	state Exp;
 branches;
 next	1.1;
 
 1.1
-date	2002.05.07.23.28.51;	author bill;	state Exp;
+date	2002.05.08.15.15.05;	author bill;	state Exp;
 branches;
 next	;
 
@@ -20,18 +25,15 @@ desc
 @@
 
 
-1.2
+1.3
 log
-@misnamed file, removing it
+@Getting close to being ready
 @
 text
-@!define(nbw1,{[110.00000MHz,110.00000MHz,110.00000MHz, 74.00000MHz, 74.00000MHz, $
- 74.00000MHz,
-     55.00000MHz, 37.00000MHz, 28.00000MHz, 18.40000MHz, 14.00000MHz,  9.20000MHz, $
-  7.20000MHz,
-      9.20000MHz, 14.00000MHz, 18.40000MHz, 28.00000MHz, 37.00000MHz, 55.00000MHz, $
- 74.00000MHz,
-z, 110.000MHz, $
+@!define(nbw1,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
+     74.000MHz,  55.000MHz,  37.000MHz,  28.000MHz,  18.400MHz,  14.000MHz, $
+      9.200MHz,   7.200MHz,   9.200MHz,  14.000MHz,  18.400MHz,  28.000MHz, $
+     37.000MHz,  55.000MHz,  74.000MHz,  74.000MHz,  74.000MHz, 110.000MHz, $
     110.000MHz, 110.000MHz]})
  
 !define(nbw2,{[ 110.000MHz, 110.000MHz, 110.000MHz,  74.000MHz,  74.000MHz, $
@@ -293,10 +295,27 @@ z, 110.000MHz, $
 @
 
 
-1.1
+1.2
 log
-@new file of noise band widths
+@made nbw1 format same as others--wgr
 @
 text
 @@
+
+
+1.1
+log
+@noise band width data--wgr
+@
+text
+@d1 4
+a4 7
+!define(nbw1,{[110.00000MHz,110.00000MHz,110.00000MHz, 74.00000MHz, 74.00000MHz, $
+ 74.00000MHz,
+     55.00000MHz, 37.00000MHz, 28.00000MHz, 18.40000MHz, 14.00000MHz,  9.20000MHz, $
+  7.20000MHz,
+      9.20000MHz, 14.00000MHz, 18.40000MHz, 28.00000MHz, 37.00000MHz, 55.00000MHz, $
+ 74.00000MHz,
+z, 110.000MHz, $
+@
 
