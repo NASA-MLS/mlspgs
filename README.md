@@ -42,3 +42,7 @@ Please make sure to review the following documentation before trying to compile 
 
 - [DEPENDENCIES.md](DEPENDENCIES.md) - information on what you'll need to get your development set up
 - [MakeFC.md](MakeFC.md) - how to create a configurable Makefile
+
+## Additional information
+
+For additional information and documentation on MLS software, data, calibration, etc., please visit the [Aura Microwave Limb Sounder community on Zenodo](https://zenodo.org/communities/aura-mls/).
