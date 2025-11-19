@@ -19,14 +19,15 @@ module O2_Abs_CS_M
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: ModuleName= &
-    &  "$RCSfile$"
+    &  "$RCSfile: o2_abs_cs_m.f90,v $"
   private :: not_used_here
 !---------------------------------------------------------------------------
 
 contains
 
 ! ----------------------------------------------------  O2_Abs_CS  -----
-  pure subroutine O2_Abs_CS ( Freq, H, Slabs, Sigma_p, Pi, Sigma_m )
+  PURE SUBROUTINE O2_Abs_CS ( Freq, H, Slabs, Sigma_p, Pi, Sigma_m, &
+       dsigma_p_dh, dpi_dh, dsigma_m_dh)
 
 ! Compute the complex absorption cross section.
 ! Modified to use Voigt with interfered lineshape
@@ -49,6 +50,10 @@ contains
     complex(rk), intent(out) :: Pi
     complex(rk), intent(out) :: Sigma_m
 
+    COMPLEX(rk), INTENT(out), optional :: dSigma_p_dh ! Output dBeta_dh values
+    COMPLEX(rk), INTENT(out), optional :: dPi_dh
+    COMPLEX(rk), INTENT(out), optional :: dSigma_m_dh
+    
     integer(ip) :: J, K, No_lines
     integer :: QN                             ! Quantum number
     real(rk) :: F_o_v0, Z, Denomm
@@ -63,6 +68,10 @@ contains
       pi = 0.0_rk
       sigma_m = 0.0_rk
       wing = 0.0_rk
+
+      IF (present(dsigma_p_dh)) dsigma_p_dh = 0.0_rk
+      IF (present(dpi_dh)) dpi_dh = 0.0_rk
+      IF (present(dsigma_m_dh)) dsigma_m_dh = 0.0_rk
 
 ! Do magnetic calculation even if h = 0 for all of the Zeeman-split lines
 
@@ -86,7 +95,8 @@ contains
         call mag_o2_abs_cs ( qn, freq, v0, h,                             &
           &                  slabs%s(j)%x1, slabs%s(j)%slabs1,            &
           &                  slabs%s(j)%y, slabs%s(j)%yi, slabs%s(j)%v0s, &
-          &                  sigma_p, pi, sigma_m )
+          &                  sigma_p, pi, sigma_m, dsigma_p_dh, dpi_dh, &
+          &                  dsigma_m_dh)
 
 !{ Fill in negative frequency part of VVW lineshape for jth line
 !
@@ -122,7 +132,8 @@ contains
 
 ! -----------------------------------------------  D_O2_Abs_CS_dT  -----
   pure subroutine D_O2_Abs_CS_dT ( Freq, H, Slabs, Sigma_p, Pi, Sigma_m, &
-    &                         dSigma_p_dT, dPi_dT, dSigma_m_dT )
+       &                         dSigma_p_dT, dPi_dT, dSigma_m_dT, &
+       &                         dsigma_p_dh, dpi_dh, dsigma_m_dh)
 
 ! Compute the complex absorption cross section and its temperature derivative.
 ! Modified to use Voigt with interfered lineshape
@@ -147,7 +158,11 @@ contains
 
     complex(rk), intent(out) :: dSigma_p_dT   ! Output dBeta_dT values
     complex(rk), intent(out) :: dPi_dT
-    complex(rk), intent(out) :: dSigma_m_dT
+    COMPLEX(rk), INTENT(out) :: dSigma_m_dT
+
+    COMPLEX(rk), INTENT(out), optional :: dSigma_p_dh ! Output dBeta_dh values
+    COMPLEX(rk), INTENT(out), optional :: dPi_dh
+    COMPLEX(rk), INTENT(out), optional :: dSigma_m_dh
 
     integer(ip) :: J, K, No_lines
     integer :: QN                             ! Quantum number
@@ -171,6 +186,10 @@ contains
       dPi_dT = 0.0_rk
       dSigma_m_dT = 0.0_rk
       dWing = 0.0_rk
+
+      IF (present(dsigma_p_dh)) dsigma_p_dh = 0.0_rk
+      IF (present(dpi_dh)) dpi_dh = 0.0_rk
+      IF (present(dsigma_m_dh)) dsigma_m_dh = 0.0_rk
 
 ! Do magnetic calculation even if h = 0 for all of the Zeeman-split lines
 
@@ -197,7 +216,8 @@ contains
           & slabs%d(j)%dx1_dT, slabs%d(j)%dslabs1_dT, slabs%d(j)%dy_dT, &
           & slabs%d(j)%dyi_dT, slabs%d(j)%dv0s_dT,                      &
           &  sigma_p,     pi,     sigma_m,                              &
-          & dSigma_p_dT, dPi_dT, dSigma_m_dT )
+          & dSigma_p_dT, dPi_dT, dSigma_m_dT,                           &
+          & dsigma_p_dh, dpi_dh, dsigma_m_dh)
 
 !{ Fill in negative frequency part of VVW lineshape for jth line
 !
@@ -314,7 +334,8 @@ contains
 
 ! ------------------------------------------------  Mag_O2_Abs_CS  -----
   pure subroutine Mag_O2_Abs_CS ( n, nu, v0, h, x1, s, w, y, v0s, &
-    &                        sigma_p, pi, sigma_m )
+       &                        sigma_p, pi, sigma_m,                &
+       &                        dsigma_p_dh, dpi_dh, dsigma_m_dh)
 
 ! Compute the frequency dependent absorption cross section for magnetic o2.
 
@@ -325,7 +346,8 @@ contains
     use MLSCommon, only: IP, R8, Rk => RP
     use Physics, only: Bohr, G_e
     use Voigt_m, only: Simple_Voigt
-
+    use Constants, only: SqrtPi
+    
     integer, intent(in) :: N    ! rotational quantum number, sign indicates delta J
     real(r8), intent(in) :: Nu  ! transmission frequency in MHz
     real(r8), intent(in) :: V0  ! zero magnetic field line position
@@ -354,6 +376,14 @@ contains
 
     real(rk) :: Xi ! This is actually 0.5 \xi \frac{\nu}{\nu_0} from the
                    ! ATBD, not just \xi.
+! stuff wgr is adding
+
+    REAL(rk) :: dxdh, dzr_dh, dzi_dh
+
+    COMPLEX(rk), INTENT(inout), optional :: dsigma_p_dh ! magnetic field derivative
+    COMPLEX(rk), INTENT(inout), optional :: dpi_dh ! magnetic field derivative
+    COMPLEX(rk), INTENT(inout), optional :: dsigma_m_dh ! magnetic field derivative
+    
 
 ! Compute the absorption coefficient at unity mixing ratio for N transition
 
@@ -387,8 +417,25 @@ contains
 !     z  = 0.5_rk * s * xi * f_o_v0
       z  = 0.25_rk * s * f_o_v0
       zr = z * (u - y*v)
-      zi = z * (v + u * (x + y))
+! I dont know why it is x + y because in Michaels paper I get just y
+! The contribution from the x is less than 1 PPTH relative to value so
+! it doesnt seem to matter
+!      zi = z * (v + u * (x + y))
+      zi = z * (v + y*u)
+      
       sigma_p = sigma_p + cmplx(zr, zi, kind=rk)
+
+      IF (PRESENT(dsigma_p_dh)) THEN
+!         PRINT '(a)','dsigma_p_dh is present'
+        dxdh = -x1 * 0.5_rk * kappa
+        dzr_dh = 2.0_rk * z * (ww*v - nu_offst*u  &
+             - y*(1.0_rk / SqrtPi - nu_offst * v - ww * u)) * dxdh
+!        dzi_dh = 2.0_rk * z * (1.0_r8 / SqrtPi - nu_offst * v - ww * u &
+!               + (ww*v - nu_offst*u)*(x + y))*dxdh
+        dzi_dh = 2.0_rk * z * (1.0_rk / SqrtPi - nu_offst * v - ww * u &
+               + (ww*v - nu_offst*u)*y)*dxdh
+        dsigma_p_dh = dsigma_p_dh + CMPLX(dzr_dh, dzi_dh, kind=rk)
+      ENDIF
 
 !     m = -n
 
@@ -402,10 +449,23 @@ contains
 !     xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
 !     xi = 0.5_rk
 !     z  =  0.5_rk * s * xi * f_o_v0
-!     z  =  0.25_rk * s * f_o_v0
+      z  =  0.25_rk * s * f_o_v0
       zr = z * (u - y*v)
-      zi = z * (v + u * (x + y))
-      sigma_m = sigma_m + cmplx(zr, zi, kind=rk)
+!      zi = z * (v + u * (x + y))
+      zi = z * (v + y*u)
+      sigma_m = sigma_m + CMPLX(zr, zi, kind=rk)
+
+      IF (PRESENT(dsigma_m_dh)) THEN
+!         PRINT '(a)','dsigma_m_dh is present'
+        dxdh = x1 * 0.5_rk * kappa
+        dzr_dh = 2.0_rk * z * (ww*v - nu_offst*u  &
+             - y*(1.0_rk / SqrtPi - nu_offst * v - ww * u)) * dxdh
+!        dzi_dh = 2.0_rk * z * (1.0_rk / SqrtPi - nu_offst * v - ww * u &
+!               + (ww*v - nu_offst*u)*(x + y))*dxdh
+        dzi_dh = 2.0_rk * z * (1.0_rk / SqrtPi - nu_offst * v - ww * u &
+               + (ww*v - nu_offst*u)*y)*dxdh
+        dsigma_m_dh = dsigma_m_dh + CMPLX(dzr_dh, dzi_dh, kind=rk)
+      ENDIF
 
 !     m = n + 1
 
@@ -421,8 +481,20 @@ contains
 !     z  = 0.5_rk * s * f_o_v0
       z = 2.0_rk * z
       zr = z * (u - y*v)
-      zi = z * (v + u * (x + y))
+!      zi = z * (v + u * (x + y))
+      zi = z * (v + y*u)
       pi = pi + cmplx(zr, zi, kind=rk)
+      IF (PRESENT(dpi_dh)) THEN
+!         PRINT '(a)','dpi_dh is present'
+        dxdh = 0.0_rk
+        dzr_dh = 2.0_rk * z * (ww*v - nu_offst*u  &
+             - y*(1.0_rk / SqrtPi - nu_offst * v - ww * u)) * dxdh
+!        dzi_dh = 2.0_rk * z * (1.0_rk / SqrtPi - nu_offst * v - ww * u &
+!               + (ww*v - nu_offst*u)*(x + y))*dxdh
+        dzi_dh = 2.0_rk * z * (1.0_rk / SqrtPi - nu_offst * v - ww * u &
+               + (ww*v - nu_offst*u)*y)*dxdh
+        dpi_dh = dpi_dh + CMPLX(dzr_dh, dzi_dh, kind=rk)
+      ENDIF
 
     else if ( n > 0 ) then
 
@@ -603,7 +675,8 @@ contains
   pure subroutine d_Mag_O2_Abs_CS_dT ( n, nu, v0, h, x1,  s,  w,  y,  v0s, &
     &                                                dx1, ds, dw, dy, dv0s, &
     &                                  sigma_p,     pi,     sigma_m,      &
-    &                                 dSigma_p_dT, dPi_dT, dSigma_m_dT )
+    &                                 dSigma_p_dT, dPi_dT, dSigma_m_dT,   &
+    &                                 dSigma_p_dH, dPi_dH, dSigma_m_dH)
 
 ! Compute the frequency dependent absorption cross section for magnetic o2
 ! and its temperature derivative.
@@ -614,7 +687,8 @@ contains
 
     use MLSCommon, only: IP, R8, Rk => RP
     use Physics, only: Bohr, G_e
-    use Voigt_m, only: D_Simple_Voigt
+    USE Voigt_m, ONLY: D_Simple_Voigt
+    USE constants, only: sqrtpi
 
     integer, intent(in) :: N     ! rotational quantum number, sign indicates delta J
     real(r8), intent(in) :: Nu   ! transmission frequency in MHz
@@ -643,14 +717,22 @@ contains
 
     complex(rk), intent(inout) :: dSigma_P_dT ! d sigma_p / dT
     complex(rk), intent(inout) :: dPi_dT      ! d pi      / dT
-    complex(rk), intent(inout) :: dSigma_M_dT ! d sigma_m /dT
+    COMPLEX(rk), INTENT(inout) :: dSigma_M_dT ! d sigma_m /dT
+
+    COMPLEX(rk), INTENT(out), optional :: dSigma_p_dh ! d sigma_p / dH
+    COMPLEX(rk), INTENT(out), optional :: dPi_dh  ! d pi / dH
+    COMPLEX(rk), INTENT(out), optional :: dSigma_m_dh ! d sigma_m /dT
+
+    
     integer(ip) :: M
 
     real(rk), parameter :: Kappa = Bohr * G_e ! ~ 2.8024
 
-    real(rk) :: Del_nu, Denom1, Denom2, F_o_v0, KappaH! , Nu_offst
+    real(rk) :: Del_nu, Denom1, Denom2, F_o_v0, KappaH
     real(rk) :: dNu_offst, dDel_nu
-    real(rk) :: X, dX, WW, WdW
+    REAL(rk) :: X, dX, WW, WdW
+    REAL(rk) :: u, v, z
+    REAL(rk) :: dxdh, dzr_dh, dzi_dh, nu_offst
 
 ! Compute the absorption coefficient at unity mixing ratio for N transition
 
@@ -682,9 +764,23 @@ contains
 !     nu_offst = x1*(del_nu + kappa*((m+1)*(2-n)-1)*h / denom1)
 ! m == n == -1 and denom2 == 3 => xi == 0.5
 !     xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
-      call absorption ( x1 * ( del_nu - 0.5_rk*kappaH ), &
-        &               0.25_rk * f_o_v0, sigma_p, dSigma_p_dT )
+      nu_offst = x1 * ( del_nu - 0.5_rk*kappaH )
+      call absorption ( nu_offst,0.25_rk * f_o_v0, u, v, sigma_p,dSigma_p_dT )
 
+      IF (PRESENT(dsigma_p_dh)) THEN
+!         PRINT '(a)','dsigma_p_dh is present in dodt'
+        z  = 0.25_rk * s * f_o_v0
+        dxdh = -x1 * 0.5_rk * kappa
+        dzr_dh = 2.0_rk * z * (ww*v - nu_offst*u  &
+             - y*(1.0_rk / SqrtPi - nu_offst * v - ww * u)) * dxdh
+!        dzi_dh = 2.0_rk * z * (1.0_r8 / SqrtPi - nu_offst * v - ww * u &
+!               + (ww*v - nu_offst*u)*(x + y))*dxdh
+        dzi_dh = 2.0_rk * z * (1.0_rk / SqrtPi - nu_offst * v - ww * u &
+               + (ww*v - nu_offst*u)*y)*dxdh
+        dsigma_p_dh = dsigma_p_dh + CMPLX(dzr_dh, dzi_dh, kind=rk)
+      ENDIF
+
+      
 !     m = -n
 
 ! sigma_m transition
@@ -692,10 +788,23 @@ contains
 ! m == -n == 1 => ((m-1)*(2-n)+1) == +1
 !     nu_offst = x1*(del_nu + kappa*((m-1)*(2-n)+1)*h / denom1)
 ! m == -n == 1 and denom2 == 3 => xi == 0.5
-!     xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
-      call absorption ( x1 * (del_nu + 0.5_rk*kappaH), &
-        &               0.25_rk * f_o_v0, sigma_m, dSigma_m_dT )
+      !     xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
+      nu_offst = x1 * (del_nu + 0.5_rk*kappaH)
+      call absorption ( nu_offst, &
+        &               0.25_rk * f_o_v0, u, v, sigma_m, dSigma_m_dT )
 
+      IF (PRESENT(dsigma_m_dh)) THEN
+!         PRINT '(a)','dsigma_m_dh is present in do2dt'
+        z  =  0.25_rk * s * f_o_v0
+        dxdh = x1 * 0.5_rk * kappa
+        dzr_dh = 2.0_rk * z * (ww*v - nu_offst*u  &
+             - y*(1.0_rk / SqrtPi - nu_offst * v - ww * u)) * dxdh
+!        dzi_dh = 2.0_rk * z * (1.0_rk / SqrtPi - nu_offst * v - ww * u &
+!               + (ww*v - nu_offst*u)*(x + y))*dxdh
+        dzi_dh = 2.0_rk * z * (1.0_rk / SqrtPi - nu_offst * v - ww * u &
+               + (ww*v - nu_offst*u)*y)*dxdh
+        dsigma_m_dh = dsigma_m_dh + CMPLX(dzr_dh, dzi_dh, kind=rk)
+      ENDIF
 !     m = n + 1
 
 ! pi transition
@@ -703,8 +812,24 @@ contains
 ! m == n + 1 == 0 => kappa*m*(2-n)*h == 0
 !     nu_offst = x1*(del_nu + kappa*m*(2-n)*h / denom1)
 ! m == n + 1 == 0 and denom2 == 3 => xi == 1.0
-!     xi = 3.0_rk * (n * n - m * m) / denom2
-      call absorption ( x1 * del_nu, 0.5_rk * f_o_v0, pi, dPi_dT )
+      !     xi = 3.0_rk * (n * n - m * m) / denom2
+      nu_offst = x1 * del_nu
+      CALL absorption (nu_offst, 0.5_rk * f_o_v0, u, v, pi, dPi_dT )
+
+      IF (PRESENT(dpi_dh)) THEN
+!         PRINT '(a)','dpi_dh is present in do2dt'
+        z = 0.5_rk * s * f_o_v0
+        dxdh = 0.0_rk
+        dzr_dh = 2.0_rk * z * (ww*v - nu_offst*u  &
+             - y*(1.0_rk / SqrtPi - nu_offst * v - ww * u)) * dxdh
+!        dzi_dh = 2.0_rk * z * (1.0_rk / SqrtPi - nu_offst * v - ww * u &
+!               + (ww*v - nu_offst*u)*(x + y))*dxdh
+        dzi_dh = 2.0_rk * z * (1.0_rk / SqrtPi - nu_offst * v - ww * u &
+               + (ww*v - nu_offst*u)*y)*dxdh
+        dpi_dh = dpi_dh + CMPLX(dzr_dh, dzi_dh, kind=rk)
+      ENDIF
+
+      
 
     else if ( n > 0 ) then
 
@@ -720,21 +845,21 @@ contains
 !       xi = 3.0_rk * ((n + 1) * (n + 1) - m * m) / denom2
         call absorption ( x1*(del_nu + kappaH*m*(1-n) / denom1), &
           &               1.5_rk * ((n + 1) * (n + 1) - m * m) / denom2 * f_o_v0, &
-          &               pi, dPi_dT )
+          &               u, v, pi, dPi_dT )
 
 ! sigma_p transition
 
 !       xi = 3.0_rk * (n + m + 1) * (n + m + 2) / (4.0_rk * denom2)
         call absorption ( x1*(del_nu + kappaH*(m*(1-n)-n) / denom1), &
           &               0.375_rk * (n + m + 1) * (n + m + 2) / denom2 * f_o_v0, &
-          &               sigma_p, dSigma_p_dT )
+          &               u, v, sigma_p, dSigma_p_dT )
 
 ! sigma_m transition
 
 !       xi = 3.0_rk * (n - m + 1) * (n - m + 2) / (4.0_rk * denom2)
         call absorption ( x1*(del_nu + kappaH*(m*(1-n)+n) / denom1), &
           &               0.375_rk * (n - m + 1) * (n - m + 2) / denom2 * f_o_v0, &
-          &               sigma_m, dSigma_m_dT )
+          &               u, v, sigma_m, dSigma_m_dT )
 
       end do
 
@@ -751,21 +876,22 @@ contains
 
 !       xi = 3.0_rk * (n * n - m * m) / denom2
         call absorption ( x1*(del_nu + kappaH*m*(2-n) / denom1), &
-          &               1.5_rk * (n * n - m * m) / denom2 * f_o_v0, pi, dPi_dT )
+             &               1.5_rk * (n * n - m * m) / denom2 * f_o_v0, &
+             &               u, v, pi, dPi_dT )
 
 ! sigma_p transition
 
 !       xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
         call absorption ( x1*(del_nu + kappaH*((m+1)*(2-n)-1) / denom1), &
           &               0.375_rk * (n + m) * (n + m + 1) / denom2 * f_o_v0, &
-          &               sigma_p, dSigma_p_dT )
+          &               u, v, sigma_p, dSigma_p_dT )
 
 ! sigma_m transition
 
 !       xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
         call absorption ( x1*(del_nu + kappaH*((m-1)*(2-n)+1) / denom1), &
           &               0.375_rk * (m - n) * (m - n - 1) / denom2 * f_o_v0, &
-          &               sigma_m, dSigma_m_dT )
+          &               u, v, sigma_m, dSigma_m_dT )
 
       end do
 
@@ -779,7 +905,7 @@ contains
 !     xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
       call absorption ( x1*(del_nu + kappaH*((m+1)*(2-n)-1) / denom1), &
         &               0.375_rk * (n + m) * (n + m + 1) / denom2 * f_o_v0, &
-        &               sigma_p, dSigma_p_dT )
+        &               u, v, sigma_p, dSigma_p_dT )
 
 ! m = n
 
@@ -790,7 +916,7 @@ contains
 !     xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
       call absorption ( x1*(del_nu + kappaH*((m-1)*(2-n)+1) / denom1), &
         &               0.375_rk * (m - n) * (m - n - 1) / denom2 * f_o_v0, &
-        &               sigma_m, dSigma_m_dT )
+        &               u, v, sigma_m, dSigma_m_dT )
 
 ! m = -(n-1)
 
@@ -800,14 +926,15 @@ contains
 
 !     xi = 3.0_rk * (n * n - m * m) / denom2
       call absorption ( x1*(del_nu + kappaH*m*(2-n) / denom1), &
-        &               1.5_rk * (n * n - m * m) / denom2 * f_o_v0, pi, dPi_dT )
+           &            1.5_rk * (n * n - m * m) / denom2 * f_o_v0,  &
+           &            u, v, pi, dPi_dT )
 
 ! sigma_p transition
 
 !     xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
       call absorption ( x1*(del_nu + kappaH*((m+1)*(2-n)-1) / denom1), &
         &               0.375_rk * (n + m) * (n + m + 1) / denom2 * f_o_v0, &
-        &               sigma_p, dSigma_p_dT )
+        &               u, v, sigma_p, dSigma_p_dT )
 
 ! m = n - 1
 
@@ -817,27 +944,29 @@ contains
 
 !     xi = 3.0_rk * (n * n - m * m) / denom2
       call absorption ( x1*(del_nu + kappaH*m*(2-n) / denom1), &
-                        1.5_rk * (n * n - m * m) / denom2 * f_o_v0, pi, dPi_dT )
+           &            1.5_rk * (n * n - m * m) / denom2 * f_o_v0, &
+           &            u, v, pi, dPi_dT )
 
 ! sigma_m transition
 
 !     xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
       call absorption ( x1*(del_nu + kappaH*((m-1)*(2-n)+1) / denom1), &
         &               0.375_rk * (m - n) * (m - n - 1) / denom2 * f_o_v0, &
-        &               sigma_m, dSigma_m_dT )
+        &               u, v, sigma_m, dSigma_m_dT )
 
     end if
 
   contains
 
-    pure subroutine Absorption ( nu_offst, xi, r, dr ) ! Update r ("result"), dr
+    PURE SUBROUTINE Absorption ( nu_offst, xi, u, v, r, dr ) ! Update r ("result"), dr
 
       real(rk), intent(in) :: nu_offst ! x1*(del_nu + kappa*...*h/...)
       real(rk), intent(in) :: Xi ! This is actually 0.5 \xi \frac{\nu}{\nu_0}
         !                          from the ATBD, not just \xi.
-      complex(rk), intent(inout) :: R, dR
+      COMPLEX(rk), INTENT(inout) :: R, dR
+      REAL(rk), INTENT(out) :: u,v
 
-      real(rk) :: U, dU, v, dV, Z, Zr, dZr, Zi, dZi
+      real(rk) :: dU, dV, Z, Zr, dZr, Zi, dZi
       ! dNu_offst, S, dS, w, dW, X, dX, X1, dX1, Y, dY by host association
 
 !{ Compute absorption
@@ -895,7 +1024,7 @@ contains
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
-       "$Id$"
+       "$Id: o2_abs_cs_m.f90,v 2.23 2014/04/04 19:43:10 vsnyder Exp $"
   character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
     print *, Id ! .mod files sometimes change if PRINT is added
@@ -904,7 +1033,7 @@ contains
 
 end module O2_Abs_CS_M
 
-! $Log$
+! $Log: o2_abs_cs_m.f90,v $
 ! Revision 2.23  2014/04/04 19:43:10  vsnyder
 ! Move computation of QN from get_beta_path to o2_abs_cs.  This avoids the
 ! need for an array temp.

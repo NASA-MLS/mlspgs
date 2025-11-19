@@ -20,7 +20,7 @@ module Convolution_m
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
+       "$RCSfile: Convolution_m.f90,v $"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -31,9 +31,9 @@ contains
                          & DXDT_Tan, D2X_DXDT, F_and_V, &
                          & EarthRadC_sq, Est_ScGeocAlt, FirstSignal, FmStat, &
                          & FwdModelConf, FwdModelExtra, FwdModelIn, FwdModelOut, &
-                         & Grids_f, Grids_n, Grids_tmp, Grids_v, Grids_w, &
+                         & Grids_f, Grids_n, Grids_tmp, Grids_v, Grids_w, Grids_mag, &
                          & H_Atmos, K_Atmos, K_Spect_DN, K_Spect_DV, K_Spect_DW, &
-                         & K_Temp, L1BMIF_TAI, MIFDeadTime, PTan, PTan_Der, &
+                         & K_Temp, k_magfield, L1BMIF_TAI, MIFDeadTime, PTan, PTan_Der, &
                          & Ptg_Angles, Radiances, Sideband, S_T, Surf_Angle, &
                          & Tan_Chi_Out, Tan_Phi, Temp, ThisSideband, &
                          & Jacobian, ExtraJacobian, Hessian )
@@ -93,12 +93,14 @@ contains
     type (Grids_T), intent(in) :: Grids_tmp ! All the coordinates for TEMP
     type (Grids_T), intent(in) :: Grids_v   ! All the spectroscopy(V) coordinates
     type (Grids_T), intent(in) :: Grids_w   ! All the spectroscopy(W) coordinates
+    type (Grids_T), intent(in) :: Grids_mag   ! All the coordinates for magnetic field
     real(r4), intent(in) :: H_Atmos(:,:,:,:) ! (noUsedChannels,no_tan_hts,s_h*size(grids_f%values),s_h*size(grids_f%values))
     real(r4), intent(in) :: K_Atmos(:,:,:) ! (noUsedChannels,no_tan_hts,s_a*size(grids_f%values))
     real(r4), intent(in) :: K_Spect_DN(:,:,:) ! (noUsedChannels,no_tan_hts,s_td*size(grids_n%values))
     real(r4), intent(in) :: K_Spect_DV(:,:,:) ! (noUsedChannels,no_tan_hts,s_lc*size(grids_v%values))
     real(r4), intent(in) :: K_Spect_DW(:,:,:) ! (noUsedChannels,no_tan_hts,s_lw*size(grids_w%values))
     real(r4), intent(in) :: K_Temp(:,:,:) ! (noUsedChannels,no_tan_hts,s_t*sv_t_len)
+    REAL(r4), INTENT(in) :: K_Magfield(:,:,:) ! (noUsedChannels,no_tan_hts,s_m*sv_h_len*3)
     real(rv), intent(in), pointer :: L1BMIF_TAI(:,:)   ! MIF Times
     real(rv), intent(in), pointer :: MIFDeadTime(:,:)  ! Not collecting data
     type (VectorValue_T), intent(in) :: PTan   ! Tangent pressure component of state vector
@@ -143,7 +145,10 @@ contains
     type (Convolve_Support_T) :: Convolve_Support
     type (VectorValue_T), pointer :: ElevOffset       ! Elevation offset
     type (VectorValue_T), pointer :: SidebandFraction ! The sideband fraction to use
-    logical :: Temp_Der          ! Compute derivative w.r.t. Temp
+    LOGICAL :: Temp_Der          ! Compute derivative w.r.t. Temp
+    logical :: hmag_der          ! Compute derivative w.r.t. magnetic field
+    logical :: htheta_der        ! Compute derivative w.r.t. mag theta
+    LOGICAL :: hphi_der          ! Compute derivative w.r.t. mag phi
     type (VectorValue_T), pointer :: ThisRadiance     ! A radiance vector quantity
 
     call trace_begin ( me, 'ForwardModel.Convolution', &
@@ -159,6 +164,19 @@ contains
 
     temp_der = present ( jacobian ) .and. FwdModelConf%temp_der
 
+    hmag_der = present ( jacobian ) .and. FwdModelConf%hmag_der
+    htheta_der = present ( jacobian ) .and. FwdModelConf%htheta_der
+    hphi_der = PRESENT ( jacobian ) .AND. FwdModelConf%hphi_der
+
+    PRINT '(a)','Inside the convolution program'
+    PRINT '(a)','=========begin derivative flag settings======'
+    PRINT *,'atmos der setting ',fwdmodelconf%atmos_der
+    PRINT *,'temperature der setting ',fwdmodelconf%temp_der
+    PRINT *,'h-mag der setting ',fwdmodelconf%hmag_der
+    PRINT *,'h-theta der setting ',fwdmodelconf%htheta_der
+    PRINT *,'h-phi der setting ',fwdmodelconf%hphi_der
+    PRINT '(a)','=========end derivative flag settings========'
+    
     beta_group => fwdModelConf%beta_group
     channels => fwdModelConf%channels
     MAF = fmstat%MAF
@@ -211,7 +229,7 @@ contains
     end if
 
     ! Work out which antenna patterns we're going to need ------------------
-    do i = 1, noUsedChannels
+    DO i = 1, noUsedChannels
       channel = channels(i)%used
       chanInd = channel + 1 - channels(i)%origin
       sigInd = channels(i)%signal
@@ -299,7 +317,7 @@ contains
             & Jacobian, fmStat%rows, dh_dz_out, dx_dh_out, ptan_der )
         end if
 
-        if ( atmos_der ) then
+        IF ( atmos_der ) THEN
           call convolve_other_deriv ( convolve_support, maf, chanInd, &
           & thisFraction, update, thisRadiance, beta_group%qty, Grids_f, &
           & L1BMIF_TAI, MIFDeadTime, real(k_atmos(i,:,:),kind=rp), &
@@ -332,6 +350,16 @@ contains
             & real(k_spect_dn(i,:,:),kind=rp), f_and_v, Jacobian, fmStat%rows, &
             & extraJacobian )
 
+        IF (hmag_der .OR. htheta_der .OR. hphi_der) THEN
+
+          call convolve_other_deriv ( convolve_support, maf, chanInd, &
+          & thisFraction, update, thisRadiance, grids_mag%qtystuff, &
+          & Grids_mag, L1BMIF_TAI, MIFDeadTime, &
+          & REAL(k_magfield(i,:,:),kind=rp), f_and_v, Jacobian, &
+          & fmStat%rows, extraJacobian )
+          
+        endif
+
         call fov_convolve_teardown ( convolve_support )
 
       else          ! No convolution needed ..
@@ -356,6 +384,13 @@ contains
             & thisFraction, update, tan_chi_out-thisElev, thisRadiance, &
             & beta_group%qty, grids_f, L1BMIF_TAI, MIFDeadTime, &
             & real(k_atmos(i,:,:),kind=rp), f_and_v, Jacobian, fmStat%rows, &
+            & linear=.TRUE., extraJacobian=extraJacobian )
+        
+        if ( hmag_der .OR. htheta_der .OR. hphi_der ) &
+          call interpolate_other_deriv ( coeffs, maf, chanInd, ptg_angles, &
+            & thisFraction, update, tan_chi_out-thisElev, thisRadiance, &
+            & grids_mag%qtystuff, grids_mag, L1BMIF_TAI, MIFDeadTime, &
+            & real(k_magfield(i,:,:),kind=rp), f_and_v, Jacobian, fmStat%rows, &
             & linear=.true., extraJacobian=extraJacobian )
 
         if ( spect_der_center ) &
@@ -383,7 +418,7 @@ contains
 
       end if ! Convolve or interpolate
 
-    end do                            ! Channel loop
+   END DO                            ! Channel loop
 
     call trace_end ( 'ForwardModel.Convolution', &
       & cond=toggle(emit) .and. levels(emit) > 2 )
@@ -525,7 +560,7 @@ contains
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
-       "$Id$"
+       "$Id: Convolution_m.f90,v 2.14 2020/08/28 21:41:58 vsnyder Exp $"
   character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
     print *, Id ! .mod files sometimes change if PRINT is added
@@ -534,7 +569,7 @@ contains
 
 end module Convolution_m
 
-! $Log$
+! $Log: Convolution_m.f90,v $
 ! Revision 2.14  2020/08/28 21:41:58  vsnyder
 ! Set up to calculate chi angles for QTM
 !

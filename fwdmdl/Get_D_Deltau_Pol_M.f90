@@ -13,13 +13,14 @@ module Get_d_Deltau_Pol_M
 
   implicit NONE
   private
-  public :: Get_d_Deltau_Pol_dF, Get_d_Deltau_Pol_dT
+  PUBLIC :: Get_d_Deltau_Pol_dF, Get_d_Deltau_Pol_dT, Get_d_Deltau_Pol_dH, &
+       & Get_d_Deltau_Pol_dTheta, Get_d_Deltau_Pol_dPhi
     integer, parameter :: max_num_debugs = 10
     integer :: num_debugs
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
+       "$RCSfile: Get_D_Deltau_Pol_M.f90,v $"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
@@ -645,11 +646,641 @@ contains
 
   end subroutine Get_d_Deltau_Pol_dT
 
+  subroutine Get_d_Deltau_Pol_dH ( CT, STCP, STSP, &
+                & Alpha_Path, dAlpha_dH_polarized_path, &
+                & Eta_zxp, P_Stop, Del_S, GL_Inds, Del_Zeta, Do_GL, &
+                & ds_dh, dh_dz_gw, ds_dz_gw, Incoptdepth, Ref_cor, &
+                & Deriv_Flags, ptg_i, D_Deltau_Pol_DH )
+
+    use DExdT_m, only: dExdT
+    use GLNP, only: NG, NGP1
+    use MLSKinds, only: RP, IP
+    use Opacity_m, only: Opacity
+    use Rad_Tran_m, only: Get_do_Calc
+    use Sparse_m, only: Sparse_t
+
+  ! Arguments
+    ! SVE == # of state vector elements
+    real(rp), intent(in) :: CT(:)           ! Cos(Theta), where theta
+      ! is the angle between the line of sight and magnetic field vectors.
+    real(rp), intent(in) :: STCP(:)         ! Sin(Theta) Cos(Phi) where
+      ! theta is as for CT and phi (for this purpose only) is the angle
+      ! between the plane defined by the line of sight and the magnetic
+      ! field vector, and the "instrument field of view plane polarized"
+      ! (IFOVPP) X axis.
+    real(rp), intent(in) :: STSP(:)         ! Sin(Theta) Sin(Phi)
+    complex(rp), intent(in), target :: Alpha_Path(-1:,:) ! -1:1 x path on 
+                                            ! composite coarse & fine path
+    complex(rp), intent(in), target :: dAlpha_dH_polarized_path(-1:,:) ! -1:1 x path on 
+                                            ! composite coarse & fine path path
+    class(sparse_t), intent(in) :: Eta_ZXP  ! Interpolating coefficients from
+                                            ! state vector to path
+    integer, intent(in) :: P_Stop           ! Where to stop on coarse path
+    real(rp), intent(in) :: Del_S(:)        ! unrefracted path length.  This
+                                            ! is for the whole coarse path, not
+                                            ! just the part up to the black-out
+    integer(ip), intent(in) :: GL_Inds(:)   ! indices for reading fine path
+                                            ! elements from sps_path
+    real(rp), intent(in) :: Del_Zeta(:)     ! path -log(P) differences on the
+                                            ! main grid.  This is for the whole
+                                            ! coarse path, not just the part up
+                                            ! to the black-out
+    logical, intent(in) :: Do_gl(:)         ! Indicates where on the coarse path
+                                            ! to do gl integrations.
+    real(rp), intent(in) :: ds_dh(:)        ! path length wrt height derivative
+                                            ! on entire grid.  Only the
+                                            ! gl_inds part is used.
+    real(rp), intent(in) :: dh_dz_gw(:)     ! path height wrt zeta derivative * gw.
+                                            ! on entire grid.  Only the
+                                            ! gl_inds part is used.
+    real(rp), intent(in) :: ds_dz_gw(:)     ! path length wrt zeta derivative * gw.
+                                            ! on entire grid.  Only the
+                                            ! gl_inds part is used.
+    complex(rp), intent(in) :: Incoptdepth(:,:,:) ! negative of incremental
+                                            ! optical depth.  2 x 2 x path
+    real(rp), intent(in) :: Ref_cor(:)      ! refracted to unrefracted path
+                                            ! length ratios.
+
+    logical, intent(in) :: Deriv_flags(:)   ! Indicates which magnetic
+    ! derivatives to do
+    INTEGER, intent(in) :: ptg_i            ! debugging purposes
+
+! Outputs
+
+    complex(rp), intent(out) :: D_Deltau_Pol_DH(:,:,:,:) ! 2 x 2 x path x sve.
+                                            ! derivative of delta Tau wrt
+                                            ! temperature state vector
+                                            ! element. (K)
+
+  ! Local variables
+    integer :: A                     ! Index for GL points
+    complex(rp), pointer :: Alpha_Path_c(:,:) ! -1:1 x path on coarse grid
+    complex(rp):: D_Alpha_DH_eta(-1:1,p_stop) ! Singularity * Del_S
+    complex(rp), pointer :: dAlpha_dH_polarized_path_c(:,:)
+    complex(rp) :: D_Incoptdepth_dH(2,2,p_stop)
+    logical :: Do_Calc(1:p_stop) ! do_calc_t_c .or. ( do_gl .and.
+                                     ! any of the corresponding do_calc_t_f ).
+    logical :: Do_Calc_Col(eta_zxp%nRows)  ! Where Eta_ZXP /= 0
+    logical :: Do_Calc_Col_f ( size(gl_inds) )
+    real(rp), target :: Eta_ZXP_Col(eta_zxp%nRows) ! One column of Eta_ZXP
+    real(rp), pointer :: Eta_ZXP_Col_C(:)
+    real(rp) :: F(ng)                ! Factor in GL that doesn't depend on
+                                     ! sigma +/- or pi.
+    real(rp) :: Fa, Fb               ! Hydrostatic integrand at ends of
+                                     ! path segment
+    integer :: GA                    ! GL_inds(a)
+    integer :: I_stop                ! Stop point, which may be before N_Path
+    integer :: L
+    integer :: N_Path                ! Total coarse path length.
+    logical :: NeedFA                ! Need FA in hydrostatic calculation
+    integer :: P_i                   ! Index on the coarse path
+!   integer :: P_Stop_f              ! P_Stop on fine path
+    real(rp) :: S_Del_S              ! Sum of Del_S
+    complex(rp) :: Singularity(-1:1,p_stop) ! n/T * Alpha * Eta
+                                     ! on the coarse path
+    integer :: SV_i                  ! Index of state vector element
+
+    i_stop = p_stop
+    n_path = size(del_zeta)
+    alpha_path_c(-1:,1:) => alpha_path ( :, 1 :: ngp1 )
+    dAlpha_dH_polarized_path_c(-1:,1:) => dAlpha_dH_polarized_path ( :, 1 :: ngp1 )
+    do_calc_col = .false.
+    eta_zxp_col = 0
+    eta_zxp_col_c => eta_zxp_col(1::ngp1)
+!   p_stop_f = (p_stop - 1) * ngp1 + 1
+
+    do sv_i = 1, size(eta_zxp%cols,1) ! state vector elements
+      if ( .not. deriv_flags(sv_i)) then
+        d_deltau_pol_dH(:,:,:,sv_i) = 0.0_rp
+        cycle
+      end if
+
+      call eta_zxp%get_col ( sv_i, eta_zxp_col, do_calc_col ) !, last=p_stop_f )
+      do_calc_col_f = do_calc_col(gl_inds) ! only the GL points, no coarse points
+
+      ! do the absorption part
+      call Get_do_calc ( do_calc_col(::ngp1), do_calc_col_f, do_gl, &
+        & do_calc )
+
+      a = 1
+!          IF (ptg_i == 55) THEN
+!           PRINT '(a)','inside get_d_deltau_dh routine'
+!          PRINT *,i_stop, do_gl(1:i_stop)
+!          endif
+
+      
+      do p_i = 1, i_stop
+        if ( do_calc(p_i) ) then
+          singularity(:,p_i) = eta_zxp_col_c(p_i) * &
+            & dAlpha_dH_polarized_path_c(:,p_i)
+          d_alpha_dH_eta(:,p_i) = singularity(:,p_i) * del_s(p_i)
+!          IF (ptg_i == 1) THEN
+!           PRINT '(a)','inside get_d_deltau_dh routine'
+!          PRINT *,sv_i,p_i, i_stop, eta_zxp_col_c(p_i),d_alpha_dH_eta(:,p_i)
+!          PRINT *,dAlpha_dH_polarized_path_c(:,p_i)
+!          PRINT *,d_alpha_dh_eta(:,p_i)
+!          PRINT *,del_s(p_i)
+!          endif
+          
+        else
+          singularity(:,p_i) = 0.0_rp
+          d_alpha_dH_eta(:,p_i) = 0.0_rp
+        end if
+!        ! Do GL if needed here
+        if ( do_gl(p_i) ) then
+          ga = gl_inds(a)
+          if ( do_calc(p_i) ) then
+            f = ds_dz_gw(ga:ga+ng-1)
+            do l = -1, 1
+              d_alpha_dH_eta(l,p_i) = d_alpha_dH_eta(l,p_i) + &
+                 & del_zeta(p_i) * &
+                 & sum( ( dAlpha_dH_polarized_path(l,ga:ga+ng-1)  &
+                 &          * eta_zxp_col(ga:ga+ng-1) - &
+                 &        singularity(l,p_i) ) * f )
+            end do ! l
+          end if
+          a = a + ng
+        end if
+      end do ! p_i
+
+      CALL opacity ( ct, stcp, stsp, d_alpha_dH_eta, d_incoptdepth_dH )
+
+!      IF (ptg_i == 1) THEN
+!      do p_i = 1, i_stop
+!         PRINT '(a)','inside get_d_deltau_dh routine'
+!         PRINT *,p_i,sv_i,eta_zxp_col_c(p_i)
+!         PRINT *,d_incoptdepth_dh(:,:,p_i)
+!      enddo
+!      endif
+      
+
+      DO p_i = 1, i_stop             ! along the path
+        if ( any( d_alpha_dH_eta(:,p_i) /= 0.0_rp ) ) then
+          call dExdT ( incoptdepth(:,:,p_i), -d_incoptdepth_dH(:,:,p_i), &
+               & d_deltau_pol_dH(:,:,p_i,sv_i) ) ! d exp(incoptdepth) / dH
+         ELSE
+          d_deltau_pol_dH(:,:,p_i,sv_i) = 0.0_rp
+        end if
+     END DO ! p_i
+     
+!      IF (ptg_i == 1) THEN
+!      do p_i = 1, i_stop
+!         PRINT '(a)','inside get_d_deltau_dh routine'
+!         PRINT *,p_i,sv_i,eta_zxp_col_c(p_i)
+!         PRINT *,d_deltau_pol_dH(:,:,p_i,sv_i)
+!      enddo
+!      endif
+
+      call eta_zxp%clear_col ( sv_i, eta_zxp_col, do_calc_col ) !, last=p_stop_f )
+
+    end do ! sv_i
+
+  end subroutine Get_d_Deltau_Pol_dH
+
+  SUBROUTINE Get_d_Deltau_Pol_dTheta (ST, CT, SP, CP, STCP, STSP, &
+                & Alpha_Path, &
+                & Eta_zxp, P_Stop, Del_S, GL_Inds, Del_Zeta, Do_GL, &
+                & ds_dh, dh_dz_gw, ds_dz_gw, Incoptdepth, Ref_cor, &
+                & Deriv_Flags, ptg_i, D_Deltau_Pol_DTheta )
+
+    use DExdT_m, only: dExdT
+    use GLNP, only: NG, NGP1
+    use MLSKinds, only: RP, IP
+    use Opacity_m, only: Opacity
+    use Rad_Tran_m, only: Get_do_Calc
+    use Sparse_m, only: Sparse_t
+
+  ! Arguments
+    ! SVE == # of state vector elements
+    REAL(rp), TARGET, INTENT(in) :: ST(:)           ! Sin(Theta), where theta
+    ! is the angle between the line of sight and magnetic field vectors.
+    REAL(rp), pointer :: st_c(:)
+    REAL(rp), TARGET, INTENT(in) :: CT(:)           ! Cos(Theta), where theta
+    REAL(rp), pointer :: ct_c(:)
+      ! is the angle between the line of sight and magnetic field vectors.
+    REAL(rp), TARGET, INTENT(in) :: SP(:)           ! Sin(Phi), where phi
+      ! is like a polarization angle
+    REAL(rp), pointer :: sp_c(:)
+    REAL(rp), TARGET, INTENT(in) :: CP(:)           ! Cos(Phi), where theta
+      ! is like a polarization angle
+    REAL(rp), pointer :: cp_c(:)
+    REAL(rp), TARGET,INTENT(in) :: STCP(:)         ! Sin(Theta) Cos(Phi) where
+      ! theta is as for CT and phi (for this purpose only) is the angle
+      ! between the plane defined by the line of sight and the magnetic
+      ! field vector, and the "instrument field of view plane polarized"
+      ! (IFOVPP) X axis.
+    REAL(rp), pointer :: stcp_c(:)
+    REAL(rp), TARGET,INTENT(in) :: STSP(:)         ! Sin(Theta) Sin(Phi)
+    REAL(rp), pointer :: stsp_c(:)
+    complex(rp), intent(in), target :: Alpha_Path(-1:,:) ! -1:1 x path on 
+                                            ! composite coarse & fine path
+                                            ! composite coarse & fine path path
+    class(sparse_t), intent(in) :: Eta_ZXP  ! Interpolating coefficients from
+                                            ! state vector to path
+    integer, intent(in) :: P_Stop           ! Where to stop on coarse path
+    real(rp), intent(in) :: Del_S(:)        ! unrefracted path length.  This
+                                            ! is for the whole coarse path, not
+                                            ! just the part up to the black-out
+    integer(ip), intent(in) :: GL_Inds(:)   ! indices for reading fine path
+                                            ! elements from sps_path
+    real(rp), intent(in) :: Del_Zeta(:)     ! path -log(P) differences on the
+                                            ! main grid.  This is for the whole
+                                            ! coarse path, not just the part up
+                                            ! to the black-out
+    logical, intent(in) :: Do_gl(:)         ! Indicates where on the coarse path
+                                            ! to do gl integrations.
+    real(rp), intent(in) :: ds_dh(:)        ! path length wrt height derivative
+                                            ! on entire grid.  Only the
+                                            ! gl_inds part is used.
+    real(rp), intent(in) :: dh_dz_gw(:)     ! path height wrt zeta derivative * gw.
+                                            ! on entire grid.  Only the
+                                            ! gl_inds part is used.
+    real(rp), intent(in) :: ds_dz_gw(:)     ! path length wrt zeta derivative * gw.
+                                            ! on entire grid.  Only the
+                                            ! gl_inds part is used.
+    complex(rp), intent(in) :: Incoptdepth(:,:,:) ! negative of incremental
+                                            ! optical depth.  2 x 2 x path
+    real(rp), intent(in) :: Ref_cor(:)      ! refracted to unrefracted path
+                                            ! length ratios.
+
+    logical, intent(in) :: Deriv_flags(:)   ! Indicates which magnetic
+    ! derivatives to do
+    INTEGER, intent(in) :: ptg_i            ! debugging purposes
+
+! Outputs
+
+    COMPLEX(rp), INTENT(out) :: D_Deltau_Pol_DTheta(:,:,:,:)
+                                            ! 2 x 2 x path x sve.
+                                            ! derivative of delta Tau wrt
+                                            ! theta state vector
+                                            ! element.
+
+  ! Local variables
+    integer :: A                     ! Index for GL points
+    complex(rp), pointer :: Alpha_Path_c(:,:) ! -1:1 x path on coarse grid
+    logical :: Do_Calc(1:p_stop) ! do_calc_t_c .or. ( do_gl .and.
+                                     ! any of the corresponding do_calc_t_f ).
+    logical :: Do_Calc_Col(eta_zxp%nRows)  ! Where Eta_ZXP /= 0
+    logical :: Do_Calc_Col_f ( size(gl_inds) )
+    real(rp), target :: Eta_ZXP_Col(eta_zxp%nRows) ! One column of Eta_ZXP
+    real(rp), pointer :: Eta_ZXP_Col_C(:)
+    real(rp) :: F(ng)                ! Factor in GL that doesn't depend on
+                                     ! sigma +/- or pi.
+    real(rp) :: Fa, Fb               ! Hydrostatic integrand at ends of
+                                     ! path segment
+    integer :: GA                    ! GL_inds(a)
+    integer :: I_stop                ! Stop point, which may be before N_Path
+    integer :: L
+    integer :: N_Path                ! Total coarse path length.
+    logical :: NeedFA                ! Need FA in hydrostatic calculation
+    integer :: P_i                   ! Index on the coarse path
+    real(rp) :: S_Del_S              ! Sum of Del_S
+    COMPLEX(rp) :: Singularity(-2,2,p_stop) ! n/T * Alpha * Eta * rho
+                                     ! on the coarse path
+    COMPLEX(rp):: D_delta_Dtheta_eta(2,2,p_stop) ! Singularity * Del_S
+    COMPLEX(rp) :: del_m, del_p
+    COMPLEX(rp) :: del_m_gl(ng), del_p_gl(ng)
+    integer :: SV_i                  ! Index of state vector element
+
+    i_stop = p_stop
+    n_path = size(del_zeta)
+    alpha_path_c(-1:,1:) => alpha_path ( :, 1 :: ngp1 )
+    do_calc_col = .false.
+    eta_zxp_col = 0
+    eta_zxp_col_c => eta_zxp_col(1::ngp1)
+
+    st_c => st(1::ngp1)
+    ct_c => ct(1::ngp1)
+    sp_c => sp(1::ngp1)
+    cp_c => cp(1::ngp1)
+    stsp_c => stsp(1::ngp1)
+    stcp_c => stcp(1::ngp1)
+
+      
+    do sv_i = 1, size(eta_zxp%cols,1) ! state vector elements
+      if ( .not. deriv_flags(sv_i)) then
+        d_deltau_pol_dtheta(:,:,:,sv_i) = 0.0_rp
+        cycle
+      end if
+
+      call eta_zxp%get_col ( sv_i, eta_zxp_col, do_calc_col ) !, last=p_stop_f )
+      do_calc_col_f = do_calc_col(gl_inds) ! only the GL points, no coarse points
+
+      call Get_do_calc ( do_calc_col(::ngp1), do_calc_col_f, do_gl, &
+        & do_calc )
+
+! replace this with a derivative code
+      !      CALL opacity ( ct, stcp, stsp, d_alpha_dH_eta, d_incoptdepth_dH )
+      a = 1
+      DO p_i = 1, i_stop
+
+!        IF (ptg_i == 55) THEN
+!           PRINT '(a)','inside get_d_deltau_dtheta routine'
+!           PRINT *,ng,ngp1,SIZE(ct),SIZE(st),SIZE(ct_c),SIZE(st_c)
+!           PRINT '(a)','cosine theta coarse'
+!           PRINT *,ct_c(1:i_stop)
+!           PRINT '(a)','sine theta coarse'
+!           PRINT *,st_c(1:i_stop)
+!           PRINT '(a)','cosine phi coarse'
+!           PRINT *,cp_c(1:i_stop)
+!           PRINT '(a)','sine phi coarse'
+!           PRINT *,sp_c(1:i_stop)
+!         ENDIF
+!         
+!         IF ( do_calc(p_i) ) THEN
+!            del_m = st_c(p_i) * (alpha_path_c(-1,p_i)  - alpha_path_c(+1,p_i))
+!            del_p = alpha_path_c(0,p_i) - alpha_path_c(-1,p_i) &
+!                 & - alpha_path_c(+1,p_i)
+!            singularity(1,1,p_i) = 2.0_rp * del_p * eta_zxp_col_c(p_i) &
+!                 & * stsp_c(p_i) * ct_c(p_i) * sp_c(p_i)
+!            singularity(2,1,p_i) = (2.0_rp*stsp_c(p_i)*ct_c(p_i)*cp_c(p_i) &
+!                 & * del_p + CMPLX(AIMAG(del_m),-REAL(del_m))) &
+!                 & * eta_zxp_col_c(p_i)
+!            singularity(1,2,p_i) = (2.0_rp*stsp_c(p_i)*ct_c(p_i)*cp_c(p_i) &
+!                 & * del_p + CMPLX(-AIMAG(del_m),REAL(del_m))) &
+!                 & * eta_zxp_col_c(p_i)
+!            singularity(2,2,p_i) = 2.0_rp * del_p * eta_zxp_col_c(p_i) &
+!                 & * stcp_c(p_i) * ct_c(p_i) * cp_c(p_i)
+!            d_delta_dtheta_eta(1,1,p_i) = singularity(1,1,p_i) * del_s(p_i)
+!            d_delta_dtheta_eta(2,1,p_i) = singularity(2,1,p_i) * del_s(p_i)
+!            d_delta_dtheta_eta(1,2,p_i) = singularity(1,2,p_i) * del_s(p_i)
+!            d_delta_dtheta_eta(2,2,p_i) = singularity(2,2,p_i) * del_s(p_i)
+!          
+!        else
+!          singularity(:,:,p_i) = 0.0_rp
+!          d_delta_dtheta_eta(:,:,p_i) = 0.0_rp
+!        end if
+!
+!!        ! Do GL if needed here
+!        if ( do_gl(p_i) ) then
+!          ga = gl_inds(a)
+!          if ( do_calc(p_i) ) then
+!             f = ds_dz_gw(ga:ga+ng-1)
+!             del_m_gl = st(ga:ga+ng-1) * (alpha_path(-1,ga:ga+ng-1)  &
+!                 & - alpha_path(+1,ga:ga+ng-1))
+!             del_p_gl = alpha_path(0,ga:ga+ng-1) - alpha_path(-1,ga:ga+ng-1) &
+!                 & - alpha_path(+1,ga:ga+ng-1)
+!             d_delta_dtheta_eta(1,1,p_i) = d_delta_dtheta_eta(1,1,p_i) &
+!                  & + del_zeta(p_i) * SUM((2.0_rp * eta_zxp_col(ga:ga+ng-1) &
+!                  & * del_p_gl * stsp(ga:ga+ng-1) * ct(ga:ga+ng-1) &
+!                  & * sp(ga:ga+ng-1) - singularity(1,1,p_i)) * f)
+!             d_delta_dtheta_eta(2,1,p_i) = d_delta_dtheta_eta(2,1,p_i) &
+!                  & + del_zeta(p_i) * SUM(((eta_zxp_col(ga:ga+ng-1) &
+!                  & * (2.0_rp * stsp(ga:ga+ng-1) * ct(ga:ga+ng-1) &
+!                  & * cp(ga:ga+ng-1) * del_p_gl &
+!                  & + CMPLX(AIMAG(del_m_gl),-REAL(del_m_gl)))) &
+!                  & - singularity(2,1,p_i)) * f)
+!             d_delta_dtheta_eta(1,2,p_i) = d_delta_dtheta_eta(1,2,p_i) &
+!                  & + del_zeta(p_i) * SUM(((eta_zxp_col(ga:ga+ng-1) &
+!                  & * (2.0_rp * stsp(ga:ga+ng-1) * ct(ga:ga+ng-1) &
+!                  & * cp(ga:ga+ng-1) * del_p_gl &
+!                  & + CMPLX(-AIMAG(del_m_gl),REAL(del_m_gl)))) &
+!                  & - singularity(1,2,p_i)) * f)
+!             d_delta_dtheta_eta(2,2,p_i) = d_delta_dtheta_eta(2,2,p_i) &
+!                  & + del_zeta(p_i) * SUM((2.0_rp * eta_zxp_col(ga:ga+ng-1) &
+!                  & * del_p_gl * stcp(ga:ga+ng-1) * ct(ga:ga+ng-1) &
+!                  & * cp(ga:ga+ng-1) - singularity(2,2,p_i)) * f)
+!          end if
+!          a = a + ng
+!        end if
+!      end do ! p_i
+
+        d_delta_dtheta_eta(:,:,p_i) = 0.0_rp
+
+!        ! Do GL if needed here
+        if ( do_gl(p_i) ) then
+          ga = gl_inds(a)
+          if ( do_calc(p_i) ) then
+             f = ds_dz_gw(ga:ga+ng-1)
+             del_m_gl = st(ga:ga+ng-1) * (alpha_path(-1,ga:ga+ng-1)  &
+                 & - alpha_path(+1,ga:ga+ng-1))
+             del_p_gl = alpha_path(0,ga:ga+ng-1) - alpha_path(-1,ga:ga+ng-1) &
+                 & - alpha_path(+1,ga:ga+ng-1)
+             d_delta_dtheta_eta(1,1,p_i) =  &
+                  &  del_zeta(p_i) * SUM((2.0_rp * eta_zxp_col(ga:ga+ng-1) &
+                  & * del_p_gl * stsp(ga:ga+ng-1) * ct(ga:ga+ng-1) &
+                  & * sp(ga:ga+ng-1)) * f)
+             d_delta_dtheta_eta(2,1,p_i) =  &
+                  &  del_zeta(p_i) * SUM(((eta_zxp_col(ga:ga+ng-1) &
+                  & * (2.0_rp * stsp(ga:ga+ng-1) * ct(ga:ga+ng-1) &
+                  & * cp(ga:ga+ng-1) * del_p_gl &
+                  & + CMPLX(AIMAG(del_m_gl),-REAL(del_m_gl))))) * f)
+             d_delta_dtheta_eta(1,2,p_i) =  &
+                  &  del_zeta(p_i) * SUM(((eta_zxp_col(ga:ga+ng-1) &
+                  & * (2.0_rp * stsp(ga:ga+ng-1) * ct(ga:ga+ng-1) &
+                  & * cp(ga:ga+ng-1) * del_p_gl &
+                  & + CMPLX(-AIMAG(del_m_gl),REAL(del_m_gl))))) * f)
+             d_delta_dtheta_eta(2,2,p_i) =  &
+                  &   del_zeta(p_i) * SUM((2.0_rp * eta_zxp_col(ga:ga+ng-1) &
+                  & * del_p_gl * stcp(ga:ga+ng-1) * ct(ga:ga+ng-1) &
+                  & * cp(ga:ga+ng-1)) * f)
+          end if
+          a = a + ng
+        end if
+      end do ! p_i
+
+
+      
+
+      DO p_i = 1, i_stop             ! along the path
+        IF ( ANY( d_delta_dtheta_eta(:,:,p_i) /= 0.0_rp ) ) THEN
+          call dExdT ( incoptdepth(:,:,p_i), -d_delta_dtheta_eta(:,:,p_i), &
+               & d_deltau_pol_dtheta(:,:,p_i,sv_i) )
+! d exp(incoptdepth) / dtheta
+         ELSE
+          d_deltau_pol_dtheta(:,:,p_i,sv_i) = 0.0_rp
+        end if
+     END DO ! p_i
+     
+
+      call eta_zxp%clear_col ( sv_i, eta_zxp_col, do_calc_col ) !, last=p_stop_f )
+
+    end do ! sv_i
+
+  end subroutine Get_d_Deltau_Pol_dTheta  
+
+    SUBROUTINE Get_d_Deltau_Pol_dPhi (STCP, STSP, Alpha_Path, &
+                & Eta_zxp, P_Stop, Del_S, GL_Inds, Del_Zeta, Do_GL, &
+                & ds_dh, dh_dz_gw, ds_dz_gw, Incoptdepth, Ref_cor, &
+                & Deriv_Flags, ptg_i, D_Deltau_Pol_DPhi )
+
+    use DExdT_m, only: dExdT
+    use GLNP, only: NG, NGP1
+    use MLSKinds, only: RP, IP
+    use Opacity_m, only: Opacity
+    use Rad_Tran_m, only: Get_do_Calc
+    use Sparse_m, only: Sparse_t
+
+  ! Arguments
+    ! SVE == # of state vector elements
+    REAL(rp), TARGET,INTENT(in) :: STCP(:)         ! Sin(Theta) Cos(Phi) where
+      ! theta is as for CT and phi (for this purpose only) is the angle
+      ! between the plane defined by the line of sight and the magnetic
+      ! field vector, and the "instrument field of view plane polarized"
+      ! (IFOVPP) X axis.
+    REAL(rp), pointer :: stcp_c(:)
+    REAL(rp), TARGET,INTENT(in) :: STSP(:)         ! Sin(Theta) Sin(Phi)
+    REAL(rp), pointer :: stsp_c(:)
+    complex(rp), intent(in), target :: Alpha_Path(-1:,:) ! -1:1 x path on 
+                                            ! composite coarse & fine path
+                                            ! composite coarse & fine path path
+    class(sparse_t), intent(in) :: Eta_ZXP  ! Interpolating coefficients from
+                                            ! state vector to path
+    integer, intent(in) :: P_Stop           ! Where to stop on coarse path
+    real(rp), intent(in) :: Del_S(:)        ! unrefracted path length.  This
+                                            ! is for the whole coarse path, not
+                                            ! just the part up to the black-out
+    integer(ip), intent(in) :: GL_Inds(:)   ! indices for reading fine path
+                                            ! elements from sps_path
+    real(rp), intent(in) :: Del_Zeta(:)     ! path -log(P) differences on the
+                                            ! main grid.  This is for the whole
+                                            ! coarse path, not just the part up
+                                            ! to the black-out
+    logical, intent(in) :: Do_gl(:)         ! Indicates where on the coarse path
+                                            ! to do gl integrations.
+    real(rp), intent(in) :: ds_dh(:)        ! path length wrt height derivative
+                                            ! on entire grid.  Only the
+                                            ! gl_inds part is used.
+    real(rp), intent(in) :: dh_dz_gw(:)     ! path height wrt zeta derivative * gw.
+                                            ! on entire grid.  Only the
+                                            ! gl_inds part is used.
+    real(rp), intent(in) :: ds_dz_gw(:)     ! path length wrt zeta derivative * gw.
+                                            ! on entire grid.  Only the
+                                            ! gl_inds part is used.
+    complex(rp), intent(in) :: Incoptdepth(:,:,:) ! negative of incremental
+                                            ! optical depth.  2 x 2 x path
+    real(rp), intent(in) :: Ref_cor(:)      ! refracted to unrefracted path
+                                            ! length ratios.
+
+    logical, intent(in) :: Deriv_flags(:)   ! Indicates which magnetic
+    ! derivatives to do
+    INTEGER, intent(in) :: ptg_i            ! debugging purposes
+
+! Outputs
+
+    COMPLEX(rp), INTENT(out) :: D_Deltau_Pol_DPhi(:,:,:,:)
+                                            ! 2 x 2 x path x sve.
+                                            ! derivative of delta Tau wrt
+                                            ! phi state vector
+                                            ! element.
+
+  ! Local variables
+    integer :: A                     ! Index for GL points
+    complex(rp), pointer :: Alpha_Path_c(:,:) ! -1:1 x path on coarse grid
+    logical :: Do_Calc(1:p_stop) ! do_calc_t_c .or. ( do_gl .and.
+                                     ! any of the corresponding do_calc_t_f ).
+    logical :: Do_Calc_Col(eta_zxp%nRows)  ! Where Eta_ZXP /= 0
+    logical :: Do_Calc_Col_f ( size(gl_inds) )
+    real(rp), target :: Eta_ZXP_Col(eta_zxp%nRows) ! One column of Eta_ZXP
+    real(rp), pointer :: Eta_ZXP_Col_C(:)
+    real(rp) :: F(ng)                ! Factor in GL that doesn't depend on
+                                     ! sigma +/- or pi.
+    real(rp) :: Fa, Fb               ! Hydrostatic integrand at ends of
+                                     ! path segment
+    integer :: GA                    ! GL_inds(a)
+    integer :: I_stop                ! Stop point, which may be before N_Path
+    integer :: L
+    integer :: N_Path                ! Total coarse path length.
+    logical :: NeedFA                ! Need FA in hydrostatic calculation
+    integer :: P_i                   ! Index on the coarse path
+    real(rp) :: S_Del_S              ! Sum of Del_S
+    COMPLEX(rp) :: Singularity(-2,2,p_stop) ! n/T * Alpha * Eta * rho
+                                     ! on the coarse path
+    COMPLEX(rp):: D_delta_Dphi_eta(2,2,p_stop) ! Singularity * Del_S
+    COMPLEX(rp) :: del_p, del_p_gl(ng)
+    integer :: SV_i                  ! Index of state vector element
+
+    i_stop = p_stop
+    n_path = size(del_zeta)
+    alpha_path_c(-1:,1:) => alpha_path ( :, 1 :: ngp1 )
+    do_calc_col = .false.
+    eta_zxp_col = 0
+    eta_zxp_col_c => eta_zxp_col(1::ngp1)
+
+    stsp_c => stsp(1::ngp1)
+    stcp_c => stcp(1::ngp1)
+
+      
+    do sv_i = 1, size(eta_zxp%cols,1) ! state vector elements
+      if ( .not. deriv_flags(sv_i)) then
+        d_deltau_pol_dphi(:,:,:,sv_i) = 0.0_rp
+        cycle
+      end if
+
+      call eta_zxp%get_col ( sv_i, eta_zxp_col, do_calc_col ) !, last=p_stop_f )
+      do_calc_col_f = do_calc_col(gl_inds) ! only the GL points, no coarse points
+
+      call Get_do_calc ( do_calc_col(::ngp1), do_calc_col_f, do_gl, &
+        & do_calc )
+
+! replace this with a derivative code
+      !      CALL opacity ( ct, stcp, stsp, d_alpha_dH_eta, d_incoptdepth_dH )
+      a = 1
+      DO p_i = 1, i_stop
+
+         
+         IF ( do_calc(p_i) ) THEN
+            del_p = alpha_path_c(0,p_i) - alpha_path_c(-1,p_i) &
+                 & - alpha_path_c(+1,p_i)
+            singularity(1,1,p_i) = 2.0 * del_p * eta_zxp_col_c(p_i) &
+                 * stsp_c(p_i) * stcp_c(p_i)
+            singularity(2,1,p_i) = del_p * eta_zxp_col_c(p_i) &
+                 * (stcp_c(p_i)**2 - stsp_c(p_i)**2)
+            d_delta_dphi_eta(1,1,p_i) = singularity(1,1,p_i) * del_s(p_i)
+            d_delta_dphi_eta(2,1,p_i) = singularity(2,1,p_i) * del_s(p_i)
+            d_delta_dphi_eta(1,2,p_i) = d_delta_dphi_eta(2,1,p_i)
+            d_delta_dphi_eta(2,2,p_i) = -d_delta_dphi_eta(1,1,p_i)
+          
+        else
+          singularity(:,:,p_i) = 0.0_rp
+          d_delta_dphi_eta(:,:,p_i) = 0.0_rp
+        end if
+
+!        ! Do GL if needed here
+        if ( do_gl(p_i) ) then
+          ga = gl_inds(a)
+          if ( do_calc(p_i) ) then
+             f = ds_dz_gw(ga:ga+ng-1)
+             del_p_gl = alpha_path(0,ga:ga+ng-1) - alpha_path(-1,ga:ga+ng-1) &
+                 & - alpha_path(+1,ga:ga+ng-1)
+             d_delta_dphi_eta(1,1,p_i) = d_delta_dphi_eta(1,1,p_i) &
+                  & + del_zeta(p_i) * SUM((2.0_rp * eta_zxp_col(ga:ga+ng-1) &
+                  & * del_p_gl * stsp(ga:ga+ng-1) * stcp(ga:ga+ng-1) &
+                  & - singularity(1,1,p_i)) * f)
+             d_delta_dphi_eta(2,1,p_i) = d_delta_dphi_eta(2,1,p_i) &
+                  & + del_zeta(p_i) * SUM(((eta_zxp_col(ga:ga+ng-1) &
+                  & * (stcp(ga:ga+ng-1)**2 - stsp(ga:ga+ng-1)**2) * del_p_gl) &
+                  & - singularity(2,1,p_i)) * f)
+             d_delta_dphi_eta(1,2,p_i) = d_delta_dphi_eta(2,1,p_i)
+             d_delta_dphi_eta(2,2,p_i) = -d_delta_dphi_eta(1,1,p_i)
+          end if
+          a = a + ng
+        end if
+      end do ! p_i
+
+
+      DO p_i = 1, i_stop             ! along the path
+        IF ( ANY( d_delta_dphi_eta(:,:,p_i) /= 0.0_rp ) ) THEN
+          call dExdT ( incoptdepth(:,:,p_i), -d_delta_dphi_eta(:,:,p_i), &
+               & d_deltau_pol_dphi(:,:,p_i,sv_i) )
+! d exp(incoptdepth) / dphi
+         ELSE
+          d_deltau_pol_dphi(:,:,p_i,sv_i) = 0.0_rp
+        end if
+     END DO ! p_i
+     
+
+      call eta_zxp%clear_col ( sv_i, eta_zxp_col, do_calc_col ) !, last=p_stop_f )
+
+    end do ! sv_i
+
+  end subroutine Get_d_Deltau_Pol_dPhi  
+
 !-----------------------------------------------------------------------
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
-       "$Id$"
+       "$Id: Get_D_Deltau_Pol_M.f90,v 2.49 2023/07/06 18:36:42 pwagner Exp $"
   character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
     print *, Id ! .mod files sometimes change if PRINT is added
@@ -658,7 +1289,7 @@ contains
 
 end module Get_d_Deltau_Pol_M
 
-! $Log$
+! $Log: Get_D_Deltau_Pol_M.f90,v $
 ! Revision 2.49  2023/07/06 18:36:42  pwagner
 ! correctedd off-by-one errors; limit amount of debug printing
 !

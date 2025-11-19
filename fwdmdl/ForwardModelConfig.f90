@@ -183,7 +183,10 @@ module ForwardModelConfig
     logical :: ForceFoldedOutput      ! Output to folded sideband even if signal is other (linear only)
     logical :: ForceSidebandFraction  ! If set mult. by SBfrac even if single sideband
     logical :: GenerateTScat          ! Generate TScat tables
-    logical :: GlobalConfig           ! If set is shared between all chunks
+    LOGICAL :: GlobalConfig           ! If set is shared between all chunks
+    LOGICAL :: hmag_der               ! magnetic field magnitude derivative
+    LOGICAL :: htheta_der             ! magnetic field theta angle derivative
+    logical :: hphi_der               ! magnetic field phi angle derivative
     logical :: IgnoreHessian          ! Don't do 2nd-order Taylor series
                                       ! in quasi-linear model even if L2PC has
                                       ! a Hessian
@@ -244,7 +247,7 @@ module ForwardModelConfig
 
   !------------- RCS Ident Info (more below in not_used_here) ----------------
   character (len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
+    & "$RCSfile: ForwardModelConfig.f90,v $"
   private :: not_used_here 
   !---------------------------------------------------------------------------
 
@@ -845,9 +848,11 @@ contains
       & config%anyPFA, config%atmos_der, config%atmos_second_der, config%default_spectroscopy, &
       & config%differentialScan, config%do_1d, config%do_baseline, &
       & config%do_conv, config%do_freq_avg, config%forceFoldedOutput, &
-      & config%forceSidebandFraction, config%generateTScat, config%globalConfig, &
-      & config%ignoreHessian, config%incl_cld, config%isRadianceModel, &
-      & config%lockBins, config%no_magnetic_field, config%polarized, &
+      & config%forceSidebandFraction, config%generateTScat, &
+      & config%globalConfig, config%hmag_der, config%htheta_der, &
+      & config%hphi_der, config%ignoreHessian, config%incl_cld, &
+      & config%isRadianceModel, config%lockBins,  &
+      & config%no_magnetic_field, config%polarized, &
       & config%refract, config%scanAverage, config%skipOverlaps, config%spect_Der, &
       & config%switchingMirror, config%temp_Der, config%transformMIFextinction, &
       & config%useTScat /), &
@@ -985,6 +990,9 @@ contains
     config%forceSidebandFraction  = ls(i) ; i = i + 1
     config%globalConfig           = ls(i) ; i = i + 1
     config%generateTScat          = ls(i) ; i = i + 1
+    config%hmag_der               = ls(i) ; i = i + 1
+    config%htheta_der             = ls(i) ; i = i + 1
+    config%hphi_der               = ls(i) ; i = i + 1
     config%ignoreHessian          = ls(i) ; i = i + 1
     config%incl_cld               = ls(i) ; i = i + 1
     config%isRadianceModel        = ls(i) ; i = i + 1
@@ -1398,8 +1406,11 @@ contains
     call output ( config%forceFoldedOutput, before='  ForceFoldedOutput: ', advance='yes' )
     call output ( config%forceSidebandFraction, before='  ForceSidebandFraction: ', advance='yes' )
     call output ( config%globalConfig, before='  GlobalConfig: ', advance='yes' )
+    CALL output ( config%hmag_der, before='  Hmag_der: ', advance='yes')
+    CALL output ( config%htheta_der, before='  Htheta_der: ', advance='yes')
+    CALL output ( config%hphi_der, before='  Hphi_der: ', advance='yes')
     call output ( config%incl_cld, before='  Incl_Cld: ', advance='yes' )
-    call output ( config%lockBins, before='  LockBins: ', advance='yes' )
+    CALL output ( config%lockBins, before='  LockBins: ', advance='yes' )
     call output ( config%no_magnetic_field, before='  No_Magnetic_Field: ', advance='yes' )
     call output ( config%polarized, before='  Polarized: ', advance='yes' )
     call output ( config%refract, before='  Refract: ', advance='yes' )
@@ -1569,7 +1580,7 @@ contains
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
-       "$Id$"
+       "$Id: ForwardModelConfig.f90,v 2.145 2019/10/07 20:04:12 vsnyder Exp $"
   character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
     print *, Id ! .mod files sometimes change if PRINT is added
@@ -1578,7 +1589,13 @@ contains
 
 end module ForwardModelConfig
 
-! $Log$
+! $Log: ForwardModelConfig.f90,v $
+! Revision 2.146  2024/08/15 15:50:02  wgread
+! Add hmag_der, htheta_der, hphi_der
+!
+! Revision 2.145  2019/10/07 20:04:12  vsnyder
+! Add trapezoid field for quadrature in FullForwardModel
+!
 ! Revision 2.144  2019/04/24 19:17:24  vsnyder
 ! Add MIFTangent field to forwardModel
 !

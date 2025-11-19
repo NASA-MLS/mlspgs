@@ -37,7 +37,7 @@ module Convolve_All_m
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
+       "$RCSfile: Convolve_All_m.f90,v $"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -209,6 +209,7 @@ contains
     end do
 
     sv_i = 0
+
     do jf = grids_tmp%windowStart(1), grids_tmp%windowFinish(1)
 
       if ( allocated(f_and_v(1)%vertices) ) then
@@ -520,7 +521,7 @@ contains
 
     ! Outputs
     type (Matrix_t), intent(inout), target :: Jacobian
-    logical, intent(inout) :: rowFlags(:) ! Flag to calling code
+    LOGICAL, INTENT(inout) :: rowFlags(:) ! Flag to calling code
 
     ! Optional output
     type (Matrix_t), intent(inout), optional, target :: ExtraJacobian
@@ -567,7 +568,7 @@ contains
       end if
 
       if ( qtys(sps_i)%foundInFirst ) then
-        myJacobian => jacobian
+         myJacobian => jacobian
       else
         if ( .not. present(extraJacobian) ) cycle
         myJacobian => extraJacobian
@@ -607,7 +608,7 @@ contains
 
             ! load derivatives for this (zeta & phi) if needed:
 
-            sv_f = sv_f + 1
+             sv_f = sv_f + 1
             if ( Grids_f%deriv_flags(sv_f) ) &
               & call loadMatrixValue ( drad_df_out(:,sv_f), &
                 & myJacobian%block(row,cols(jf))%values(channel::noChans,k), sbRatio, &
@@ -1436,7 +1437,7 @@ contains
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
-       "$Id$"
+       "$Id: Convolve_All_m.f90,v 2.27 2018/05/14 23:43:16 vsnyder Exp $"
   character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
     print *, Id ! .mod files sometimes change if PRINT is added
@@ -1445,7 +1446,7 @@ contains
 
 end module Convolve_All_m
 
-! $Log$
+! $Log: Convolve_All_m.f90,v $
 ! Revision 2.27  2018/05/14 23:43:16  vsnyder
 ! Move Hessians stuff to Hessians_m
 !

@@ -17,11 +17,11 @@ module Opacity_M
 
   implicit none
   private
-  public :: Opacity
+  PUBLIC :: Opacity, Test_Opacity
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
+       "$RCSfile: opacity_m.f90,v $"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -149,10 +149,70 @@ contains
 
   end subroutine Opacity
 
+  ! This simply a test to see if I understand the math in this routine
+  
+    subroutine Test_Opacity ( CT, STCP, STSP, Alpha_path, Del_opcty )
+
+    use MLSCommon, only: Rk => Rp
+
+! Arguments
+
+! Theta is the angle between the line of sight and magnetic field vectors.
+
+! Phi is the angle between the plane defined by the line of sight and the
+! magnetic field vector, and the "instrument field of view plane polarized"
+! (IFOVPP) X axis.
+
+    real(rk), intent(in) ::    CT(:)     ! Cos(Theta)
+    real(rk), intent(in) ::    STCP(:)   ! Sin(Theta) Cos(Phi)
+    real(rk), intent(in) ::    STSP(:)   ! Sin(Theta) Sin(Phi)
+
+    ! Alpha_path(-1,:) is Alpha_sigma_m, Alpha_path(0,:) is Alpha_pi,
+    ! Alpha_path(+1,:) is Alpha_sigma_p
+    complex(rk), intent(in) ::  Alpha_path(-1:,:)
+
+    complex(rk), intent(out) :: Del_opcty(:,:,:) ! (2,2,:)
+
+! Local variables
+
+    integer :: h_i
+    complex(rk) :: del_m, del_p
+
+! cover all heights
+
+    do h_i = 1, size(alpha_path,2)
+
+      IF ( ALL(alpha_path(:,h_i) == (0.0_rk,0.0_rk) ) ) THEN
+        ! This is the most common case for derivatives.
+        del_opcty(:,:,h_i) = 0
+        cycle
+     END IF
+
+     del_p = alpha_path(-1,h_i) + alpha_path(+1,h_i)
+     del_m = ct(h_i) * (alpha_path(-1,h_i) - alpha_path(+1,h_i))
+     
+     del_opcty(1,1,h_i) = del_p + stsp(h_i)**2 * (alpha_path(0,h_i) - del_p)
+
+     del_opcty(1,2,h_i) = stcp(h_i)*stsp(h_i) * alpha_path(0,h_i) &
+                      & - del_p * stsp(h_i)*stcp(h_i)
+
+     del_opcty(2,1,h_i) = del_opcty(1,2,h_i) - CMPLX(AIMAG(del_m), &
+                          -REAL(del_m), kind = rk)
+          
+     del_opcty(1,2,h_i) = del_opcty(1,2,h_i) - CMPLX(-AIMAG(del_m), &
+                          & REAL(del_m),kind = rk)
+     
+     del_opcty(2,2,h_i) = del_p + stcp(h_i)**2 * (alpha_path(0,h_i) - del_p)
+          
+
+    end do
+
+  end subroutine Test_Opacity
+
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
-       "$Id$"
+       "$Id: opacity_m.f90,v 2.6 2017/08/09 20:20:12 vsnyder Exp $"
   character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
     print *, Id ! .mod files sometimes change if PRINT is added
@@ -161,7 +221,7 @@ contains
 
 end module Opacity_M
 
-! $Log$
+! $Log: opacity_m.f90,v $
 ! Revision 2.6  2017/08/09 20:20:12  vsnyder
 ! Set del_opcty to zero where alpha_path is zero because testing is cheaper
 ! than evaluating everything to get zero.  This is the usual case for

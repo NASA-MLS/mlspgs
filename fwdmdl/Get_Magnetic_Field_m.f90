@@ -21,7 +21,7 @@ module Get_Magnetic_Field_m
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
+       "$RCSfile: Get_Magnetic_Field_m.f90,v $"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -84,12 +84,17 @@ contains
       call load_one_item_grid ( grids_mag, magField, fmStat%maf, phitan, &
         & fwdModelConf, .false., across=abs(azimuth) > azimuth_tol )
       print_mag = switchDetail(switches, 'MagGrid')
-      if ( print_mag > -1 ) then
+      IF ( print_mag > -1 ) THEN
         if ( switchDetail(switches, 'Azimuth') < 0 ) & ! viewing_azimuth didn't print it
           & call output ( rad2deg*azimuth, before='Azimuth ', &
             & after=' degrees', advance='yes' )
         call dump ( grids_mag, 'Grids_Mag', print_mag )
-      end if
+     END IF
+     IF (fwdmodelconf%hmag_der .OR. fwdmodelconf%htheta_der .OR. &
+          & fwdmodelconf%hphi_der ) then
+           grids_mag%qtystuff%foundinfirst = .TRUE.
+           grids_mag%deriv_flags(:) = .TRUE.
+     ENDIF
     else
       call emptyGrids_t ( grids_mag ) ! Allocate components with zero size
     end if
@@ -102,7 +107,7 @@ contains
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
-       "$Id$"
+       "$Id: Get_Magnetic_Field_m.f90,v 2.1 2016/09/13 00:30:16 vsnyder Exp $"
   character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
     print *, Id ! .mod files sometimes change if PRINT is added
@@ -111,7 +116,7 @@ contains
 
 end module Get_Magnetic_Field_m
 
-! $Log$
+! $Log: Get_Magnetic_Field_m.f90,v $
 ! Revision 2.1  2016/09/13 00:30:16  vsnyder
 ! Initial commit
 !

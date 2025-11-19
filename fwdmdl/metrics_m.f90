@@ -34,7 +34,7 @@ module Metrics_m
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
+       "$RCSfile: metrics_m.f90,v $"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -112,14 +112,17 @@ contains
       ! have it, and adjust r_eq and h_tan relative to this, and adjust
       ! h_ref accordingly.
       h_surf = eta_t%row_dot_vec ( 1, surf_height )
+!      PRINT *,'surface height is present ',h_surf       
     else
       ! If we don't have the actual surface height, we set the surface
       ! reference at the input z_ref and adjust r_eq and h_tan relative
       ! to this, and adjust h_ref accordingly.
       h_surf = eta_t%row_dot_vec ( 1, h_ref(1,:) )
+!      PRINT *,'surface height not present ',h_surf       
     end if
 
     ! compute the tangent height above H_surf.
+
     if ( present(tan_press) .and. present(surf_temp) .and. &
       &  .not. present(surf_height) ) then
       ! Earth intersecting ray. Compute GP height (km) of tangent pressure
@@ -127,8 +130,10 @@ contains
       ! present(tan_press) requires present(surf_temp).  We don't need to
       ! subtract h_surf here because this gives km from the z_ref surface.
       h_tan = eta_t%row_dot_vec ( 1, surf_temp ) * (tan_press-z_ref)/14.8
+!      PRINT *,'tan_press and surf_temp  present ',tan_press,h_tan,z_ref      
     else
       h_tan = eta_t%row_dot_vec ( 1, h_ref(tan_ind_f,:) ) - h_surf
+!      PRINT *,'compute htan from h_surf and h_ref ',h_tan,h_ref(tan_ind_f,:)
     end if
 
   end subroutine Tangent_Metrics
@@ -1184,7 +1189,7 @@ path: do i = i1, i2
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
-       "$Id$"
+       "$Id: metrics_m.f90,v 2.92 2022/01/05 00:28:26 pwagner Exp $"
   character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
     print *, Id ! .mod files sometimes change if PRINT is added
@@ -1193,7 +1198,10 @@ path: do i = i1, i2
 
 end module Metrics_m
 
-! $Log$
+! $Log: metrics_m.f90,v $
+! Revision 2.92  2022/01/05 00:28:26  pwagner
+! Prevents crashing when compiled with NAG and run on OL8
+!
 ! Revision 2.91  2018/08/28 22:15:35  vsnyder
 ! Rearrange arguments because Eta_FZP is optional in Comp_Sps_Path_Sparse_No_Frq
 !

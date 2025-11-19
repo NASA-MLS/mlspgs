@@ -17,7 +17,7 @@ module Compute_Z_PSIG_m
 
 !---------------------------- RCS Module Info ------------------------------
   character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
+       "$RCSfile: Compute_Z_PSIG_m.f90,v $"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
@@ -66,9 +66,9 @@ contains
     z_all_size = fwdModelConf%temp%qty%template%nosurfs + 2
     if ( associated(FwdModelConf%integrationGrid) ) &
       & z_all_size = z_all_size + FwdModelConf%integrationGrid%nosurfs
-    if ( associated(FwdModelConf%tangentGrid) .and. .not. &
-      & associated(FwdModelConf%integrationGrid,FwdModelConf%tangentGrid) ) &
-      & z_all_size = z_all_size + FwdModelConf%tangentGrid%nosurfs
+!    if ( associated(FwdModelConf%tangentGrid) .and. .not. &
+!      & associated(FwdModelConf%integrationGrid,FwdModelConf%tangentGrid) ) &
+!      & z_all_size = z_all_size + FwdModelConf%tangentGrid%nosurfs
     do sps_i = 1 , size(qtys)
       z_all_size = z_all_size + qtys(sps_i)%qty%template%nosurfs
     end do
@@ -91,14 +91,14 @@ contains
       z_all_prev = z_all_size
     end if
 
-    if ( associated(FwdModelConf%tangentGrid) .and. .not. &
-      & associated(FwdModelConf%integrationGrid,FwdModelConf%tangentGrid) ) then
+!    if ( associated(FwdModelConf%tangentGrid) .and. .not. &
+!      & associated(FwdModelConf%integrationGrid,FwdModelConf%tangentGrid) ) then
       ! if pointing grid is associated and not the same as the integration
       ! grid concatenate it to the state vector
-      z_all_size = z_all_prev + FwdModelConf%tangentGrid%nosurfs
-      z_all(z_all_prev+1:z_all_size) = FwdModelConf%tangentGrid%surfs(:,1)
-      z_all_prev = z_all_size
-    end if
+!      z_all_size = z_all_prev + FwdModelConf%tangentGrid%nosurfs
+!      z_all(z_all_prev+1:z_all_size) = FwdModelConf%tangentGrid%surfs(:,1)
+!      z_all_prev = z_all_size
+!    end if
 
     do sps_i = 1, size(qtys)
       z_all_size = z_all_size + qtys(sps_i)%qty%template%nosurfs
@@ -114,7 +114,14 @@ contains
 
 ! Now, create the final grid and discard the temporary array:
 
+!    PRINT *,'+++++++++++++++ z_all grid ++++++++++++++++'
+!    PRINT *,z_all
+!    PRINT *,'MIN val ',minval(z_all)
+!    PRINT *,'+++++++++++++++ end z-all +++++++++++++++++'
     call make_z_grid ( z_all, z_psig )
+!    PRINT *,'+++++++++++++++ z_psig grid ++++++++++++++++'
+!    PRINT *,z_psig
+!    PRINT *,'+++++++++++++++ end z-psig +++++++++++++++++'
     call deallocate_test ( z_all, 'z_all', moduleName )
 
     call trace_end ( 'Compute_Z_PSIG', &
@@ -125,7 +132,7 @@ contains
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
-       "$Id$"
+       "$Id: Compute_Z_PSIG_m.f90,v 2.14 2016/09/03 00:30:09 vsnyder Exp $"
   character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
     print *, Id ! .mod files sometimes change if PRINT is added
@@ -134,7 +141,7 @@ contains
 
 end module Compute_Z_PSIG_m
 
-! $Log$
+! $Log: Compute_Z_PSIG_m.f90,v $
 ! Revision 2.14  2016/09/03 00:30:09  vsnyder
 ! Make Z_All allocatable instead of a pointer
 !

@@ -27,7 +27,7 @@ module GET_BETA_PATH_M
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: ModuleName= &
-    &  "$RCSfile$"
+    &  "$RCSfile: get_beta_path_m.f90,v $"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
@@ -398,7 +398,7 @@ contains
 
   ! ------------------------------------  Get_Beta_Path_Polarized  -----
   subroutine Get_Beta_Path_Polarized ( Frq, H, Beta_group, GL_slabs, &
-                                     & Path_inds, Beta_path, dBeta_path_dT )
+       & Path_inds, Beta_path, dBeta_path_dT, dBeta_path_dH, ptg_i)
 
     use Dump_0, only: Dump
     use ForwardModelConfig, only: LBL_T
@@ -417,7 +417,8 @@ contains
     real(rp), intent(in) :: H(:)      ! Magnetic field component in instrument
                                       ! polarization on the path
     type (slabs_struct), dimension(:,:), intent(in) :: GL_slabs
-    integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
+    INTEGER(ip), INTENT(in) :: Path_inds(:) ! indicies for reading gl_slabs
+    INTEGER, intent(in) :: ptg_i ! for debugging only
     type (LBL_T), dimension(:), intent(in) :: Beta_group
 
 ! Outputs
@@ -427,18 +428,20 @@ contains
 !  compute the weighted average over species, saving as many multiplies as
 !  there are species.
 
-    complex(rp), intent(out) :: Beta_path(-1:,:,:) ! path beta for each speciess, km^{-1}
+    complex(rp), intent(out) :: Beta_path(-1:,:,:) ! path beta for each species, km^{-1}
     ! beta_path(-1,:,:) is Sigma_m, beta_path(0,:,:) is Pi,
     ! beta_path(+1,:,:) is Sigma_p
 
-    complex(rp), intent(out) :: dBeta_path_dT(-1:,:,:)
+    COMPLEX(rp), INTENT(out) :: dBeta_path_dT(-1:,:,:)
+    COMPLEX(rp), INTENT(out) :: dBeta_path_dH(-1:,:,:)
 
 ! Local variables..
 
     integer(ip) :: I, IB, J, K, N, N_PATH
     real(rp) :: RATIO ! Isotope ratio, not mixing ratio
     complex(rp) :: Sigma_m, Pi, Sigma_p
-    complex(rp) :: dSigma_m_dT, dPi_dT, dSigma_p_dT
+    COMPLEX(rp) :: dSigma_m_dT, dPi_dT, dSigma_p_dT
+    COMPLEX(rp) :: dSigma_m_dH, dPi_dH, dSigma_p_dH
     character(len=4), save :: clean
     logical, save :: DumpBeta, DumpStop
     logical, save :: First = .true. ! First-time flag
@@ -458,6 +461,7 @@ contains
 
     beta_path = 0.0
     if ( size(dBeta_path_dT) > 0 ) dBeta_path_dT = 0.0
+    if ( size(dBeta_path_dH) > 0 ) dBeta_path_dH = 0.0
 
     do i = 1, size(beta_group)
       do n = 1, size(beta_group(i)%cat_index)
@@ -468,17 +472,43 @@ contains
         do j = 1, n_path
           k = path_inds(j)
 
-          if ( size(dBeta_path_dT) == 0 ) then
-            call o2_abs_cs ( frq, h(k), gl_slabs(k,ib), &
-                           & sigma_p, pi, sigma_m )
+          IF ( SIZE(dBeta_path_dT) == 0 ) THEN
+            IF (SIZE(dBeta_path_dH) == 0) THEN
+              call o2_abs_cs ( frq, h(k), gl_slabs(k,ib), &
+                   & sigma_p, pi, sigma_m )    
+            ELSE
+              call o2_abs_cs ( frq, h(k), gl_slabs(k,ib), &
+                   & sigma_p, pi, sigma_m, dsigma_p_dh, dpi_dh, dsigma_m_dh )
+              dBeta_path_dH(-1,j,i) = dBeta_path_dH(-1,j,i) &
+                   &                + ratio * dSigma_m_dH
+              dBeta_path_dH( 0,j,i) = dBeta_path_dH( 0,j,i) &
+                   &                + ratio * dPi_dH
+              dBeta_path_dH(+1,j,i) = dBeta_path_dH(+1,j,i) &
+                   &                + ratio * dSigma_p_dH
+            endif           
           else
-            call d_o2_abs_cs_dT ( frq, h(k), gl_slabs(k,ib),    &
-                                & sigma_p,     pi,     sigma_m, &
-                                & dSigma_p_dT, dPi_dT, dSigma_m_dT )
+            IF (SIZE(dBeta_path_dH) == 0) THEN
+              call d_o2_abs_cs_dT ( frq, h(k), gl_slabs(k,ib),    &
+                                  & sigma_p,     pi,     sigma_m, &
+                                  & dSigma_p_dT, dPi_dT, dSigma_m_dT )
+            ELSE
+              call d_o2_abs_cs_dT ( frq, h(k), gl_slabs(k,ib),    &
+                                  & sigma_p,     pi,     sigma_m, &
+                                  & dSigma_p_dT, dPi_dT, dSigma_m_dT, &
+                                  & dsigma_p_dh, dpi_dh, dsigma_m_dh )
+              dBeta_path_dH(-1,j,i) = dBeta_path_dH(-1,j,i) &
+                   &                + ratio * dSigma_m_dH
+              dBeta_path_dH( 0,j,i) = dBeta_path_dH( 0,j,i) &
+                   &                + ratio * dPi_dH
+              dBeta_path_dH(+1,j,i) = dBeta_path_dH(+1,j,i) &
+                   &                + ratio * dSigma_p_dH
+!              PRINT *,'inside get beta path polarized ',i,ptg_i
+!              if (i == 3 .and. ptg_i == 1) PRINT *,i,j,k,dsigma_m_dh,dpi_dh,dsigma_p_dh
+            endif
             dBeta_path_dT(-1,j,i) = dBeta_path_dT(-1,j,i) + ratio * dSigma_m_dT
             dBeta_path_dT( 0,j,i) = dBeta_path_dT( 0,j,i) + ratio * dPi_dT
             dBeta_path_dT(+1,j,i) = dBeta_path_dT(+1,j,i) + ratio * dSigma_p_dT
-          end if
+          END IF
           beta_path(-1,j,i) = beta_path(-1,j,i) + ratio * sigma_m
           beta_path( 0,j,i) = beta_path( 0,j,i) + ratio * pi
           beta_path(+1,j,i) = beta_path(+1,j,i) + ratio * sigma_p
@@ -1603,7 +1633,7 @@ contains
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
-       "$Id$"
+       "$Id: get_beta_path_m.f90,v 2.121 2018/01/31 21:26:35 vsnyder Exp $"
   character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
     print *, Id ! .mod files sometimes change if PRINT is added
@@ -1612,7 +1642,10 @@ contains
 
 end module GET_BETA_PATH_M
 
-! $Log$
+! $Log: get_beta_path_m.f90,v $
+! Revision 2.121  2018/01/31 21:26:35  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.120  2014/04/22 00:09:01  vsnyder
 ! Remove unused identifiers
 !

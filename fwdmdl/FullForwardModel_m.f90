@@ -20,7 +20,7 @@ module FullForwardModel_m
 
 !------------------------------ RCS Ident Info -------------------------------
   character (len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
+    & "$RCSfile: FullForwardModel_m.f90,v $"
 !------------------------------------------------------------------------------
 
   ! Private parameters:
@@ -85,7 +85,7 @@ contains
     use HGridsDatabase, only: HGrid_T
     use Interpolate_MIF_to_Tan_Press_m, only: Get_Lines_of_Sight
     use Intrinsic, only: Lit_Indices, L_ECRtoFOV, L_PhiTan, L_PTan, L_ScECR, &
-      & L_TScat, L_VMR, L_Wrong
+      & L_TScat, L_VMR, L_Wrong, L_MagneticField
     use Load_SPS_Data_M, only: DestroyGrids_T, Dump, EmptyGrids_T, Grids_T, &
       & Load_One_Item_Grid, Load_SPS_Data
     use MatrixModule_1, only: Matrix_T
@@ -99,7 +99,8 @@ contains
     use Tangent_Pressures_m, only: Tangent_Pressures
     use Toggles, only: Emit, Switches, Toggle
     use Trace_M, only: Trace_Begin, Trace_End
-    use VectorsModule, only: Vector_T, VectorValue_T
+    USE VectorsModule, ONLY: Vector_T, VectorValue_T, &
+         GetVectorQuantityIndexByType
 
     type(forwardModelConfig_T), intent(inout) :: FwdModelConf
     type(vector_T), intent(in) :: FwdModelIn, FwdModelExtra
@@ -145,6 +146,8 @@ contains
                                 ! (minor frame quantity)
     type (VectorValue_T), pointer :: Temp     ! Temperature component of
                                 ! state vector
+    type (VectorValue_T), pointer :: magneticfield     ! magnetic field component of
+                                ! state vector
 
     character(127) :: ERMSG     ! From allocate
 
@@ -170,7 +173,10 @@ contains
     integer :: Stat             ! From allocate
     integer :: SurfaceTangentIndex  ! Index in tangent grid of earth's
                                     ! surface
-    integer :: Sv_T_len         ! Number of t_phi*t_zeta in the window
+    INTEGER :: Sv_T_len         ! Number of t_phi*t_zeta in the window
+    integer :: No_sv_p_H        ! number of phi basis for magnetic field
+    integer :: N_H_zeta         ! Number of zetas for magnetic field
+    integer :: Sv_H_len         ! Number of t_phi*t_zeta in the window
     integer :: S_A   ! Multiplier for atmos derivative sizes, 0 or 1
     integer :: S_H   ! Multiplier for atmos second derivative sizes, 0 or 1
     integer :: S_I   ! Multiplier for ice/cloud sizes, 0 or 1
@@ -183,13 +189,36 @@ contains
     integer :: S_TD  ! Multiplier for temp dependence deriv sizes, 0 or 1
     integer :: S_TG  ! Multiplier for TScat generation sizes, 0 or 1
     integer :: S_TS  ! Multiplier for using TScat tables, 0 or 1
+    integer :: S_M   ! Multiplier for magnetic field derivatives, 0 or 1
     logical :: UsingQTM         ! Temperature and all species have QTM hGrids
 
     ! Flags for various derivatives
     logical :: Atmos_Der, Atmos_Second_Der, PTan_Der, Spect_Der
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
     ! What severity is not having derivative in "first" state vector?
-    integer, parameter :: DerivativeMissingFromState = MLSMSG_Error
+    INTEGER, PARAMETER :: DerivativeMissingFromState = MLSMSG_Error
+    INTEGER :: compute_magfield_derivatives
+    
+    compute_magfield_derivatives = GetVectorQuantityIndexByType(fwdmodelin, &
+         l_magneticfield, noError = .TRUE.)
+
+    IF (compute_magfield_derivatives /= 0) THEN
+       fwdmodelconf%hmag_der = .TRUE.
+       fwdmodelconf%htheta_der = .TRUE.
+       fwdmodelconf%hphi_der = .TRUE.
+    ELSE
+       fwdmodelconf%hmag_der = .FALSE.
+       fwdmodelconf%htheta_der = .FALSE.
+       fwdmodelconf%hphi_der = .FALSE.
+    ENDIF
+    
+!    PRINT '(a)','=========begin derivative flag settings======'
+!    PRINT *,'atmos der setting ',fwdmodelconf%atmos_der
+!    PRINT *,'temperature der setting ',fwdmodelconf%temp_der
+!    PRINT *,'h-mag der setting ',fwdmodelconf%hmag_der
+!    PRINT *,'h-theta der setting ',fwdmodelconf%htheta_der
+!    PRINT *,'h-phi der setting ',fwdmodelconf%hphi_der
+!    PRINT '(a)','=========end derivative flag settings========'
 
     call trace_begin ( me, 'FullForwardModel, MAF=', index=fmstat%maf, &
       & cond=toggle(emit) ) ! set by -f command-line switch
@@ -204,6 +233,12 @@ contains
 
     ! Get a shorter handle for the temperature quantity
     temp => fwdModelConf%temp%qty
+    
+    magneticfield => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+         & quantityType=l_magneticfield, config=fwdModelConf)
+    n_h_zeta = magneticfield%TEMPLATE%nosurfs
+    no_sv_p_h = magneticfield%TEMPLATE%noinstances
+    sv_h_len = no_sv_p_h * n_h_zeta
 
     no_mol = size(fwdModelConf%beta_group)
     noUsedChannels = size(fwdModelConf%channels)
@@ -227,9 +262,15 @@ contains
     else
       call compute_Z_PSIG ( fwdModelConf, z_psig )
     end if
-    nlvl = size(z_psig)
+    nlvl = SIZE(z_psig)
+    PRINT *,'con fig file ',fwdmodelconf%tangentgrid%surfs
     call tangent_pressures ( fwdModelConf, z_psig, no_tan_hts,   &
                            & surfaceTangentIndex, tan_press )
+!    PRINT *,'====== I got to the tangent pressure bit=====',no_tan_hts
+!    PRINT *,z_psig
+!    PRINT *,tan_press
+!    PRINT *,surfacetangentindex
+!    PRINT *,'============================================='
 
     ! Find the phiTan quantity in the state vector.  The phiTan quantity is
     ! only used to compute the instance window for the temperature quantity.
@@ -258,7 +299,7 @@ contains
 
     ! Compute some sizes
     n_t_zeta = temp%template%noSurfs ! Number of zeta levels for temperature
-
+    n_h_zeta = magneticfield%template%nosurfs
     if ( usingQTM ) then
 
       ! These computations are here instead of in Both_Sidebands_Setup
@@ -371,8 +412,11 @@ contains
       ! configuration into Grids_tmp.  Automatic extents of arrays in
       ! FullForwardModelAuto depend upon components of Grids_Tmp.
 
-      call load_one_item_grid ( grids_tmp, temp, fmStat%maf, phitan, fwdModelConf, &
-        & setDerivFlags=.true. )
+      CALL load_one_item_grid ( grids_tmp, temp, fmStat%maf, phitan, &
+           & fwdModelConf, setDerivFlags=.TRUE. )
+      
+      CALL load_one_item_grid ( grids_mag, magneticfield, fmStat%maf, phitan, &
+        & fwdModelConf, setDerivFlags=.true. )
 
       ! Copy the mixing ratios from the state vector via the configuration into
       ! Grids_f.  Automatic extents of arrays in FullForwardModelAuto depend
@@ -390,9 +434,12 @@ contains
         & ermsg=ermsg )
       no_sv_p_T = grids_tmp%l_p(1)  ! size of temperature's horizontal grid ==
                                     ! windowFinish - windowStart + 1.
+      no_sv_p_H = grids_mag%l_p(1)  ! size of magnetic horizontal grid ==
+                                    ! windowFinish - windowStart + 1.
     end if ! not QTM
 
     sv_t_len = no_sv_p_T * n_t_zeta ! Number of temperature values
+    sv_h_len = no_sv_p_H * n_h_zeta ! Number of magnetic values
 
     spect_der = present ( jacobian ) .and. FwdModelConf%spect_der
     spect_der_center = spect_der .and. size(fwdModelConf%lineCenter) > 0
@@ -460,7 +507,7 @@ contains
     end if
 
     call Get_Magnetic_Field ( fwdModelConf, fwdModelIn, fwdModelExtra, &
-                            & fmStat, phiTan, grids_mag )
+         & fmStat, phiTan, grids_mag )
 
     nullify ( cloudIce )
     if ( FwdModelConf%incl_cld .or. FwdModelConf%useTScat ) then
@@ -516,7 +563,8 @@ contains
     s_t = merge(1,0,fwdModelConf%temp%derivOK)
     s_td = merge(1,0,spect_der_width_TDep)
     s_tg = merge(1,0,FwdModelConf%GenerateTScat)
-    s_ts = merge(1,0,FwdModelConf%useTScat)
+    s_ts = MERGE(1,0,FwdModelConf%useTScat)
+    s_m = MERGE(1,0,FwdModelConf%hmag_der .or. FwdModelConf%htheta_der .or. FwdModelConf%hphi_der)
 
     dump_conf = switchDetail(switches,'fmconf')
     if ( dump_conf > -1 ) call dump( FwdModelConf, details=dump_conf  )
@@ -529,11 +577,13 @@ contains
 !Q                              & QTM_HGrid, &
                               & Q_LOS, QTM_Paths, ScECR_MIF,                   &
                               & F_and_V, F_and_V_MIF, no_mol, noUsedChannels,  &
-                              & no_sv_p_T, n_t_zeta, sv_t_len, nlvl, no_tan_hts,&
+                              & no_sv_p_T, n_t_zeta, sv_t_len, &
+                              & no_sv_p_h, n_h_zeta, sv_h_len, &
+                              & nlvl, no_tan_hts,&
                               & surfaceTangentIndex,                           &
                               & max_c, maxVert, max_f, ptan_der,               &
                               & s_t, s_a, s_h, s_lc, s_lw, s_td, s_p, s_pfa,   &
-                              & s_i, s_tg, s_ts, s_QTM,                        &
+                              & s_i, s_tg, s_ts, s_m, s_QTM,                        &
                               ! Optional:
                               & Jacobian, ExtraJacobian, Hessian )
 
@@ -578,15 +628,17 @@ contains
                              & FwdModelOut, FmStat, z_psig, tan_press,         &
                              & grids_tmp,  grids_f, grids_mag, grids_iwc,      &
                              & grids_n, grids_v, grids_w, ptan,                &
-                             & phitan, temp, &
+                             & phitan, temp,                                   &
 !Q                             & QTM_HGrid, &
                              & Q_LOS, QTM_Paths, ScECR_MIF,                    &
                              & F_and_V, F_and_V_MIF, no_mol, noUsedChannels,   &
-                             & No_sv_p_T, n_t_zeta, sv_t_len, nlvl, no_tan_hts,&
+                             & No_sv_p_T, n_t_zeta, sv_t_len, &
+                             & no_sv_p_h, n_h_zeta, sv_h_len, &
+                             & nlvl, no_tan_hts,&
                              & surfaceTangentIndex,                            &
                              & max_c, maxVert, max_f, ptan_der,                &
                              & s_t, s_a, s_h, s_lc, s_lw, s_td, s_p, s_pfa,    &
-                             & s_i, s_tg, s_ts, s_QTM,                         &
+                             & s_i, s_tg, s_ts, s_m, s_QTM,                         &
                              ! Optional:
                              & Jacobian, ExtraJacobian, Hessian )
 
@@ -691,6 +743,9 @@ contains
     integer, intent(in) :: No_sv_p_T        ! number of phi basis for temperature
     integer, intent(in) :: N_T_zeta         ! Number of zetas for temperature
     integer, intent(in) :: Sv_T_len         ! Number of t_phi*t_zeta in the window
+    integer, intent(in) :: No_sv_p_h        ! number of phi basis for magnetic field
+    integer, intent(in) :: N_h_zeta         ! Number of zetas for magnetic field
+    integer, intent(in) :: Sv_h_len         ! Number of h_phi*h_zeta in the window
     integer, intent(in) :: Nlvl             ! Number of levels in coarse zeta grid
     integer, intent(in) :: No_Tan_Hts       ! Number of tangent heights
     integer, intent(in) :: SurfaceTangentIndex ! Index in tangent grid of
@@ -714,6 +769,7 @@ contains
     integer, intent(in) :: S_TD ! Multiplier for temp dependence deriv sizes, 0 or 1
     integer, intent(in) :: S_TG ! Multiplier for TScat generation sizes, 0 or 1
     integer, intent(in) :: S_TS ! Multiplier for using TScat tables, 0 or 1
+    integer, intent(in) :: S_M  ! Multiplier for magnetic field, 0 or 1
 
     type(matrix_T),  intent(inout), optional :: Jacobian
     type(matrix_T),  intent(inout), optional :: ExtraJacobian ! This is used
@@ -771,7 +827,7 @@ contains
 
     integer :: Nspec              ! No of species for cloud model
 
-    logical :: Any_Der            ! temp_der .or. atmos_der .or. spect_der
+    logical :: Any_Der            ! temp_der .or. atmos_der .or. spect_der .or. magnetic_der
     ! logical :: Clean              ! Used for dumping
     character(len=4) :: Clean     ! Used for dumping
     logical :: Do_More_Points     ! Do intersections of path at zetas < zeta(tan)
@@ -798,6 +854,7 @@ contains
     logical :: UsingQTM
 
     logical :: temp_der, atmos_der, spect_der ! Flags for various derivatives
+    logical :: hmag_der, htheta_der, hphi_der ! Flags for various derivatives
     logical :: atmos_second_der   ! Flag for atmos second derivatives
     logical :: Spect_Der_Center, Spect_Der_Width, Spect_Der_Width_TDep
 
@@ -943,8 +1000,8 @@ contains
       & merge(1,0,fwdModelConf%do_freq_avg .and. &
       &           any(fwdModelConf%anyLBL((fwdModelConf%sidebandStart+3)/2:    &
       &                                   (fwdModelConf%sidebandStop+3)/2))) * &
-      &   max(s_t,s_a,s_lc,s_lw,s_td) *      & ! merge(1,0,any_der)
-      &   max(sv_t_len,size(grids_f%values), &
+      &   MAX(s_t,s_a,s_m,s_lc,s_lw,s_td) *      & ! merge(1,0,any_der)
+      &   MAX(sv_t_len,sv_h_len, SIZE(grids_f%values), &
       &       size(grids_w%values), size(grids_n%values), size(grids_v%values)), &
       & size(fwdModelConf%usedDACSSignals) )
 
@@ -957,22 +1014,34 @@ contains
 
     complex(rp) :: D_Rad_Pol_dF(2,2,s_p*s_a*size(grids_f%values)) ! From mcrt_der
     complex(rp) :: D_Rad_Pol_dT(2,2,s_p*s_t*sv_t_len) ! From mcrt_der
+    complex(rp) :: D_Rad_Pol_dH(2,2,s_p*s_m*sv_h_len) ! From mcrt_der
+    complex(rp) :: D_Rad_Pol_dTheta(2,2,s_p*s_m*sv_h_len) ! From mcrt_der
+    complex(rp) :: D_Rad_Pol_dPhi(2,2,s_p*s_m*sv_h_len) ! From mcrt_der
     complex(rp), target :: Alpha_Path_Polarized(-1:1,s_p*max_f)
     complex(rp), pointer :: Alpha_Path_Polarized_C(:,:)
     complex(rp) :: Alpha_Path_Polarized_F(-1:1,s_p*max_f)
     complex(rp), target :: dAlpha_dT_Polarized_Path(-1:1,s_p*s_t*max_f)
     complex(rp), pointer :: dAlpha_dT_Polarized_Path_C(:,:)
     complex(rp) :: dAlpha_dT_Polarized_Path_F(-1:1,s_p*s_t*max_f)
+    complex(rp), target :: dAlpha_dH_Polarized_Path(-1:1,s_p*s_m*max_f)
+    complex(rp), pointer :: dAlpha_dH_Polarized_Path_C(:,:)
+    complex(rp) :: dAlpha_dH_Polarized_Path_F(-1:1,s_p*s_m*max_f)
     complex(rp) :: Beta_Path_Polarized(-1:1,s_p*max_c,no_mol)
     complex(rp) :: Beta_Path_Polarized_F(-1:1,s_p*max_f,no_mol)
     complex(rp) :: dBeta_dT_Polarized_Path_C(-1:1,s_p*s_t*max_c,no_mol)
     complex(rp) :: dBeta_dT_Polarized_Path_F(-1:1,s_p*s_t*2*max_f,no_mol)
+    complex(rp) :: dBeta_dH_Polarized_Path_C(-1:1,s_p*s_m*max_c,no_mol)
+    complex(rp) :: dBeta_dH_Polarized_Path_F(-1:1,s_p*s_m*2*max_f,no_mol)
     complex(rp) :: DE_DF(2,2,s_p*s_a*max_c,size(grids_f%values)) ! DE/Df in Michael's notes
     complex(rp) :: DE_DT(2,2,s_p*s_t*max_c,sv_t_len) ! DE/DT in Michael's notes
+    complex(rp) :: DE_DHMAG(2,2,s_p*s_m*max_c,sv_h_len) ! DE/DH in Michael's notes
+    complex(rp) :: DE_DTHETA(2,2,s_p*s_m*max_c,sv_h_len) ! DE/DTheta in Michael's notes
+    complex(rp) :: DE_DPHI(2,2,s_p*s_m*max_c,sv_h_len) ! DE/DPhi in Michael's notes
     complex(rp) :: DelTau_Pol(2,2,s_p*max_c) ! E in Michael's notes
 !   complex(rp) :: dIncOptDepth_Pol_dT(2,2,s_p*s_t*max_c) ! D Incoptdepth_Pol / DT
 !   complex(rp) :: GL_Delta_Polarized(-1:1,s_p*max_f)
     complex(rp) :: IncOptDepth_Pol(2,2,s_p*max_c)
+    complex(rp) :: IncOptDepth_Pol_test(2,2,s_p*max_c)
     complex(rp) :: Prod_Pol(2,2,s_p*max_c) ! P in Michael's notes
     complex(rp) :: Tau_Pol(2,2,s_p*max_c)  ! Tau in Michael's notes
 
@@ -990,6 +1059,7 @@ contains
     real(r4) :: K_Spect_DV(noUsedChannels,no_tan_hts,s_lc*size(grids_v%values))
     real(r4) :: K_Spect_DW(noUsedChannels,no_tan_hts,s_lw*size(grids_w%values))
     real(r4) :: K_Temp(noUsedChannels,no_tan_hts,s_t*sv_t_len)
+    REAL(r4) :: K_Magfield(noUsedChannels,no_tan_hts,s_m*sv_h_len*3)
 
     logical :: Do_GL(max_c)       ! GL indicator.  Before the tangent point,
                                   ! Do_GL(i) means the panel (i-1:i) on the
@@ -1015,6 +1085,10 @@ contains
     real(rp) :: ROT(3,3)      ! ECR-to-FOV rotation matrix
     real(rp) :: Vel_Rel       ! Vel_z / c
 
+    REAL(rp) :: st(max_f)     ! sine of theta
+    REAL(rp) :: sp(max_f)     ! sine of phi
+    real(rp) :: cp(max_f)     ! cosine of phi
+    
     real(rp), pointer :: CT(:)           ! Cos(Theta), where theta
       ! is the angle between the line of sight and magnetic field vectors.
     real(r8), pointer :: Frequencies(:)  ! Frequencies to compute for
@@ -1027,7 +1101,7 @@ contains
       ! between the plane defined by the line of sight and the magnetic
       ! field vector, and the "instrument field of view plane polarized"
       ! (IFOVPP) X axis.
-    real(rp), pointer :: STSP(:)         ! Sin(Theta) Sin(Phi)
+    REAL(rp), POINTER :: STSP(:)         ! Sin(Theta) Sin(Phi)
     real(rp), pointer :: DACsStaging(:,:) ! Temporary space for DACS radiances
 
     ! Cloud arrays have the same grids as temperature
@@ -1041,7 +1115,8 @@ contains
     real(rp), allocatable :: K_Spect_DN_Frq(:,:) ! ****
     real(rp), allocatable :: K_Spect_DV_Frq(:,:) ! ****
     real(rp), allocatable :: K_Spect_DW_Frq(:,:) ! ****
-    real(rp), allocatable :: K_Temp_Frq(:,:)     ! dI/dT, ptg.frq X T-SV
+    REAL(rp), ALLOCATABLE :: K_Temp_Frq(:,:)     ! dI/dT, ptg.frq X T-SV
+    REAL(rp), ALLOCATABLE :: K_MagField_Frq(:,:) ! dI/dh, ptg.frq X H-SV X 3
     real(rp), allocatable :: T_Script_LBL(:,:)   ! Delta_B in some notes, Path X Frq
     real(rp), allocatable :: H_Atmos_Frq(:,:,:)  ! d2I/(dVMRq dVMRr), ptg.frq X vmr-SVq X vmr-SVr
 
@@ -1103,6 +1178,11 @@ contains
     ! Interpolation coefficients from zeta X horizontal (phi or QTM) basis to
     ! path for temperature; only needed for temperature derivatives
     type (Sparse_Eta_t) :: Eta_zp_T
+    ! Interpolation coefficients from zeta X horizontal (phi or QTM) basis to
+    ! path for temperature; only needed for temperature derivatives
+    ! Interpolation coefficients from zeta X horizontal (phi or QTM) basis to
+    ! path for magnetic field; only needed for magnetic field derivatives
+    type (Sparse_Eta_t) :: Eta_zp_H
     ! Interpolation coefficients from zeta X phi basis to path for all species
     type (Sparse_Eta_t) :: Eta_zp(size(fwdModelConf%beta_group))
     ! Interpolation coefficients from zeta for each VMR to path GL zeta.
@@ -1161,6 +1241,8 @@ contains
     alpha_path_polarized_c(-1:,1:) => alpha_path_polarized ( -1:1, 1 :: ngp1 )
     dAlpha_dT_polarized_path_c(-1:,1:) => dAlpha_dT_polarized_path ( -1:1, 1 :: ngp1 )
 
+    dAlpha_dH_polarized_path_c(-1:,1:) => dAlpha_dH_polarized_path ( -1:1, 1 :: ngp1 )
+
     ! Get pointer to Alpha_Path_C, the coarse-path part of Alpha_Path
     alpha_path_c => alpha_path ( 1::ngp1 )
 
@@ -1210,7 +1292,7 @@ contains
         & ddhidhidTl0 ) 
       ! Rank 3 R4:
       call fill_IEEE_NaN ( k_atmos, k_spect_dn, k_spect_dv, k_spect_dw, &
-        & k_temp )
+        & k_temp, k_magfield )
       ! Rank 3 R8:
       ! Rank 4 RP:
       call fill_IEEE_NaN ( DACsStaging3 )
@@ -1268,8 +1350,16 @@ contains
 
     h2o_ind = grids_f%s_ind(l_h2o)
 
-    call both_sidebands_setup
-
+    CALL both_sidebands_setup
+    
+    PRINT '(a)','=========begin derivative flag settings======'
+    PRINT *,'atmos der setting ',atmos_der
+    PRINT *,'temperature der setting ',temp_der
+    PRINT *,'h-mag der setting ',hmag_der
+    PRINT *,'h-theta der setting ',htheta_der
+    PRINT *,'h-phi der setting ',hphi_der
+    PRINT '(a)','=========end derivative flag settings========'
+    
     if ( FwdModelConf%generateTScat ) then
       call TScat_Gen_Setup ( fwdModelConf, fwdModelIn, fwdModelExtra,     &
       &                      fwdModelOut, noUsedChannels, temp, sideband, &
@@ -1334,10 +1424,11 @@ contains
     ! Interpolation coefficients for Phi for temperature
     call eta_p_T%create ( max_f, no_sv_p_T, 2*max_f, what=grids_tmp%mol(1) )
     ! Interpolation coefficients for Zeta X Phi for temperature
-    if ( temp_der ) then
+    IF ( temp_der ) THEN
       call eta_zp_T%create ( max_f, sv_t_len, 2*max_f, what=grids_tmp%mol(1) )
-      call dh_dt_path%create ( max_f, sv_t_len, 2*max_f, what=grids_tmp%mol(1) )
-    end if
+      CALL dh_dt_path%create ( max_f, sv_t_len, 2*max_f, what=grids_tmp%mol(1))
+    END IF
+    CALL eta_zp_H%create ( max_f, sv_h_len, 2*max_f, what=grids_mag%mol(1) )
     do i = 1, size(beta_group)
       ! For QTM, everything has the same horizontal grid.  The values of
       ! grids_f%l_p are computed from the longest path through the QTM.
@@ -1395,6 +1486,23 @@ contains
       end do
     end if
 
+!      PRINT '(a)','t rows'
+!      PRINT *,size(eta_zp_t%rows)
+!      PRINT *,eta_zp_t%rows
+!      PRINT '(a)','t cols'
+!      PRINT *,size(eta_zp_t%cols)
+!      PRINT *,eta_zp_t%cols
+!      PRINT '(a)','t lbnd'
+!      PRINT *,eta_zp_t%lbnd
+!      PRINT '(a)','t ubnd'
+!      PRINT *,eta_zp_t%ubnd
+!      PRINT '(a)','t e'
+!      PRINT *,size(eta_zp_t%e)
+!      PRINT *,eta_zp_t%e
+      
+
+
+    
     ! Loop over sidebands ----------------------------------------------------
     call Trace_Begin ( me_SidebandLoop, 'ForwardModel.SidebandLoop', &
       & cond=toggle(emit) .and. levels(emit) > 0 )
@@ -1422,7 +1530,7 @@ contains
         & moduleName, temp_der )
 
       call frequency_setup_1 ( tan_press, grids )
-
+      
       ! Loop over pointings --------------------------------------------------
       call Trace_Begin ( me_PointingLoop, 'ForwardModel.PointingLoop', &
         & cond=toggle(emit) .and. levels(emit) > 2 )
@@ -1432,8 +1540,6 @@ contains
         if ( toggle(emit) .and. levels(emit) > 2 ) &
           & call output( '(Skipping loop of pointings)', advance='yes' )
       else if ( .not. FwdModelConf%generateTScat ) then
-
-
 
         do ptg_i = 1, no_tan_hts
 
@@ -1456,7 +1562,6 @@ contains
               &                 tan_press=tan_press(ptg_i), &
               &                 est_scGeocAlt=est_scGeocAlt(ptg_i) )
           else
-
             ! For the QTM case, R_Eq might have different values for each
             ! tangent point in the QTM.
             r_eq = radius_of_curvature_normal ( QTM_paths(ptg_i)%lines(2,1), &
@@ -1475,12 +1580,12 @@ contains
         ! Do ray tracing at specified scattering angles
         call generate_TScat ( fwdModelConf )
       end if
-
+      
       call Trace_End ( 'ForwardModel.PointingLoop', &
         & cond=toggle(emit) .and. levels(emit) > 2 )
 
       if ( .not. fwdModelConf%generateTScat ) then
-        if ( thisSideband == fwdModelConf%sidebandStart ) then
+        IF ( thisSideband == fwdModelConf%sidebandStart ) THEN
            ! Same for both sidebands, so only need to do it once
           if ( .not. usingQTM ) then
             call convolution_setup ( dh_dz_out, dx_dh_out, dxdT_surface, &
@@ -1502,18 +1607,27 @@ contains
               & WindowFinish, WindowStart, &
               & n_path_c(1), scECR_MIF, ECRtoFOV )
           end if
-        end if
+       END IF
+!       PRINT '(a)','About to convolve this'
+!       PRINT *,SIZE(k_magfield,1),SIZE(k_magfield,2),SIZE(k_magfield,3)
+!       DO i = 1, 70
+!         PRINT *,k_magfield(1,i,1),k_magfield(1,i,2),k_magfield(1,i,3)
+!       end do
         call convolution & ! or interpolate to ptan
           ( dh_dz_out, dx_dh_out, dx_dT, dxdT_surface, &
           & dxdT_tan, d2x_dxdT, F_and_V, &
           & Q_EarthRadC_sq, Est_ScGeocAlt, FirstSignal, FmStat, &
           & FwdModelConf, FwdModelExtra, FwdModelIn, FwdModelOut, &
-          & Grids_f, Grids_n, Grids_tmp, Grids_v, Grids_w, &
+          & Grids_f, Grids_n, Grids_tmp, Grids_v, Grids_w, Grids_mag, &
           & H_Atmos, K_Atmos, K_Spect_DN, K_Spect_DV, K_Spect_DW, &
-          & K_Temp, L1BMIF_TAI, MIFDeadTime, PTan, PTan_Der, &
+          & K_Temp, k_magfield, L1BMIF_TAI, MIFDeadTime, PTan, PTan_Der, &
           & Ptg_Angles, Radiances, Sideband, S_T, Surf_Angle, &
           & Chi_MIF_Tan, Tan_Phi, Temp, ThisSideband, &
           & Jacobian, ExtraJacobian, Hessian )
+!        PRINT '(a)','after convoltion'
+!        PRINT *,k_magfield_frq
+!        PRINT '(a)','after convoltion T'
+!        PRINT *,k_temp
       end if
 
       ! Frequency averaging and any LBL:
@@ -1531,6 +1645,8 @@ contains
       call DestroyCompleteSlabs ( gl_slabs )
       if ( temp_der ) &
         & call deallocate_test ( k_temp_frq,   'k_temp_frq',       moduleName )
+      if ( hmag_der .or. htheta_der .or. hphi_der) &
+        & call deallocate_test ( k_magfield_frq, 'k_magfield_frq', moduleName )
 
       call deallocate_test ( k_atmos_frq,  'k_atmos_frq',          moduleName )
       call deallocate_test ( h_atmos_frq,  'h_atmos_frq',          moduleName )
@@ -1657,6 +1773,9 @@ contains
       end if
 
       temp_der = fwdModelConf%temp%derivOK
+      hmag_der = fwdmodelconf%hmag_der
+      htheta_der = fwdmodelconf%htheta_der
+      hphi_der = fwdmodelconf%hphi_der
       atmos_der = present ( jacobian ) .and. FwdModelConf%atmos_der
       atmos_second_der = present ( hessian ) .and. FwdModelConf%atmos_second_der
 
@@ -1667,7 +1786,8 @@ contains
       spect_der = spect_der .and. &
         & ( spect_der_center .or. spect_der_width .or. spect_der_width_TDep )
 
-      any_der = temp_der .or. atmos_der .or. spect_der
+      any_der = temp_der .OR. atmos_der .OR. spect_der .OR. hmag_der .OR. &
+           htheta_der .or. hphi_der
 
       ! Work out what we've been asked to do -----------------------------------
 
@@ -1984,7 +2104,11 @@ contains
       integer :: SV_I    ! State-vector index
 
       call trace_begin ( me, 'ForwardModel.Frequency_Average_Derivative=', &
-          & index=mol, cond=toggle(emit) .and. levels(emit) > 6 )
+           & index=mol, cond=toggle(emit) .AND. levels(emit) > 6 )
+
+!      PRINT '(a)','inside the frequency derivative'
+!      PRINT *,SIZE(k_frq,1),SIZE(k_frq,2)
+!      PRINT *,SIZE(k,1),SIZE(k,2)
 
       if ( combine ) then
         ! Simply add newly-computed PFA derivatives in K_frq to
@@ -2083,6 +2207,11 @@ contains
       if ( temp_der ) call frequency_average_derivative ( grids_tmp, &
         &               k_temp_frq(:ub,:), k_temp(:,ptg_i,:), 1, combine )
 
+      IF ( hmag_der .OR. htheta_der .OR. hphi_der) &
+           CALL frequency_average_derivative ( grids_mag, &
+           &               k_magfield_frq(:ub,:), k_magfield(:,ptg_i,:), &
+           & 1, combine )
+      
       ! Frequency Average the atmospheric derivatives with the appropriate
       ! filter shapes
       if ( atmos_der ) then
@@ -2109,11 +2238,15 @@ contains
           & ( grids_w, k_spect_dw_frq(:ub,:), k_spect_dw(:,ptg_i,:), k, &
           & combine )
       end do
-      do k = 1, size(fwdModelConf%lineWidth_TDep)
+      DO k = 1, SIZE(fwdModelConf%lineWidth_TDep)
         call frequency_average_derivative &
           & ( grids_n, k_spect_dn_frq(:ub,:), k_spect_dn(:,ptg_i,:), k, &
           & combine )
-      end do
+      END DO
+
+!      IF (hmag_der) THEN
+!         k_magfield(:,ptg_i,:) = 5.0
+!      endif
 
       call trace_end ( 'ForwardModel.Frequency_Average_Derivatives', &
         & cond=toggle(emit) .and. levels(emit) > 5 )
@@ -2392,6 +2525,13 @@ contains
       ! invoking the MERGE intrinsic function might require accessing an
       ! undefined or disassociated pointer.
       sv_dim = 0
+
+!      IF (hmag_der .OR. htheta_der .OR. hphi_der) sv_dim = SIZE(grids_mag%values)
+      call allocate_test( k_magfield_frq, max(maxNoPtgFreqs,noUsedChannels), &
+           & MERGE(3*sv_h_len,0,hmag_der), 'k_magfield_frq', &
+           & moduleName )
+      sv_dim = 0
+      
       if ( atmos_der ) sv_dim = size(grids_f%values)
       call allocate_test ( k_atmos_frq, max(maxNoPtgFreqs,noUsedChannels), &
                          & sv_dim, 'k_atmos_frq', moduleName )
@@ -2479,7 +2619,7 @@ contains
       & P_Path, PFA, Ref_Corr, Sps_Path, Tau, T_Path_c, T_Script, Tanh1_c,  &
       & TT_Path_c, W0_Path_c, Z_Path, I_Start, I_End, Inc_Rad_Path, RadV,   &
       & dAlpha_dT_Path, H_Atmos_Frq, K_Atmos_Frq, K_Spect_dN_Frq,           &
-      & K_Spect_dV_Frq, K_Spect_dW_Frq, K_Temp_Frq )
+      & K_Spect_dV_Frq, K_Spect_dW_Frq, K_Temp_Frq, K_Magfield_Frq )
 
       ! Having arguments instead of using host association serves two
       ! purposes:  The array sizes are implicit, so we don't need explicitly
@@ -2495,13 +2635,15 @@ contains
       use Get_Beta_Path_m, only: Get_Beta_Path, Get_Beta_Path_Cloud, &
         & Get_Beta_Path_PFA, Get_Beta_Path_Polarized
       use Get_dAlpha_dF_m, only: Get_dAlpha_dF
-      use Get_D_Deltau_Pol_m, only: Get_d_Deltau_Pol_dF, Get_d_Deltau_Pol_dT
+      USE Get_D_Deltau_Pol_m, ONLY: Get_d_Deltau_Pol_dF, &
+        & Get_d_Deltau_Pol_dT, Get_d_Deltau_Pol_dH, Get_d_Deltau_Pol_dTheta, &
+        & Get_d_Deltau_Pol_dPhi
       use Hessians_m, only: d2Rad_Tran_dF2, Get_d2Alpha_dF2
       use Interpolate_Mie_m, only: Interpolate_Mie
       use Load_Sps_data_m, only:  Load_One_Item_Grid
       use L2PC_m, only: L2PC_T
       use MCRT_m, only: MCRT_Der
-      use Opacity_m, only: Opacity
+      USE Opacity_m, ONLY: Opacity, Test_Opacity
       use Path_Contrib_m, only: Path_Contrib
       use Physics, only: H_Over_K
       use Rad_Tran_m, only: Rad_Tran_Pol, dRad_Tran_dF, dRad_Tran_dT, &
@@ -2548,7 +2690,8 @@ contains
       real(rp), intent(out) :: K_Spect_dN_Frq(:) ! ****
       real(rp), intent(out) :: K_Spect_dV_Frq(:) ! ****
       real(rp), intent(out) :: K_Spect_dW_Frq(:) ! ****
-      real(rp), intent(out) :: K_Temp_Frq(:)   ! dI/dT, ptg.frq X T-SV
+      REAL(rp), INTENT(out) :: K_Temp_Frq(:)   ! dI/dT, ptg.frq X T-SV
+      REAL(rp), INTENT(out) :: k_magfield_frq(:) ! Di/Dmagfield X h-sv * 3
 
       integer, pointer :: CG_Inds(:) ! Indices on coarse grid where GL needed
       real(rp), pointer :: dAlpha_dT_Path_c(:)
@@ -2617,6 +2760,10 @@ contains
           &  dTanh_dT_c, vel_rel, dBeta_dT_path_c, dBeta_dw_path_c,      &
           &  dBeta_dn_path_c, dBeta_dv_path_c, dBeta_df_path_c,          &
           &  grids_f%where_dBeta_df, sps_path(:npf,:) )
+!        PRINT '(a)','====print out the betas======'
+!        PRINT *,SIZE(beta_path_c)
+!        PRINT *,size(dbeta_df_path_c)
+!        PRINT *,size(dbeta_dt_path_c)
       end if
 
       if ( FwdModelConf%incl_cld .and. .not. pfa ) then
@@ -2728,7 +2875,7 @@ contains
 
       end if ! end of check cld
 
-      if ( .not. fwdModelConf%polarized ) then
+      IF ( .NOT. fwdModelConf%polarized ) THEN
         ! Determine where to use Gauss-Legendre for scalar instead of a trapezoid.
 
         call path_contrib ( incoptdepth, tan_pt_c, i_start, i_end, &
@@ -2738,7 +2885,8 @@ contains
            ! Can't be doing TScat, so process the whole path
 
         call get_beta_path_polarized ( frq, h, beta_group%lbl(sx), gl_slabs, &
-          & c_inds, beta_path_polarized, dBeta_dT_polarized_path_c )
+             & c_inds, beta_path_polarized, dBeta_dT_polarized_path_c, &
+             & dbeta_dh_polarized_path_c, ptg_i)
 
         ! We put an explicit extent of -1:1 for the first dimension in
         ! the hope a clever compiler will do better optimization with
@@ -2746,6 +2894,27 @@ contains
         ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
         ! to Alpha here.
 
+!        PRINT '(a)','====print out the polarized betas======'
+!        PRINT *,frq,h
+!        PRINT *,npc
+!        PRINT *,SIZE(beta_path_polarized)
+!        PRINT *,size(dbeta_dt_polarized_path_c)
+!        PRINT *,SIZE(dbeta_dh_polarized_path_c,1), &
+!             & SIZE(dbeta_dh_polarized_path_c,2), &
+        !             & SIZE(dbeta_dh_polarized_path_c,3)
+!        if (ptg_i == 1) THEN
+!        DO j = 1, npc
+!           PRINT '(a)','species 1'
+!           PRINT *,dbeta_dh_polarized_path_c(-1:1,j,1)
+!           PRINT '(a)','species 2'
+!           PRINT *,dbeta_dh_polarized_path_c(-1:1,j,2)
+!           PRINT '(a)','species 3'
+!           PRINT *,j
+!           PRINT *,dbeta_dh_polarized_path_c(-1:1,j,3)
+!           PRINT '(a)','species 4'
+!           PRINT *,dbeta_dh_polarized_path_c(-1:1,j,4)
+!        END DO
+!        endif
         do j = 1, npc
           alpha_path_polarized_c(-1:1,j) = &
             & matmul( beta_path_polarized(-1:1,j,:), sps_path_c(j,:) ) *  &
@@ -2756,7 +2925,35 @@ contains
 
         ! Turn sigma-, pi, sigma+ into 2X2 matrix incoptdepth_pol
         call opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
-          & alpha_path_polarized_c(:,1:npc), incoptdepth_pol(:,:,1:npc) )
+             & alpha_path_polarized_c(:,1:npc), incoptdepth_pol(:,:,1:npc) )
+
+!        call test_opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
+!             & alpha_path_polarized_c(:,1:npc), &
+!             & incoptdepth_pol_test(:,:,1:npc) )
+
+!        IF (ptg_i == 30) then
+!           PRINT '(a)','print results of my opacity routine'
+!           DO i = 1,npc
+!              PRINT *,i,incoptdepth_pol(:,:,i)
+!              PRINT *,i,incoptdepth_pol_test(:,:,i)
+!           end do
+!     ENDIF
+!        incoptdepth_pol = incoptdepth_pol_test
+
+!         IF (ptg_i == 1 .and. frq_i == 50) THEN
+!            PRINT *,'Some stuff after opacity'
+!            PRINT *,'this frequency ',frq
+!            PRINT *,npc
+!            PRINT *,'tangent height ',tan_ht
+!            PRINT *,'heights on path ',h_path_c(1:npc)
+!            PRINT *,'temperature on path ',t_path_c(1:npc)
+!            PRINT *,'size of del_s ',SIZE(del_s)
+!            PRINT *,'path lengths ',del_s(1:npc)
+!            PRINT *,'magnetic field ',h            
+!            PRINT *,'alpha path polaized ',alpha_path_polarized(1,1:npc)     
+!            PRINT *,'incoptdepth_pol ',incoptdepth_pol(1,1,1:npc)           
+!        ENDIF
+       
 
         ! We don't add unpolarized incremental optical depth to diagonal
         ! of polarized incremental optical depth because we added the
@@ -2783,7 +2980,7 @@ contains
 
         ! Determine where to do GL
         call path_contrib ( deltau_pol(:,:,1:npc), tan_pt_c, e_rflty, &
-           & fwdModelConf%tolerance, do_gl )
+             & fwdModelConf%tolerance, do_gl )
 
       end if
 
@@ -2983,14 +3180,15 @@ contains
         ! Get the corrections to integrals for layers that need GL for
         ! the polarized species.
         call get_beta_path_polarized ( frq, h,beta_group%lbl(sx), gl_slabs, &
-          & gl_inds, beta_path_polarized_f, dBeta_dT_polarized_path_f )
+             & gl_inds, beta_path_polarized_f, dBeta_dT_polarized_path_f, &
+             & dbeta_dh_polarized_path_f, ptg_i)
 
         ! We put an explicit extent of -1:1 for the first dimension in
         ! the hope a clever compiler will do better optimization with
         ! a constant extent.
         ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
         ! to Alpha here.
-        do j = 1, ngl
+        DO j = 1, ngl
           alpha_path_polarized_f(-1:1,j) = &
             & matmul( beta_path_polarized_f(-1:1,j,:), &
             &         sps_path_f(j,:) ) * tanh1_f(j) &
@@ -2998,13 +3196,35 @@ contains
           alpha_path_polarized_f(0,j) = alpha_path_polarized_f(0,j) +               &
             & 0.25 * alpha_path_f(j)
           alpha_path_polarized(-1:1,gl_inds(j)) = alpha_path_polarized_f(-1:1,j)
-        end do
-
+       END DO
+       
+!        IF (ptg_i == 1 .and. frq_i == 50) THEN
+!           PRINT *,'Some stuff before the radiative transfer'
+!           PRINT *,'tan pt c ',tan_pt_c
+!           PRINT *,'e_rflty ',e_rflty
+!           PRINT *,'del_zeta ',del_zeta
+!           PRINT *,'ref_corr ',ref_corr
+!           PRINT *,'dsdz_gw_path ',dsdz_gw_path
+!           PRINT *,'alpha_path_polarized ',alpha_path_polarized(-1,1:ngl)
+!            PRINT *,'incoptdepth_pol ',incoptdepth_pol(1,1,1:npc)           
+!            PRINT *,'deltau_pol ',deltau_pol(1,1,1:npc)
+!            PRINT *,'p stop ',p_stop
+!        ENDIF
+           
         call rad_tran_pol ( tan_pt_c, gl_inds, cg_inds, e_rflty, del_zeta,   &
           & alpha_path_polarized(:,1:npf), ref_corr,                         &
           & incoptdepth_pol(:,:,1:npc), deltau_pol(:,:,1:npc), dsdz_gw_path, &
           & ct, stcp, stsp, t_script, dump_rad_pol, prod_pol(:,:,1:npc),     &
           & tau_pol(:,:,1:npc), rad_pol, p_stop )
+
+        IF (ptg_i == 1) THEN
+!           PRINT *,'Some stuff after the radiative transfer'
+!            PRINT *,'incoptdepth_pol ',incoptdepth_pol(1,1,1:npc)           
+!            PRINT *,'deltau_pol ',deltau_pol(1,1,1:npc)
+            PRINT '(a,f12.4)','freq and Radiance ',frq
+            PRINT *,rad_pol
+!            PRINT *,'p stop ',p_stop
+        ENDIF
 
         if ( p_stop < 0 ) then ! exp(incoptdepth_pol(:,:,-p_stop)) failed
           call output ( 'Exp(incoptdepth_pol(:,:,' )
@@ -3021,7 +3241,12 @@ contains
           call Announce_Error ( 'exp(incoptdepth_pol) failed' )
         end if
 
-        if ( print_pol_rad > -1 ) then
+        print_pol_rad = -1
+!        PRINT *,'Print pol rad flag ',print_pol_rad
+!        if ( print_pol_rad > -1 ) then
+        if ( print_pol_rad > -1 .and. ptg_i == 1) then
+          PRINT *,'Print tangent height ',ptg_i,tan_ht
+          PRINT *,'Print frequency ',frq_i,frq
           call output ( 'Radiance' )
           do j = 1, 2
             do i = 1, 2
@@ -3146,6 +3371,7 @@ contains
 
       end if ! atmos_der
 
+      
       if ( temp_der ) then
 
         dAlpha_dT_path_c(:npc) = sum( sps_path_c(:npc,:) *  &
@@ -3205,7 +3431,7 @@ contains
                 & sps_path_f(:ngl,j) * dBeta_dT_polarized_path_f(l,1:ngl,j)
             end do ! l
           end do ! j
-          do l = -1, 1
+          DO l = -1, 1
             dAlpha_dT_polarized_path_c(l,1:npc) =               &
               & dAlpha_dT_polarized_path_c(l,1:npc) * tanh1_c + &
               & alpha_path_polarized_c(l,:npc) * dTanh_dT_c(:npc)
@@ -3215,8 +3441,169 @@ contains
             ! Put GL for panels needing it back into composite path
             dAlpha_dT_polarized_path(l,gl_inds) = &
               & dAlpha_dT_polarized_path_f(l,1:ngl)
-          end do
+         END DO
+         IF (hmag_der) THEN
+            
+          dAlpha_dH_polarized_path_c(:,1:npc) = 0.0
+          dAlpha_dH_polarized_path_f(:,1:ngl) = 0.0
+          do j = 1, no_mol
+            do l = -1, 1
+              dAlpha_dH_polarized_path_c(l,1:npc) = &
+            & dAlpha_dH_polarized_path_c(l,1:npc) + &
+            & sps_path_c(:npc,j) * tanh1_c(1:npc) * &
+            & dBeta_dH_polarized_path_c(l,1:npc,j)
+              dAlpha_dH_polarized_path_f(l,1:ngl) = &
+            & dAlpha_dH_polarized_path_f(l,1:ngl) + &
+            & sps_path_f(:ngl,j) * tanh1_f(1:ngl) * &
+            & dBeta_dH_polarized_path_f(l,1:ngl,j)
+            end do ! l
+          end do ! j
+          DO l = -1, 1
+            ! Put GL for panels needing it back into composite path
+            dAlpha_dH_polarized_path(l,gl_inds) = &
+              & dAlpha_dH_polarized_path_f(l,1:ngl)
+          END DO
 
+          call get_d_deltau_pol_dH ( ct, stcp, stsp,           &
+               & alpha_path_polarized(:,1:npf),                          &
+               & dAlpha_dH_polarized_path(:,1:npf), eta_zp_h, p_stop,    &
+               & del_s, gl_inds, del_zeta, do_gl(1:p_stop),              &
+               & dsdh_path, dhdz_gw_path, dsdz_gw_path,                  &
+               & incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),      &
+               & grids_mag%deriv_flags, ptg_i, de_dhmag(:,:,1:p_stop,:) )
+!           IF (ptg_i == 1) then
+!             PRINT '(a)','Compute de_dh'
+!             PRINT *,tan_pt_c,SIZE(de_dhmag,1),SIZE(de_dhmag,2),SIZE(de_dhmag,3),SIZE(de_dhmag,4),npc
+!             PRINT '(a)','element 1'
+!             DO l = 1, npc
+!                PRINT *,de_dhmag(1,1,1:npc,1)
+!             end do
+!             PRINT '(a)','element 2'
+!             DO l = 1, npc
+!                PRINT *,de_dhmag(1,1,1:npc,2)
+!                end do
+!             PRINT '(a)','element 3'
+!             DO l = 1, npc
+!                PRINT *,de_dhmag(1,1,1:npc,3)
+!                end do
+!          endif
+          call mcrt_der ( t_script, sqrt(e_rflty),             &
+            & deltau_pol(:,:,1:npc), de_dhmag(:,:,1:npc,:),       &
+            & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop, &
+            & tan_pt_c, d_rad_pol_dh )
+!          IF (ptg_i == 1) THEN
+!            PRINT '(a)','Compute d_rad_pol_dh'
+!            PRINT *,ptg_i
+!            PRINT *,SIZE(d_rad_pol_dh,1),SIZE(d_rad_pol_dh,2),SIZE(d_rad_pol_dh,3)
+!             PRINT '(a)','element 1'
+!            PRINT *,real(d_rad_pol_dh(1,1,1))
+!             PRINT '(a)','element 2'
+!            PRINT *,real(d_rad_pol_dh(1,1,2))
+!             PRINT '(a)','element 3'
+!            PRINT *,real(d_rad_pol_dh(1,1,3))
+!         ENDIF
+!          IF (ptg_i == 55) THEN
+!            PRINT '(a)','Compute d_rad_pol_dh'
+!            PRINT *,ptg_i
+!            PRINT *,SIZE(d_rad_pol_dh,1),SIZE(d_rad_pol_dh,2),SIZE(d_rad_pol_dh,3)
+!             PRINT '(a)','element 1'
+!            PRINT *,real(d_rad_pol_dh(1,1,1))
+!             PRINT '(a)','element 2'
+!            PRINT *,real(d_rad_pol_dh(1,1,2))
+!             PRINT '(a)','element 3'
+!            PRINT *,real(d_rad_pol_dh(1,1,3))
+!         ENDIF
+            
+           if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
+              k_magfield_frq(1:sv_h_len) = REAL(d_rad_pol_dh(1,1,:))
+!             PRINT *,k_magfield_frq(:)
+          else
+             k_magfield_frq(1:sv_h_len) = REAL(d_rad_pol_dh(2,2,:))
+          end if
+       ENDIF
+       
+         IF (htheta_der) THEN
+            
+          CALL get_d_deltau_pol_dtheta ( st, ct, sp, cp, stcp, stsp,     &
+               & alpha_path_polarized(:,1:npf), eta_zp_h, p_stop,        &
+               & del_s, gl_inds, del_zeta, do_gl(1:p_stop),              &
+               & dsdh_path, dhdz_gw_path, dsdz_gw_path,                  &
+               & incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),      &
+               & grids_mag%deriv_flags, ptg_i, de_dtheta(:,:,1:p_stop,:) )
+!           IF (ptg_i == 1) then
+!             PRINT '(a)','Compute de_dh'
+!             PRINT *,tan_pt_c,SIZE(de_dhmag,1),SIZE(de_dhmag,2),SIZE(de_dhmag,3),SIZE(de_dhmag,4),npc
+!             PRINT '(a)','element 1'
+!             DO l = 1, npc
+!                PRINT *,de_dhmag(1,1,1:npc,1)
+!             end do
+!             PRINT '(a)','element 2'
+!             DO l = 1, npc
+!                PRINT *,de_dhmag(1,1,1:npc,2)
+!                end do
+!             PRINT '(a)','element 3'
+!             DO l = 1, npc
+!                PRINT *,de_dhmag(1,1,1:npc,3)
+!                end do
+!          endif
+          call mcrt_der ( t_script, sqrt(e_rflty),             &
+            & deltau_pol(:,:,1:npc), de_dtheta(:,:,1:npc,:),       &
+            & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop, &
+            & tan_pt_c, d_rad_pol_dtheta )
+!          IF (ptg_i == 1) THEN
+!            PRINT '(a)','Compute d_rad_pol_dh'
+!            PRINT *,ptg_i
+!            PRINT *,SIZE(d_rad_pol_dh,1),SIZE(d_rad_pol_dh,2),SIZE(d_rad_pol_dh,3)
+!             PRINT '(a)','element 1'
+!            PRINT *,real(d_rad_pol_dh(1,1,1))
+!             PRINT '(a)','element 2'
+!            PRINT *,real(d_rad_pol_dh(1,1,2))
+!             PRINT '(a)','element 3'
+!            PRINT *,real(d_rad_pol_dh(1,1,3))
+!         ENDIF
+!          IF (ptg_i == 55) THEN
+!            PRINT '(a)','Compute d_rad_pol_dh'
+!            PRINT *,ptg_i
+!            PRINT *,SIZE(d_rad_pol_dh,1),SIZE(d_rad_pol_dh,2),SIZE(d_rad_pol_dh,3)
+!             PRINT '(a)','element 1'
+!            PRINT *,real(d_rad_pol_dh(1,1,1))
+!             PRINT '(a)','element 2'
+!            PRINT *,real(d_rad_pol_dh(1,1,2))
+!             PRINT '(a)','element 3'
+!            PRINT *,real(d_rad_pol_dh(1,1,3))
+!         ENDIF
+            
+           if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
+                k_magfield_frq(sv_h_len+1:2*sv_h_len) = &
+              & REAL(d_rad_pol_dtheta(1,1,:))
+!             PRINT *,k_magfield_frq(:)
+          else
+             k_magfield_frq(sv_h_len+1:2*sv_h_len) = &
+                  & REAL(d_rad_pol_dtheta(2,2,:))
+          end if
+       ENDIF
+
+       IF (hphi_der) THEN
+          CALL get_d_deltau_pol_dPhi ( stcp, stsp,     &
+               & alpha_path_polarized(:,1:npf), eta_zp_h, p_stop,        &
+               & del_s, gl_inds, del_zeta, do_gl(1:p_stop),              &
+               & dsdh_path, dhdz_gw_path, dsdz_gw_path,                  &
+               & incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),      &
+               & grids_mag%deriv_flags, ptg_i, de_dphi(:,:,1:p_stop,:) )
+          call mcrt_der ( t_script, sqrt(e_rflty),             &
+            & deltau_pol(:,:,1:npc), de_dphi(:,:,1:npc,:),       &
+            & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop, &
+            & tan_pt_c, d_rad_pol_dphi )
+            
+           if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
+                k_magfield_frq(2*sv_h_len+1:3*sv_h_len) = &
+              & REAL(d_rad_pol_dphi(1,1,:))
+          else
+             k_magfield_frq(2*sv_h_len+1:3*sv_h_len) = &
+                  & REAL(d_rad_pol_dphi(2,2,:))
+          end if
+       ENDIF
+       
           call get_d_deltau_pol_dT ( ct, stcp, stsp, tan_pt_c,            &
             & t_path(:npf), alpha_path_polarized(:,1:npf),                &
             & dAlpha_dT_path(:npf), dAlpha_dT_polarized_path,             &
@@ -3403,8 +3790,10 @@ contains
 
       ! Compute the height of the pressure reference surface and the
       ! tangent height above that surface.
+      
       if ( .not. usingQTM ) then
-        if ( associated(surfaceHeight) ) then
+         IF ( ASSOCIATED(surfaceHeight) ) THEN
+
           call tangent_metrics ( tan_phi, grids_tmp%phi_basis,      &
             &                    h_glgrid, tan_ind_f,               & ! in
             &                    h_surf, tan_ht_s,                  & ! output
@@ -3417,6 +3806,7 @@ contains
             &                    Tan_Press=tan_press,               & ! optional
             &                    Surf_Temp=temp%values(1,windowstart:windowfinish) )
         else
+!            PRINT *,'I got here 3'
           call tangent_metrics ( tan_phi, grids_tmp%phi_basis,      &
             &                    h_glgrid, tan_ind_f,               & ! in
             &                    h_surf, tan_ht_s )                   ! output
@@ -3425,12 +3815,24 @@ contains
         if ( present(scat_tan_ht) ) tan_ht_s = scat_tan_ht + h_surf
 
         ! Get H_Path and Phi_Path on the fine grid.
-        call Height_Metrics ( tan_phi, tan_ind_f, grids_tmp%phi_basis, & ! in
+!             PRINT *,'I got here 4'
+       call Height_Metrics ( tan_phi, tan_ind_f, grids_tmp%phi_basis, & ! in
           &  h_glgrid, h_surf, tan_ht_s, z_glgrid(:nz_if), r_eq,       & ! in
           &  req_s, vert_inds(1:npf), h_path(1:npf), phi_path(1:npf),  & ! out
           &  forward=forward )                                           ! opt
         tan_ht = tan_ht_s + req_s
         phi_path_c => phi_path(1:npf:ngp1)
+        if (ptg_i == 1) then
+        PRINT *,'tangent index and ptg_i ',surfaceTangentIndex,ptg_i
+        PRINT *,'surface heights ',h_surf
+!        PRINT *,'surf heights%values ',surfaceHeight%values(1,:)
+        PRINT *,'equivalent earth radius ',r_eq
+        PRINT *,'equivalent earth radius at surface ',req_s
+        PRINT *,'tangent height ',tan_ht
+        PRINT *,'tangent height surface ',tan_ht_s
+        PRINT *,'size of path ',npf
+!        PRINT *,'path heights ',h_path(1:npf)
+        endif
 
       else ! QTM
 
@@ -3623,7 +4025,6 @@ contains
       call comp_eta ( grids_f, tan_pt_f, z_path(1:npf), eta_z, &
                     & phi_path(1:npf), eta_p, eta_zp, eta_fzp, &
                     & skip=ngp1 )
-
       ! Compute sps_path for all those with no frequency component, especially
       ! to get WATER (H2O) contribution for refraction calculations.
       call comp_sps_path_sparse ( Grids_f, eta_zp, sps_path(1:npf,:), eta_fzp )
@@ -3646,6 +4047,26 @@ contains
 
       n_path_c(1:npc) = min ( n_path_c(1:npc), MaxRefraction )
 
+      call comp_eta ( grids_mag, tan_pt_f, z_path(1:npf), &
+           & phi_path(1:npf), eta_zp_h)
+
+!      IF (ptg_i == 1) THEN
+!         PRINT '(a)','eta_zp_h%rows'
+!         PRINT *,SIZE(eta_zp_h%rows)
+!         PRINT *,eta_zp_h%rows
+!         PRINT '(a)','eta_zp_h%cols'
+!         PRINT *,SIZE(eta_zp_h%cols)
+!         PRINT *,eta_zp_h%cols
+!         PRINT '(a)','eta_zp_h%lbnd'
+!         PRINT *,SIZE(eta_zp_h%lbnd)
+!         PRINT '(a)','eta_zp_h%ubnd'
+!         PRINT *,SIZE(eta_zp_h%ubnd)
+!         PRINT '(a)','eta_zp_h%e'
+!         PRINT *,SIZE(eta_zp_h%e)
+!         PRINT *,eta_zp_h%e
+!      endif         
+      
+                    
       ! Special path quantities for spectroscopy derivatives
       if ( size(fwdModelConf%lineCenter) > 0 ) then
         call comp_sps ( grids_v, tan_pt_f, z_path(1:npf), &
@@ -3679,7 +4100,7 @@ contains
 
       if ( FwdModelConf%polarized ) then
 
-        block
+        BLOCK
           use Magnetic_Field_On_Path_m, only: Magnetic_Field_On_Path
 
           ! Get the rotation matrix for the magnetic field.  Use the
@@ -3696,13 +4117,44 @@ contains
           call magnetic_field_on_path ( grids_mag, tan_pt_f, &
             & h_path(1:npf), r_eq, z_path(1:npf), phi_path(1:npf), &
             & rot, mag_path(1:npf,1:4) )
-        end block
-
+        END BLOCK
+!        if ( tan_pt_f == 5 ) THEN
+!        PRINT '(a)','The magnetic path values'
+!        PRINT *,'npf ',npf,tan_pt_f
+!        PRINT *,mag_path(1:npf,3)
+!        PRINT *,mag_path(1:npf,1)
+!        PRINT *,mag_path(1:npf,2)
+!        PRINT *,mag_path(1:npf,4)
+!        PRINT '(a)','ecr to fov matrix'
+!        PRINT *,rot
+!        PRINT *,'zeta, phi, values'
+!        PRINT *,grids_mag%zet_basis(:)
+!        PRINT *,grids_mag%phi_basis(:)
+!        PRINT *,grids_mag%values(:)
+!        endif
         ct => mag_path(1:npf,3)   ! cos(theta)
         stcp => mag_path(1:npf,1) ! sin(theta) cos(phi)
         stsp => mag_path(1:npf,2) ! sin(theta) sin(phi)
         h => mag_path(1:npf,4)    ! magnitude of magnetic field
 
+! to compute the theta and phi derivatives we need more trig functions
+! for the jacobian
+        IF (htheta_der .OR. hphi_der) THEN
+!           PRINT '(a)','enterring trig module'
+! we will assume 0 <= theta <= 180 therefore sin(theta) >= 0.0
+           st(1:npf) = SQRT(1.0 - mag_path(1:npf,3)**2)
+           sp(1:npf) = mag_path(1:npf,2) / st(1:npf)
+           cp(1:npf) = mag_path(1:npf,1) / st(1:npf)
+           where(st < 0.001_rp) 
+              sp = mag_path(:,2)
+              cp = mag_path(:,1)
+           END where
+        ENDIF   
+!         if ( tan_pt_f == 5 ) THEN
+!        PRINT '(a)','New trig values'
+!        PRINT *,'npf ',npf,tan_pt_f
+!        PRINT *,st(1:npf),ct(1:npf),sp(1:npf),cp(1:npf),stsp(1:npf),stcp(1:npf)
+!        endif
         if ( print_Mag > -1 ) then
           call output ( maf, before='ECR to FOV matrix for MAF ' )
           call output ( mif, before=' and MIF ', advance='yes' )
@@ -3943,10 +4395,10 @@ contains
 ! $\frac{\partial I^\sigma_q}{\partial x_k}$ is {\tt K_}$x${\tt_FRQ} &
 ! $\frac{\partial I_c}{\partial x_k}$ is {\tt K_}$x$
 ! \\
-! \end{tabular}
-
+      ! \end{tabular}
+      
       if ( FwdModelConf%anyLBL(sx) ) then
-        do frq_i = 1, size(frequencies)
+        DO frq_i = 1, SIZE(frequencies)
           call one_frequency ( ptg_i, frq_i, alpha_path_c(:npc),              &
             & beta_path_c(:npc,:), c_inds(:npc), del_s(:npc), del_zeta(:npc), &
             & do_GL(:npc), frequencies(frq_i), h_path_c, tan_ht,              &
@@ -3957,8 +4409,9 @@ contains
             & inc_rad_path(:,frq_i), RadV(frq_i), dAlpha_dT_path(:npf),       &
             & H_Atmos_Frq(frq_i,:,:), K_Atmos_Frq(frq_i,:),                   &
             & K_Spect_dN_Frq(frq_i,:), K_Spect_dV_Frq(frq_i,:),               &
-            & K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
-        end do
+            & K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:),                   &
+            & K_Magfield_frq(frq_i,:) )
+       END DO
         if ( print_TauL ) then
           call output ( thisSideband, before='Sideband ' )
           call output ( ptg_i, before=' Pointing ' )
@@ -3995,7 +4448,7 @@ contains
             & rad_avg_path(:,frq_i), RadV(frq_i), dAlpha_dT_path(:npf),         &
             & H_Atmos_Frq(frq_i,:,:), K_Atmos_Frq(frq_i,:),                     &
             & K_Spect_dN_Frq(frq_i,:), K_Spect_dV_Frq(frq_i,:),                 &
-            & K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:) )
+            & K_Spect_dW_Frq(frq_i,:), K_Temp_Frq(frq_i,:), K_Magfield_frq(frq_i,:) )
         end do
         if ( print_TauP ) then
           call output ( thisSideband, before='Sideband ' )
@@ -4034,7 +4487,7 @@ contains
 !--------------------------- end bloc --------------------------------------
   logical function not_used_here()
   character (len=*), parameter :: IdParm = &
-       "$Id$"
+       "$Id: FullForwardModel_m.f90,v 2.411 2023/07/06 18:34:10 pwagner Exp $"
   character (len=len(idParm)) :: Id = idParm
     not_used_here = (id(1:1) == ModuleName(1:1))
     print *, Id ! .mod files sometimes change if PRINT is added
@@ -4043,7 +4496,10 @@ contains
 
 end module FullForwardModel_m
 
-! $Log$
+! $Log: FullForwardModel_m.f90,v $
+! Revision 2.411  2023/07/06 18:34:10  pwagner
+! Commented-out most uncondtional printing
+!
 ! Revision 2.410  2023/06/23 20:45:07  pwagner
 ! In middle of debugging pol fwdmdl
 !
