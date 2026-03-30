@@ -32,7 +32,7 @@ MODULE SortQualify ! Sort and qualify the L0 data
 
 !---------------------------- RCS Module Info ------------------------------
   CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
-       "$RCSfile$"
+       "$RCSfile: SortQualify.f90,v $"
   PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -1464,7 +1464,7 @@ CONTAINS
   LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (len=*), PARAMETER :: IdParm = &
-       "$Id$"
+       "$Id: SortQualify.f90,v 2.35 2024/10/10 20:13:51 pwagner Exp $"
   CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -1473,7 +1473,7 @@ CONTAINS
 END MODULE SortQualify
 !=============================================================================
 
-! $Log$
+! $Log: SortQualify.f90,v $
 ! Revision 2.35  2024/10/10 20:13:51  pwagner
 ! Detect out-of-lock for R2 and then set RnPrecSign
 !
