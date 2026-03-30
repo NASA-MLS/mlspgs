@@ -1,5 +1,7 @@
 # MLSPGS
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19055785.svg)](https://doi.org/10.5281/zenodo.19055785)
+
 Aura MLS Product Generation Software (MLSPGS) for Level 1 and Level 2.
 
 This code and limited associated documentation herein (more documentation is elsewhere) has been developed for the Aura [Microwave Limb Sounder](https://mls.jpl.nasa.gov) project to produce daily calibrated radiance and engineering (Level 1) and geophysical data along the measurement footprint (Level 2) data products.
@@ -25,6 +27,8 @@ The vast majority of the software is written in Fortran, requiring a Fortran-200
 Level 1 processing is a relatively lightweight task that can be run in a short order for 24-hours of data on a single CPU machine.  The Level 1 data are the largest datasets for the mission (though not particularly large by today's standards) requiring around 4Gb per day of data.
 
 Level 2 is run in an "embarassingly parallel" manner, with the (admittedly dated) PVM (Parallel Virtual Machine) message passing system used for the (relatively lightweight) communication between the tasks.  Fundamentally, each CPU runs a single-threaded task to process a fraction (~15 degrees along the orbit track, about 4-5 minutes-worth of data).
+
+The executables compiled by this code (called "shrinkwraps") are available in [Zenodo](https://zenodo.org/uploads/18929845).  Note that not every tagged version of the mlspgs code will have a tagged version since some versions were not used in production.
 
 ## History of the software and this repository
 

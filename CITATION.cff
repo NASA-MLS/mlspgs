@@ -1,0 +1,154 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  Aura MLS Product Generation Software (MLSPGS) for Level 1
+  and Level 2
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Nathaniel
+    family-names: Livesey
+    email: Nathaniel.J.Livesey@jpl.nasa.gov
+    affiliation: Jet Propulsion Laboratory
+    orcid: 'https://orcid.org/0000-0001-8753-9153'
+  - given-names: Paul
+    family-names: Wagner
+    affiliation: Jet Propulsion Laboratory
+    orcid: 'https://orcid.org/0009-0001-5706-9872'
+  - given-names: Richard
+    family-names: Cofield
+    name-suffix: IV
+    affiliation: Jet Propulsion Laboratory
+  - given-names: David
+    family-names: Cuddy
+    affiliation: Jet Propulsion Laboratory
+  - given-names: William
+    family-names: Daffer
+    affiliation: Jet Propulsion Laboratory
+  - given-names: Mark
+    family-names: Filipiak
+    affiliation: University of Edinburgh
+  - given-names: Lucien
+    family-names: Froidevaux
+    affiliation: Jet Propulsion Laboratory
+    orcid: 'https://orcid.org/0000-0002-0681-1483'
+  - given-names: Audrey
+    family-names: Hanzel
+    affiliation: Raytheon
+  - given-names: Robert
+    family-names: Jarnot
+    email: Robert.F.Jarnot@jpl.nasa.gov
+    affiliation: Jet Propulsion Laboratory
+  - given-names: Jonathan
+    family-names: Jiang
+    affiliation: Jet Propulsion Laboratory
+    orcid: 'https://orcid.org/0000-0002-5929-8951'
+  - given-names: Yibo
+    family-names: Jiang
+    affiliation: Jet Propulsion Laboratory
+  - given-names: Brian
+    family-names: Knosp
+    email: Brian.Knosp@jpl.nasa.gov
+    affiliation: Jet Propulsion Laboratory
+    orcid: 'https://orcid.org/0000-0002-2266-8883'
+  - given-names: Fered
+    family-names: Krough
+    affiliation: Jet Propulsion Laboratory
+  - given-names: Alyn
+    family-names: Lambert
+    affiliation: Jet Propulsion Laboratory
+    email: Alyn.Lambert@jpl.nasa.gov
+    orcid: 'https://orcid.org/0000-0003-3182-1824'
+  - given-names: Theodore
+    family-names: Lungu
+    affiliation: Jet Propulsion Laboratory
+  - given-names: Mariyetta
+    family-names: Madatya
+    email: Mariyetta.Madatyan@jpl.nasa.gov
+    affiliation: Jet Propulsion Laboratory
+  - given-names: Gloria
+    family-names: Manney
+    email: manney@nwra.com
+    affiliation: Northwest Research Associates
+    orcid: 'https://orcid.org/0000-0003-4489-4811'
+  - given-names: Luis
+    family-names: Millan
+    orcid: 'https://orcid.org/0000-0002-9509-9095'
+    email: Luis.F.Millan@jpl.nasa.gov
+    affiliation: Jet Propulsion Laboratory
+  - given-names: Lori
+    family-names: Nakamura
+    affiliation: Jet Propulsion Laboratory
+  - given-names: Honghanh
+    family-names: Nguyen
+    affiliation: Jet Propulsion Laboratory
+    name-particle: Hayley
+  - given-names: Vince
+    family-names: Perun
+    affiliation: Jet Propulsion Laboratory
+  - given-names: Hugh
+    family-names: Pumphrey
+    email: H.C.Pumphrey@ed.ac.uk
+    affiliation: University of Edinburgh
+    orcid: 'https://orcid.org/0000-0003-0747-1457'
+  - given-names: William
+    family-names: Read
+    email: William.G.Read@jpl.nasa.gov
+    affiliation: Jet Propulsion Laboratory
+    orcid: 'https://orcid.org/0000-0001-8474-3490'
+  - given-names: Michelle
+    family-names: Santee
+    email: Michelle.L.Santee@jpl.nasa.gov
+    affiliation: Jet Propulsion Laboratory
+    orcid: 'https://orcid.org/0000-0002-9466-7257'
+  - given-names: Michael
+    family-names: Schwartz
+    email: Michael.J.Schwartz@jpl.nasa.gov
+    affiliation: Jet Propulsion Laboratory
+    orcid: 'https://orcid.org/0000-0001-6169-5094'
+  - given-names: Zvi
+    family-names: Shippony
+    affiliation: Jet Propulsion Laboratory
+  - given-names: W.
+    name-particle: Van
+    family-names: Snyder
+    affiliation: Jet Propulsion Laboratory
+  - given-names: Christina
+    family-names: Vuu
+    email: Christina.Vuu@jpl.nasa.gov
+    affiliation: Raytheon
+    orcid: 'https://orcid.org/0009-0008-1315-1373'
+  - given-names: Frank
+    family-names: Werner
+    email: frank.werner@jpl.nasa.gov
+    affiliation: Jet Propulsion Laboratory
+    orcid: 'https://orcid.org/0000-0002-7141-0934'
+  - given-names: Dong
+    family-names: Wu
+    affiliation: Jet Propulsion Laboratory
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.19055785
+repository-code: 'https://github.com/NASA-MLS/mlspgs'
+abstract: >-
+  Aura MLS Product Generation Software (MLSPGS) for Level 1
+  and Level 2, covering v1 through the v06.03 release.
+
+
+  This code and limited associated documentation herein
+  (more documentation is elsewhere) has been developed for
+  the Aura Microwave Limb Sounder project to produce daily
+  calibrated radiance and engineering (Level 1) and
+  geophysical data along the measurement footprint (Level 2)
+  data products.
+keywords:
+  - MLS
+  - Microwave Limb Sounder
+  - Aura
+  - Level 1
+  - Level 2
+license: Apache-2.0
