@@ -25,7 +25,7 @@ MODULE SortQualifyTHz ! Sort and qualify the L0 data for the THz module
 
 !---------------------------- RCS Module Info ------------------------------
   CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
-       "$RCSfile$"
+       "$RCSfile: SortQualifyTHz.f90,v $"
   PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -297,7 +297,7 @@ CONTAINS
   LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (len=*), PARAMETER :: IdParm = &
-       "$Id$"
+       "$Id: SortQualifyTHz.f90,v 2.18 2024/10/09 22:37:38 pwagner Exp $"
   CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -305,7 +305,7 @@ CONTAINS
 END MODULE SortQualifyTHz
 !=============================================================================
 
-! $Log$
+! $Log: SortQualifyTHz.f90,v $
 ! Revision 2.18  2024/10/09 22:37:38  pwagner
 ! Stop excess printing on dates THz module is off
 !

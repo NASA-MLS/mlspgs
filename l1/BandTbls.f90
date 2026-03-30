@@ -29,7 +29,7 @@ MODULE BandTbls   ! Tables for all bands
 
 !---------------------------- RCS Module Info ------------------------------
   CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
-       "$RCSfile$"
+       "$RCSfile: BandTbls.f90,v $"
   PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -632,7 +632,7 @@ CONTAINS
   LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (len=*), PARAMETER :: IdParm = &
-       "$Id$"
+       "$Id: BandTbls.f90,v 2.15 2024/10/29 15:58:39 pwagner Exp $"
   CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -640,7 +640,7 @@ CONTAINS
 
 END MODULE BandTbls
 
-! $Log$
+! $Log: BandTbls.f90,v $
 ! Revision 2.15  2024/10/29 15:58:39  pwagner
 ! Relax severity of CBP/CSC errors to warning; reverts to pre-v6 behavior
 !

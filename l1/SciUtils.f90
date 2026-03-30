@@ -31,7 +31,7 @@ MODULE SciUtils ! L0 science utilities
 
 !---------------------------- RCS Module Info ------------------------------
   CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
-       "$RCSfile$"
+       "$RCSfile: SciUtils.f90,v $"
   PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -1094,14 +1094,14 @@ MODULE SciUtils ! L0 science utilities
   LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (len=*), PARAMETER :: IdParm = &
-       "$Id$"
+       "$Id: SciUtils.f90,v 2.24 2024/10/10 20:18:35 pwagner Exp $"
   CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
   END FUNCTION not_used_here
 END MODULE SciUtils
 
-! $Log$
+! $Log: SciUtils.f90,v $
 ! Revision 2.24  2024/10/10 20:18:35  pwagner
 ! Improve comments; print GM07 when out-of-lock
 !
@@ -1173,7 +1173,7 @@ END MODULE SciUtils
 ! Revision 2.3  2002/10/03 17:43:53  jdone
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
-! $Log$
+! $Log: SciUtils.f90,v $
 ! Revision 2.24  2024/10/10 20:18:35  pwagner
 ! Improve comments; print GM07 when out-of-lock
 !

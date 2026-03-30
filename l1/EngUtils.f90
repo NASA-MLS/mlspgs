@@ -25,7 +25,7 @@ MODULE EngUtils   ! Engineering utilities
 
 !---------------------------- RCS Module Info ------------------------------
   CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
-       "$RCSfile$"
+       "$RCSfile: EngUtils.f90,v $"
   PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -533,7 +533,7 @@ CONTAINS
   LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (len=*), PARAMETER :: IdParm = &
-       "$Id$"
+       "$Id: EngUtils.f90,v 2.16 2024/10/10 20:15:54 pwagner Exp $"
   CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -541,7 +541,7 @@ CONTAINS
 END MODULE EngUtils
 !=============================================================================
 
-! $Log$
+! $Log: EngUtils.f90,v $
 ! Revision 2.16  2024/10/10 20:15:54  pwagner
 ! Reduce routine messaging
 !

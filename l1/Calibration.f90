@@ -48,7 +48,7 @@ MODULE Calibration ! Calibration data and routines
 
 !---------------------------- RCS Module Info ------------------------------
   CHARACTER (len=*), PRIVATE, PARAMETER :: ModuleName= &
-       "$RCSfile$"
+       "$RCSfile: Calibration.f90,v $"
   PRIVATE :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -1241,7 +1241,7 @@ PRINT *, 'end calibrating...'
   LOGICAL FUNCTION not_used_here()
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (len=*), PARAMETER :: IdParm = &
-       "$Id$"
+       "$Id: Calibration.f90,v 2.27 2024/10/10 20:17:17 pwagner Exp $"
   CHARACTER (len=LEN(idParm)), SAVE :: Id = idParm
 !---------------------------------------------------------------------------
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -1250,7 +1250,7 @@ PRINT *, 'end calibrating...'
 END MODULE Calibration
 !=============================================================================
 
-! $Log$
+! $Log: Calibration.f90,v $
 ! Revision 2.27  2024/10/10 20:17:17  pwagner
 ! Add new component RnPrecSign to MAFdata_T
 !
