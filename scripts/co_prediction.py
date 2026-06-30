@@ -9,7 +9,7 @@
 # export authority as may be required before exporting such information to
 # foreign countries or providing access to foreign persons.
 
-# "$Id$"
+# "$Id: co_prediction.py,v 1.6 2026/06/22 17:14:27 cvuu Exp $"
 ## =========================================================================
 ## Import of modules
 ## =========================================================================
@@ -272,13 +272,41 @@ def _read_l1brad(l1brad_file=None, \
     # Read file
     R = {}
     file = h5py.File(l1brad_file, 'r')
+
     for i_bands in range(len(l1b_bands)):
-        R_D = file[l1b_bands[i_bands]][:,:,:]
-        R_D2 = file[l1b_bands[i_bands]+' Baseline'][:,:]
-        R_DD = np.zeros_like ( R_D )
-        for i_mifs in range(0, len(R_DD[0,:,0])):
-            R_DD[:,i_mifs,:] = np.array(R_D[:,i_mifs,:] + R_D2[:,:])
+
+        try:
+
+            R_D = file[l1b_bands[i_bands]][:,:,:]
+            R_D2 = file[l1b_bands[i_bands]+' Baseline'][:,:]
+
+            R_DD = np.zeros_like(R_D)
+
+            for i_mifs in range(0, len(R_DD[0,:,0])):
+                R_DD[:,i_mifs,:] = np.array(R_D[:,i_mifs,:] + R_D2[:,:])
+
             R[i_bands] = R_DD
+
+        except KeyError:
+            # Special handling for CO DACS-1 dataset.
+            # Some newer input files do not contain this dataset.
+            # Return a fill-value array so downstream QC can flag
+            # the retrieval without aborting the processing chain.
+
+            if l1b_bands[i_bands] == 'R3:240.B25D:CO.S1.DACS-1':
+
+                print('WARNING: Dataset ' + l1b_bands[i_bands] +
+                      ' not found. Using fill values.')
+
+                l1b_band_fill = 'R3:240.B24D:O3.S0.DACS-3'
+
+                R[i_bands] = np.zeros_like(
+                    file[l1b_band_fill][:,:,:]
+                ) - 999.0
+
+            else:
+                raise
+
     file.close()
 
     return(R)
@@ -513,6 +541,16 @@ def _co_prediction(l1bradg_file=None, \
                     weights.labels_mean[:,i_lat]
             pred2[ind_lat,weights.surfs[0]-1:weights.surfs[-1]] = dummy
 
+    # Precision
+    prec2 = _define_precision(surfs=weights.surfs)
+    prec2 = np.tile(prec2,(len(features),1))
+
+    # Check for faulty latitudes and set precision to -999.99.
+    # Predictions are already -999.99.
+    ind_lat = np.where((lat<-90))[0]
+    if len(ind_lat)>0:
+        prec2[ind_lat,:] = -999.99
+
     # Check for unrealistic predictions outside the expected range
     for i_lat in range ( 0, len(weights.lats) ):
         lat_bin = weights.lats[i_lat]
@@ -530,7 +568,7 @@ def _co_prediction(l1bradg_file=None, \
                 ind_thresh = np.where( (pred2[ind_lat,i_surfs]<thresh_min) | \
                                        (pred2[ind_lat,i_surfs]>thresh_max) )[0]
                 if len(ind_thresh)>0:
-                    prec[ind_lat[ind_thresh],:] = -999.99
+                    prec2[ind_lat[ind_thresh],:] = -999.99
 
             # We see whether for each observation there is an outlier feature
             for i_obs in range(0, len(ind_lat)):
@@ -538,10 +576,13 @@ def _co_prediction(l1bradg_file=None, \
                 thresh_max = np.where(features[ind_lat[i_obs],:]-(weights.bt_mean[:,i_lat]-5*weights.bt_std[:,i_lat])<0)[0]
 
                 if len(thresh_min)>0 or len(thresh_max)>0:
-                    prec[ind_lat[i_obs],:] = -999.99
+                    prec2[ind_lat[i_obs],:] = -999.99
 
     # Set pred[4:8] to pred2[4:8], because we want to use the UTLS model here
     pred[:,4:8] = pred2[:,4:8]
+
+    # Set prec[4:8] to prec2[4:8], because we want to use the UTLS model here
+    prec[:, weights.surfs[0]-1:weights.surfs[-1]] = prec2[:, weights.surfs[0]-1:weights.surfs[-1]]
 
     # Output file
     file = h5py.File(out_file, 'w')
@@ -594,3 +635,7 @@ result = _co_prediction(l1bradg_file=l1bradg_file, \
 ## Revision 1.3  2023/12/29 fwerner
 ## Added a check for features outside of the training range.
 ## Those observations get a negative precision.
+##
+## Revision 1.4  2026/06/15 fwerner
+## Added check for missing band 25; if not found then _read_l1brad() returns an array with - 999.0.
+## Precision for the second UTLS model is set independently at the appropriate levels.
